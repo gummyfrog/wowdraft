@@ -1,0 +1,63 @@
+extends layout
+
+block content
+	div#league_create
+		form(action='/api/leagues/create' method='post')
+			input(v-model="name" type='text' placeholder='Goldshire Inn League' name='name' required)
+			input(v-model="description" type='text' placeholder='Describe your League here!' name='description' required)
+
+			input(v-model="rounds" type='number' placeholder='10' name='rounds' required)
+			select(v-model="style" name="style" required)
+				option(value="Standard") Standard
+
+			select(v-model="server" name="server")
+				option(value="Grobbulus") Grobbulus
+
+			select(v-model="faction" name="faction")
+				option(value="Alliance") Alliance
+
+			select(name="color1" v-model="color1" required)
+				option(style="color:#0070FF" value="#0070FF") Rare
+				option(style="color:#A335EE" value="#A335EE") Epic
+				option(style="color:#FF8000" value="#FF8000" selected) Legendary
+				option(style="color:#3CE13F" value="#3CE13F") Guild Chat Green
+				option(style="color:#77C8FF" value="#77C8FF") Party Lead Teal
+				option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
+				option(style="color:#FF4700" value="#FF4700") Raid Warning Red
+				option(style="color:#00ADEF" value="#00ADEF") BNet Blue
+
+			select(name="icon" v-model="icon" required)
+				option(value="banner_Bloodelf.png") Bloodelf Banner
+				option(value="banner_Draenei.png") Draenei Banner
+				option(value="banner_Dwarf.png") Dwarf Banner
+				option(value="banner_Gnome.png") Gnome Banner
+				option(value="banner_Human.png") Human Banner
+				option(value="banner_Nightelf.png") Nightelf Banner
+				option(value="banner_Orc.png") Orc Banner
+				option(value="banner_Scourge.png") Scourge Banner
+				option(value="banner_Tauren.png") Tauren Banner
+				option(value="banner_Troll.png") Troll Banner
+
+			button(type='submit') Submit
+
+		h1 Preview:
+		div(:style="'color:'+color1").league_wrapper
+			img.league_logo( :src="'/images/league_icons/' + icon")
+			h1.league_name {{name}}
+
+		p {{description}}
+
+	script.
+		var app = new Vue({
+			el: '#league_create',
+			data: {
+				name:"Stormwind League",
+				description: "Light be with you.",
+				rounds: 10,
+				server: "Grobbulus",
+				faction: "Alliance",
+				style:"Standard",
+				color1: "#0070FF",
+				icon: "banner_Human.png",
+				}
+			})

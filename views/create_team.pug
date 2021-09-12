@@ -1,0 +1,65 @@
+extends layout
+
+block content
+	div#team_create
+		form(action=`/api/leagues/${leagueID}/newTeam` method='post')
+			input(type='text' placeholder='Lower City Sluggers' maxlength="25" name='name' v-model="name" required)
+			input(type='text' placeholder='For the Alliance!' maxlength="70" name='motto' v-model="motto")
+
+			//- select(name="color1" v-model="color1")
+			//- 	option(style="color:black" value="black" selected) Void Black
+			//- 	option(style="color:#0070FF" value="#0070FF") Rare
+			//- 	option(style="color:#A335EE" value="#A335EE") Epic
+			//- 	option(style="color:#FF8000" value="#FF8000") Legendary
+			//- 	option(style="color:#3CE13F" value="#3CE13F") Guild Chat Green
+			//- 	option(style="color:#77C8FF" value="#77C8FF") Party Lead Teal
+			//- 	option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
+			//- 	option(style="color:#FF4700" value="#FF4700") Raid Warning Red
+			//- 	option(style="color:#00ADEF" value="#00ADEF") BNet Blue
+
+			select(name="color2" v-model="color2" required)
+				option(style="color:#0070FF" value="#0070FF") Rare
+				option(style="color:#A335EE" value="#A335EE") Epic
+				option(style="color:#FF8000" value="#FF8000" selected) Legendary
+				option(style="color:#3CE13F" value="#3CE13F") Guild Chat Green
+				option(style="color:#77C8FF" value="#77C8FF") Party Lead Teal
+				option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
+				option(style="color:#FF4700" value="#FF4700") Raid Warning Red
+				option(style="color:#00ADEF" value="#00ADEF") BNet Blue
+
+
+			select(name="icon" v-model="icon" required)
+				option(style="background-image:url('/images/icons/icon1.png')" value="icon1") Challenging Roar
+				option(style="background-image:url('/images/icons/icon2.png')" value="icon2") Gauntlet
+				option(style="background-image:url('/images/icons/icon3.png')" value="icon3") Helmet
+				option(style="background-image:url('/images/icons/icon4.png')" value="icon4") Card
+				option(style="background-image:url('/images/icons/icon5.png')" value="icon5") Skull
+				option(style="background-image:url('/images/icons/icon6.png')" value="icon6") Hearthstone
+				option(style="background-image:url('/images/icons/icon7.png')" value="icon7") Pants
+				option(style="background-image:url('/images/icons/icon8.png')" value="icon8") Destro Pot		
+				option(style="background-image:url('/images/icons/icon9.png')" value="icon9") Seal of Protection	
+				option(style="background-image:url('/images/icons/icon10.png')" value="icon10") Shadow Soulgem
+
+
+
+			button(type='submit') Submit
+
+
+		h1 Preview:
+		div.team
+			img.team_logo(:src="'/images/icons/'+icon+'.png'")
+			div.team_text
+				h1(:style="'color:'+color2").team_name {{name}}
+				h2(:style="'color:'+color2").team_motto {{motto}}
+
+	script.
+		var app = new Vue({
+			el: '#team_create',
+			data: {
+				name:"Goldshire Sluggers",
+				motto:"For the Alliance!",
+				color1: "black",
+				color2: "#FF8000",
+				icon: "icon6",
+				}
+			})

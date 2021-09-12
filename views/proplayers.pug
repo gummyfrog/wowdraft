@@ -1,0 +1,159 @@
+extends layout
+
+block content
+	div#proplayers
+
+		button(v-on:click="pageDown").pageButton
+			i.fas.fa-arrow-circle-left
+
+		select(name="role_select" @change="resetFetch" v-model="tag").role_select
+			option(value="dps" v-selected) DPS
+			option(value="tanks") Tanks
+			option(value="healers") Healers
+
+
+
+		button(v-on:click="pageUp").pageButton
+			i.fas.fa-arrow-circle-right
+
+		h1 Page: {{ page+1 }}
+
+		ul#players
+			player-item(
+				v-for="(player, index) in players",
+				v-bind:player="player",
+				v-bind:leagueID="leagueID"
+			)
+
+	script.
+		var leagueID = "!{leagueID}";
+
+
+		Vue.component('player-item', {
+			props: ['player', 'leagueID'],
+		 	template: `
+		 	<li :class="'player ' + player.class"> 
+
+		 	<div id="player-info"> 
+			 	<div id="info">
+				 	<h2> {{player.name}} </h2>
+				 	<h3> {{player.guild}} </h3>
+				 	<h3> {{player.rankings[0].spec}} {{player.class}}</h3>
+			 	</div>
+
+			 	<div id="averages">
+				 	<div id="avg_parse_badge">
+				 		<span id="avg_parse" class="parse">{{player.avgParse}}</span>
+				 		<span>Average Parse</span>
+				 	</div>
+
+				 	<div id="avg_dps_badge">
+			 			<span id="avg_dps">{{player.avgDps}}</span>
+			 			<span>Average DPS</span>
+			 		</div>
+
+			 		<div id="avg_speed_badge">
+			 			<span id="avg_speed" class="parse">{{player.avgSpeed}}</span>
+			 			<span>Average Speed</span>
+			 		</div>
+			 	</div>
+		 	</div> 
+		 	<div id="rankings">
+		 	<player-rankings 
+				v-for="ranking in player.rankings.slice(0, 4)"
+				v-bind:rankings="ranking"
+			>
+			</div>
+
+		 	<form v-if="!{onClock}" action="/api/leagues/${leagueID}/draftPlayer" method='post'>
+		 		<input type="hidden" name="player_id" :value=player._id>
+		 		<input type="hidden" name="tag" :value=player.tag>
+		 		<button type="submit" class="draft_button"> <h3> <i class="fas fa-handshake"></i> draft this player </h3> </button>
+		 	</form>
+
+		 	</li>'`
+		})
+
+		//- <a v-if="!{onClock}"> draft me! </a>
+		Vue.component('player-rankings', {
+			props: ['rankings'],
+			template: `
+				<li class="parseBadge"> 
+				<span id="encounter_boss"> {{rankings.encounter_data.encounter.name}} </span> 
+
+				<span id="encounter_dps">{{rankings.amount}} DPS </span> 
+
+				<span id="encounter_rankPercent" class="parse">{{rankings.rankPercent}}</span> 
+				</li>
+			`
+		})
+
+		var app = new Vue({
+			el: '#proplayers',
+			data: {
+					players: [],
+					page: 0,
+					tag: "dps",
+					leagueID: leagueID,
+			},
+			methods: {
+				fetchData: function(event) {
+					fetch(`/api/proplayers/${this.leagueID}/${this.tag}/${this.page}`)
+					.then(res => res.json())
+					.then((response) => {
+						app.players = response;
+						console.log(response);
+					})
+					.then(() => {
+						$('.parse').each((i, obj) => {
+							var obj = $(obj);
+							obj.css("color", parseStyle(obj.text()))
+						})
+					})
+					.catch((err) => {
+						console.log(err);
+					})
+				},
+
+				pageDown:function(event) {
+					if(this.page-1 < 0) {
+						return;
+					}
+					this.page--;
+					this.fetchData();
+				},
+				pageUp:function(event) {
+					this.page++;
+					this.fetchData();
+				},
+				resetFetch:function(event){
+					this.page = 0;
+					this.fetchData();
+				}
+			}
+		})
+
+		function parseStyle(parse){
+			var me = "Gray";
+			parse=parseInt(parse);
+
+			if(parse < 25) {
+				me = "Gray"
+			} else if(parse < 50) {
+				me = "Green"
+			} else if(parse < 75) {
+				me = "Blue"
+			} else if(parse < 95) {
+				me = "Purple"
+			} else if(parse < 99) {
+				me = "Orange"
+			} else {
+				me = "Gold"
+			}
+
+			console.log(parse, me);
+			return me;
+		}
+
+		app.fetchData("dps", 0);
+

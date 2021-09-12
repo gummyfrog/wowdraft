@@ -1,0 +1,51 @@
+extends layout
+
+block content
+	h1 All Leagues
+
+	div#leagues
+		ol
+			league-item(
+				v-for="(league, index) in leagues"
+				v-bind:league_info="league"
+				v-bind:index="index",
+				v-bind:slugify="slugify"
+			)
+
+	script.
+		var leagues = !{leagues}
+		console.log(leagues.length);
+
+		Vue.component('league-item', {
+			props: ['league_info', 'slugify'],
+			template: `
+			<div class="mini_league"> 
+				<div> 
+			 		<div class="league_wrapper_mini" :style="'color:'+league_info.color1"> 
+			 		<img class="league_logo" :src="'/images/league_icons/' + league_info.icon">
+			 		<h1 class="league_name"> {{league_info.name}} </h1> 
+			 	</div>
+			<h3> Organized by {{league_info.admin.name}}
+			<br> <span :class="'league_status '+slugify(league_info.status)">Draft {{league_info.status}} </span>
+			</h3> 
+			<h3> 
+			<br> Draft Style: {{league_info.style}}
+			<br> {{league_info.server}}, {{league_info.faction}} 
+			<br> # of Rounds: {{league_info.rounds}} </h3> </div>
+			<h2> 
+			<a :href="'/leagues/' + league_info.code"><i class="fas fa-door-open"></i> Enter </a>
+			</h2>
+			`
+		})
+
+		var app = new Vue({
+			el: '#leagues',
+			data: {
+				leagues: leagues
+			},
+			methods: {
+				slugify(x) {
+			  		return x.toLowerCase().replace(" ", '-');
+			  	}
+			}
+		})

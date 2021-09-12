@@ -1,0 +1,495 @@
+:root {
+  --druid: #A34C00;
+  --hunter: #6F9B31;
+  --mage: #1395B9;
+  --paladin: #EA1F7A;
+  --priest: #FFFFFF;
+  --rogue: #8F8500;
+  --shaman: #0070DD;
+  --warlock: #4C4FE6;
+  --warrior: #936739;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+#logged-in, #logged-out {
+	float: right;
+}
+
+#username {
+	float: left;
+	margin: 0;
+	padding-right: 10px;
+}
+
+
+#players, .league_links  {
+	list-style-type: none;
+	padding: 0;
+}
+
+.player {
+	color: white;
+	position: relative;
+	margin: 0 auto;
+	padding: 20px;
+	min-height: 50px;
+	border-radius: 5px;
+	margin-bottom: 5px;
+	max-width: 900px;
+}
+
+#player-info {
+	width: 100%;
+}
+
+
+#info {
+	width: 49%;
+	display: inline-block;
+}
+
+#averages {
+	text-align: right;
+	width: 49%;
+	display: inline-block;
+}
+
+#averages span {
+	color: white;
+	background-color: black;
+	display: inline-block;
+	text-align: center;
+	border-radius: 10px;
+	padding: 3px;
+	padding-left: 10px;
+	padding-right: 10px;
+	margin-bottom: 5px;
+	text-align: center;
+}
+
+
+#rankings {
+	display: flex;
+	flex-wrap: wrap;
+	max-width: 500px;
+
+}
+
+.parseBadge {
+	position: relative;
+	display: inline-block;
+	width: 25%;
+	margin: auto;
+	background-color: black;
+	min-height: 50px;
+	border-radius: 20px;
+	padding: 10px;
+	padding-top: 45px;
+}
+
+.parseBadge .parse {
+	font-size: 2.5em;
+	font-weight: 800;
+}
+
+#encounter_boss {
+	top: 0;
+	left: 0;
+	position: absolute;
+	background-color: green;
+	font-weight: 800;
+	color
+	text-decoration: bold;
+	height: 40px;
+	width: 100%;
+	display: inline-block;
+	text-align: center;
+	border-radius: 5px;
+}
+
+#encounter_dps {
+	font-weight: 600;
+	color: white;
+	width: 100%;
+	display: inline-block;
+	text-align: center;
+	border-radius: 10px;
+}
+
+#encounter_rankPercent {
+	margin-top: 10px;
+	color: white;
+	width: 100%;
+	display: inline-block;
+	text-align: center;
+	border-radius: 10px;
+}
+
+.Druid {
+	background-color: var(--druid);
+}
+.Hunter {
+	background-color: var(--hunter);
+}
+.Mage {
+	background-color: var(--mage);
+}
+.Paladin {
+	background-color: var(--paladin);
+
+}
+.Priest {
+	background-color: var(--priest);
+	color: black;
+}
+
+/*.Priest div#player-info div#averages span {
+	color: black;
+} */
+
+.Rogue {
+	background-color: var(--rogue);
+
+}
+.Shaman {
+	background-color: var(--shaman);
+}
+.Warlock {
+	background-color: var(--warlock);
+
+}
+.Warrior {
+	background-color: var(--warrior);
+}
+
+
+h1, h2, h3, h4, span {
+	margin: 0;
+	font-family: 'Roboto Mono', monospace;
+}
+
+p, a {
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 800;
+}
+
+#teams {
+	padding: 0;
+	margin: 0;
+}
+
+.team {
+	position: relative;
+	min-height: 100px;
+	border-radius: 20px;
+	color: black;
+	max-width: 550px;
+	min-width: 300px;
+	margin: 0 auto;
+}
+
+
+.team_text {
+	display: inline;
+	margin: 0 auto;
+}
+
+.team_name {
+	text-indent: 20px;
+	background-color: black;
+	border-radius: 10px;
+	padding-left: 10px;
+	padding-right: 10px;
+	border-bottom: black inset 2px;
+}
+
+.team_manager {
+	padding: 1px;
+	margin: 0 auto;
+	display: inline-block;
+	float: right;
+	color: white;
+	background-color: black;
+	border-radius: 10px;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.team_motto {
+	display: inline-block;
+	padding: 10px;
+	margin: 0 auto;
+}
+
+.team_logo {
+	margin-left: 10px;
+	margin-top: 3px;
+	clip-path: circle(50%);
+	height: 30px;
+	float: left;
+	pointer-events: none;
+}
+
+
+.league_status {
+	color: white;
+	background-color: red;
+	padding-left: 10px;
+	padding-right: 10px;
+	font-weight: 800;
+	border-radius: 15px;
+}
+
+.league_status.setting-up {
+	background-color: purple;
+}
+
+
+.league_status.in-progress {
+	background-color: blue;
+}
+
+.league_status.completed {
+	background-color: green;
+}
+
+.draft {
+	border-radius: 15px;
+}
+
+.pick_history {
+	margin-top: 25px;
+}
+
+.picks {
+	margin-top: 15px;
+	margin-bottom: 15px;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	display: inline-flex;
+	width: 100%;	
+}
+
+.pick {
+	margin: 0 auto;
+	position: relative;
+	padding-left: 60px;
+}
+
+.pick_number {
+	top: 0;
+	margin: 0;
+	padding: 0;
+	position: absolute;
+	font-size: 5em;
+	z-index: -1;
+	line-height: 0.8em;
+	mix-blend-mode: invert;
+	transform: translateX(-60px) rotateZ(-6deg); 
+	opacity: 0.3;
+}
+
+.mini_team_name, .mini_team_manager, .mini_player, .mini_role {
+	width: 100%;
+	display: block;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.mini_player {
+	border-radius: 15px;
+}
+
+.mini_guild {
+	color: green;
+	text-align: center;
+}
+
+.mini_role {
+
+}
+
+header {
+	margin-bottom: 10px;
+}
+
+.role_select {
+	font-family: 'Roboto Mono', monospace;
+	border: none;
+	font-size: 1.5em;
+
+}
+
+.pageButton {
+	border: none;
+	background: none;
+	color: black;
+	font-size: 1.5em;
+}
+
+
+.pageButton:hover {
+	opacity: 0.9;
+	transform: scale(0.96);
+}
+.pageButton:active {
+	opacity: 0.8;
+	transform: scale(0.95);
+}
+
+.current_pick {
+	color: maroon;
+}
+
+.team_players {
+	width: 100%;
+	display: inline-flex;
+	flex-wrap: wrap;
+}
+
+.team_mini_player {
+	width: 33%;
+}
+
+.pick_order {
+	display: inline-flex;
+	flex-wrap: wrap;
+}
+
+.pick_order_item {
+	padding-left: 20px;
+	padding-right: 20px;
+	position: relative;
+	width: 150px;
+	height: 50px;
+	text-align: right;
+	line-height: 50px;
+}
+
+.pick_order_item h4 {
+	line-height: 1.5;
+	display: inline-block;
+	vertical-align: middle;
+}
+.pick_order_number {
+	left: 0px;
+	top: 0px;
+	position: absolute;
+	font-size: 3.2em;
+	opacity: 0.3;
+}
+
+.draft_button {
+	border: none;
+	background-color: black;
+	color: white;
+	border-radius: 15px;
+	padding: 5px;
+	font-size: 1em;
+	cursor: pointer;
+	padding-left: 15px;
+	padding-right: 15px;
+	margin-top: 10px;
+}
+
+.draft_button:hover {
+	opacity: 0.8;
+	transform: scale(0.99);
+}
+
+.past_order {
+	opacity: 0.1;
+}
+
+.team_players {
+	margin-bottom: 10px;
+}
+
+
+.league_wrapper, .teams_wrapper {
+	max-width: 100%;
+	border-radius: 15px;
+	padding: 5px;
+	border-bottom: black inset 5px;
+	margin-bottom: 10px;
+	background-color: black;
+}
+
+.league_wrapper_mini {
+	max-width: 500px;
+	border-radius: 15px;
+	padding: 10px;
+	border-bottom: black inset 5px;
+	margin-bottom: 10px;
+	background-color: black;
+
+}
+
+.league_logo {
+	margin-right: 15px;
+	clip-path: circle(50%);
+	height: 2.7em;
+	float: left;
+	pointer-events: none;
+}
+
+.league_name{
+	font-weight: 900;
+	padding-left: 10px;
+	padding-right: 10px;
+	font-weight: 800;
+	border-radius: 20px;
+}
+
+.startbutton {
+	margin-bottom: 20px;
+}
+
+.unavailable {
+	pointer-events: none;
+	opacity: 0.5;
+	color: gray;
+}
+
+.league_links a {
+	padding-right: 10px;
+}
+
+.mini_league {
+	margin-bottom: 20px;
+}
+
+.league_description {
+
+}
+
+.requirements {
+	list-style-type: none;
+	padding: 0;
+	font-weight: 800;
+}
+
+.youreup {
+	color: maroon;
+	padding-left: 30px;
+}
+
+.view_players {
+	margin-bottom: 30px;
+	display: block;
+}
+

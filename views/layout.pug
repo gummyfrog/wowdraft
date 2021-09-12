@@ -1,0 +1,53 @@
+doctype html
+html
+	head
+		title #{title}
+		link(rel='stylesheet', href='/stylesheets/style.css')
+		script(src="https://cdn.jsdelivr.net/npm/vue@2")
+		script(src="https://code.jquery.com/jquery-3.6.0.min.js"
+			  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+			  crossorigin="anonymous")
+
+		link(rel='preconnect' href='https://fonts.googleapis.com')
+		link(rel='preconnect' href='https://fonts.gstatic.com' crossorigin='')
+		link(href='https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap' rel='stylesheet')
+		link(href='https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap' rel='stylesheet')
+		link(rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous")
+		
+
+	body
+		header
+			div#logged-in
+				p#username
+				a(href="/logout").
+					logout
+					<i class="fas fa-sign-out-alt"></i>
+
+			div#logged-out
+				a(href="/login").
+					login
+					<i class="fas fa-sign-in-alt"></i>
+
+			div#navigation
+				a(href="/leagues").
+					<i class="fas fa-book"></i>
+					all leagues
+				br
+				a(href="/leagues/create").
+					<i class="fas fa-book-open"></i>
+					 new league
+
+		block content
+
+	footer
+		script.
+			$("#logged-in").hide();
+
+			var username = "#{user_session_name}"
+
+			if(!{user_session_auth}) {
+				$("#logged-out").hide();
+				$("#logged-in").show();
+				$("#username").text(username);
+			}
+

@@ -1,0 +1,260 @@
+extends layout
+
+block content
+	div#league
+
+		link(rel="shortcut icon" :href="'/images/league_icons/'+league.icon+'.png'" type="image/x-icon")
+
+		draft_info(
+			v-bind:league_info="league_info",
+			v-bind:status_slug="statusSlug"
+		)
+
+		draft_progress(
+			v-bind:draft_info="draft_info",
+			v-bind:managers="managers",
+			v-bind:teams="teams",
+			v-bind:league_info="league_info"
+			v-bind:yti="yourTeamIndex"
+			v-bind:reqs="requirements"
+		)
+
+		div.teams_wrapper(:style="'color:'+league_info.color1")
+			h1.league_name.
+				<i class="fas fa-flag"></i>
+				Teams
+
+		h3(v-if="noTeams") none... yet!
+
+		ol#teams
+			team-item(
+				v-for="(team, index) in teams"
+				v-bind:team="team"
+				v-bind:managers="managers",
+				v-bind:index="index",
+			)
+
+	script.
+		var league = !{JSON.stringify(league)}
+		league = JSON.parse(league)
+
+		Vue.component('team-item', {
+			props: ['team', 'managers', 'index'],
+		 	template: `
+
+		 	<div class="team">
+
+		 	<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
+			 	<div class="team_text">
+				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
+				 	<h3 class="team_manager"> {{managers[index].name}}</h3>
+				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
+			 	</div>
+
+			 	<div class="team_players">
+				 	<mini_player 
+						v-for="(player, index) in team.drafted_players"
+						v-bind:player="player"
+						v-bind:index="index">
+				</div>
+		 	</div>
+
+		 	`
+		})
+
+		Vue.component('draft_info', {
+			props: ['league_info', 'status_slug'],
+		 	template: `
+		 	<div> 
+		 		<div class="league_wrapper" :style="'color:'+league.color1"> 
+		 		<img class="league_logo" :src="'/images/league_icons/' + league.icon">
+		 		<h1 class="league_name"> {{league_info.name}} </h1> 
+		 	</div>
+
+		 	<div class="league_links_wrapper">
+		 		<ol class="league_links">
+		 			<a :href="'/leagues/' + league_info.code"> <i class="fas fa-home"></i> League Home </a>
+		 			<a :href="'/leagues/' + league_info.code + '/teams'"> <i class="fas fa-flag"></i> Teams </a>
+		 			<a class="unavailable" :href="'/leagues/' + league_info.code + '/rankings'"> <i class="fas fa-calendar-alt"></i> Rankings </a>
+		 		</ol>
+		 	</div>
+		 	<p class="league_description"> {{league_info.description}} <p>
+
+		 	<h3> Organized by {{league_info.admin.name}}
+		 	<br> <span :class="'league_status '+status_slug">Draft {{league_info.status}} </span>
+		 	</h3> 
+		 	<h3> 
+		 	<br> Draft Style: {{league_info.style}}
+		 	<br> {{league_info.server}}, {{league_info.faction}} 
+		 	<br> # of Rounds: {{league_info.rounds}}<br> </h4> 
+
+		 	<br>
+		 	<a v-if="!{canMakeTeam}" :href="'/leagues/' + league_info.code + '/newTeam'"> <h4> <i class="fas fa-long-arrow-alt-right"></i> Create Team </h4> </a>
+		 	<br>
+		 	<a class="startbutton" v-if="!{organizer} && league.status == 'Setting Up' && league.teams.length >=2" :href="'/leagues/' + league_info.code + '/start'"> Start Drafting! </a>
+
+		 	</div>
+		 	`
+		})
+
+		Vue.component('draft_progress', {
+			props: ['draft_info', 'managers', 'teams', 'league_info', 'yti', 'reqs'],
+		 	template: `
+		 	<div v-if=draft_info.started class="draft"> 
+		 		<div v-if=draft_info.inProgress class="progress">
+			 		<h2> <i class="fas fa-clock"></i> On The Clock: <br> {{managers[draft_info.pick_order[draft_info.pick_index]].name}} ({{teams[draft_info.pick_order[draft_info.pick_index]].name}})</h2>
+
+			 		<div class="youreup" v-if="draft_info.pick_order[draft_info.pick_index] == yti"> 
+			 			<h2> <i class="fas fa-user-clock"></i> You're Up! </h2>
+			 			<ul class="requirements" v-html="reqs"> </ul>
+			 		</div>
+			 		<h2> <a class="view_players" :href="'/leagues/' + league_info.code+'/proplayers'"> <i class="fas fa-long-arrow-alt-right"></i> View Players </a> </h2>
+		 		</div>
+		 		<h1 v-else>Draft is over! Great job!</h1>
+
+		 		<div v-if="draft_info.picks.length>0" class="pick_history">
+		 			<h2> <i class="fas fa-history"></i> Pick History: </h2>
+		 			<div class="picks">
+						<pick_history_item 
+							v-for="(pick, index) in draft_info.picks"
+							v-bind:pick="pick"
+							v-bind:index="index">
+					</div>
+		 		</div>
+
+		 		<div v-if="draft_info.inProgress">
+		 			<h2><i class="fas fa-list-ul"></i> Pick Order: </h2>
+		 			<div class="pick_order">
+					<pick_order_item 
+						v-for="(team_number, index) in draft_info.pick_order"
+						v-bind:team_number="team_number"
+						v-bind:teams="teams"
+						v-bind:index="index"
+						v-bind:pick_index=draft_info.pick_index
+						v-bind:picks=draft_info.picks
+						v-bind:current="draft_info.pick_index">
+					</div>
+		 		</div>
+
+		 		<br>
+		 		<br>
+
+		 	</div>
+		 	`
+		})
+
+		Vue.component('pick_history_item', {
+			props: ['pick', 'index'],
+		 	template: `
+		 	<div class="pick">
+		 		<h1 class="pick_number"> {{index+1}} </h1>
+			 	<h4 class="mini_team_name" :style="'color:'+pick.team.color2"> {{pick.team.name}} </h4> 
+			 	<h4 class="mini_role">{{pick.player.role}}</h4>
+			 	<h4 :class="'mini_player '+pick.player.class">{{pick.player.name}}</h4>
+			 	<h4 class="mini_guild">{{pick.player.guild}}</h4>
+		 	</div>`
+		})
+
+
+		Vue.component('pick_order_item', {
+			props: ['current', 'team_number', 'index', 'pick_index', 'teams', 'picks'],
+		 	template: `
+		 	<div class="pick_order_item current_pick" v-if="current==index">
+		 		<h3 class="pick_order_number"> {{index+1}} </h3>
+		 		<h4> {{teams[team_number].name}} </h4>
+		 	</div>
+		 	<div v-else-if="pick_index > index" class="pick_order_item past_order">
+		 		<h3 class="pick_order_number"> {{index+1}} </h3>
+		 		<h4> {{teams[team_number].name}} </h4>
+		 	</div>
+		 	<div v-else class="pick_order_item">
+		 		<h3 class="pick_order_number"> {{index+1}} </h3>
+		 		<h4> {{teams[team_number].name}} </h4>
+		 	</div>
+		 	`
+
+		})
+
+		Vue.component('mini_player', {
+			props: ['player'],
+		 	template: `
+		 	<div class="team_mini_player">
+		 	<h4 class="mini_role">{{player.role}}</h4>
+			 <h4 :class="'mini_player '+player.class">{{player.name}}</h4>
+			 <h4 class="mini_guild">{{player.guild}}</h4>
+			 </div>`
+		})
+
+
+		var app = new Vue({
+		  el: '#league',
+		  data: {
+		  	teams: league.teams,
+		  	managers: league.managers,
+		  	league_info: league,
+		  	has_real_draft_info: false,
+		  	draft_info: {pick_order:[0], pick_index:0, started: false, inProgress:false},
+		  },
+		  methods: {
+			fetchDraftData: function(event) {
+				fetch(`/api/leagues/${league.code}/draftInfo`)
+				.then(res => res.json())
+				.then((response) => {
+					app.draft_info = response
+					app.has_real_draft_info = true;
+				})
+			},
+			fetchData:function(event) {
+				fetch(`/api/leagues/${league.code}`)
+				.then(res => res.json())
+				.then((response) => {
+					league = response;
+					this.teams = league.teams;
+					this.managers = league.managers;
+					this.league_info = league;
+				})
+			}
+		  },
+		  computed: {
+		  	statusSlug() {
+		  		return this.league_info.status.toLowerCase().replace(" ", '-');
+		  	},
+		  	noTeams() {
+		  		return this.teams.length == 0;
+		  	},
+		  	yourTeamIndex() {
+		  		for(var x=0; x<this.managers.length;x++) {
+		  			if(this.managers[x].name == `!{user_session_name}`) {
+		  				return this.managers[x].team;
+		  			}
+		  		}
+		  		return -1;
+		  	},
+		  	requirements() {
+		  		if(this.yourTeamIndex != -1) {
+			  		var roles_drafted = this.teams[this.yourTeamIndex].roles_drafted;
+			  		var reqs = this.league_info.requirements;
+			  		var msg = "";
+			  		if(roles_drafted.tanks < reqs.tanks) {
+			  			msg += `<li> <i class="fas fa-exclamation-circle"></i> You need ${reqs.tanks-roles_drafted.tanks} more tank(s). </li>`
+			  		}
+			  		if(roles_drafted.dps < reqs.dps) {
+			  			msg += `<li> <i class="fas fa-exclamation-circle"></i> You need ${reqs.dps-roles_drafted.dps} more dps.</li>`
+			  		}
+			  		if(roles_drafted.healers < reqs.healers) {
+			  			msg += `<li> <i class="fas fa-exclamation-circle"></i> You need ${reqs.healers-roles_drafted.healers} more healer(s).</li>`
+			  		}
+			  		return msg;
+		  		}
+		  	}
+		  }
+		})
+
+		app.fetchDraftData();
+		if(league.status == "In Progress") {
+			setInterval(app.fetchDraftData, 1000 * 5)
+		}
+
+		if(league.status != "Completed") {
+			setInterval(app.fetchData, 1000 * 10)
+		}

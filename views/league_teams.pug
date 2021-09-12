@@ -1,0 +1,83 @@
+extends layout
+
+block content
+	div#teams
+		draft_info(
+			v-bind:league_info="league_info",
+		)
+
+		team-item(
+			v-for="(team, index) in teams"
+			v-bind:team="team"
+			v-bind:managers="managers",
+			v-bind:index="index",
+		)
+
+	script.
+		var league = !{JSON.stringify(league)}
+		league = JSON.parse(league)
+
+		Vue.component('team-item', {
+			props: ['team', 'managers', 'index'],
+		 	template: `
+
+		 	<div class="team">
+
+		 	<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
+			 	<div class="team_text">
+				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
+				 	<h3 class="team_manager"> {{managers[index].name}}</h3>
+				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
+			 	</div>
+
+			 	<div class="team_players">
+				 	<mini_player 
+						v-for="(player, index) in team.drafted_players"
+						v-bind:player="player"
+						v-bind:index="index">
+				</div>
+		 	</div>
+
+		 	`
+		})
+
+		Vue.component('draft_info', {
+			props: ['league_info'],
+		 	template: `
+		 	<div> 
+		 		<div class="league_wrapper" :style="'color:'+league.color1"> 
+		 		<img class="league_logo" :src="'/images/league_icons/' + league.icon">
+		 		<h1 class="league_name"> {{league_info.name}} </h1> 
+		 	</div>
+
+		 	<div class="league_links_wrapper">
+		 		<ol class="league_links">
+		 			<a :href="'/leagues/' + league_info.code"> <i class="fas fa-home"></i> League Home </a>
+		 			<a :href="'/leagues/' + league_info.code + '/teams'"> <i class="fas fa-flag"></i> Teams </a>
+		 			<a class="unavailable" :href="'/leagues/' + league_info.code + '/rankings'"> <i class="fas fa-calendar-alt"></i> Rankings </a>
+		 		</ol>
+		 	</div>
+		 	`
+		})
+
+
+
+		Vue.component('mini_player', {
+			props: ['player'],
+		 	template: `
+		 	<div class="team_mini_player">
+		 	<h4 class="mini_role">{{player.role}}</h4>
+			 <h4 :class="'mini_player '+player.class">{{player.name}}</h4>
+			 <h4 class="mini_guild">{{player.guild}}</h4>
+			 </div>`
+		})
+
+
+		var app = new Vue({
+		  el: '#teams',
+		  data: {
+		  	teams: league.teams,
+		  	managers: league.managers,
+		  	league_info: league,
+		  }
+		})
