@@ -18,6 +18,23 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+// force https
+app.use((req, res, next) => {
+	if (process.env.NODE_ENV === 'production') {
+		if (req.headers['x-forwarded-proto'] !== 'https') {
+		    return res.redirect('https://' + req.headers.host + req.url);
+		}
+		else {
+		    return next();
+		}
+	} else {
+		return next();
+	}
+});
+
+
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
