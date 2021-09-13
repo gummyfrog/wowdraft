@@ -104,8 +104,8 @@ block content
 			 		<h2> <i class="fas fa-clock"></i> On The Clock: <br> {{managers[draft_info.pick_order[draft_info.pick_index]].name}} ({{teams[draft_info.pick_order[draft_info.pick_index]].name}})</h2>
 
 			 		<div v-if="!{organizer}" class="SKIP">
-			 			h2 Skip this team's turn?
-			 			<a class="skipbutton" v-if="!{organizer}" :href="'/leagues/' + league_info.code + '/skip'"> Skip! </a>
+			 			<h3> Skip this team's turn? </skip>
+			 			<a class="skipbutton" v-if="!{organizer}" :href="'/leagues/' + league_info.code + '/skip'"> Yep, skip! </a>
 			 		</div>
 
 			 		<div class="youreup" v-if="draft_info.pick_order[draft_info.pick_index] == yti"> 
