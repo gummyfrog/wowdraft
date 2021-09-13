@@ -234,6 +234,10 @@ MongoClient.connect(uri)
 					return;
 				}
 
+				if(league.status != "Setting Up") {
+					res.redirect('/405');
+				}
+
 				new_team.id = short.generate();
 				new_team.drafted_players = [];
 				new_team.roles_drafted = {
