@@ -7,6 +7,7 @@ var session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 const short = require('short-uuid');
 
+
 var router = express.Router();
 
 router.use(session({
@@ -30,7 +31,6 @@ MongoClient.connect('mongodb://localhost:27017')
 			res.render('leagues', { title: 'All Leagues', leagues: JSON.stringify(leagues), user_session_auth: req.session.loggedin, user_session_name: req.session.username});
 		});
 	});
-
 
 	router.get('/leagues/:leagueID', function(req, res, next) {
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
@@ -144,6 +144,53 @@ MongoClient.connect('mongodb://localhost:27017')
 		});
 	});
 
+	router.get('/api/leagues/:leagueID/teams', function(req, res, next) {
+		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
+		.then((league) =>  {
+			res.json(league.teams);
+		})
+		.catch((err) => {
+			res.redirect("/404");
+		});
+	});
+
+	router.get('/leagues/:leagueID/rankings', function(req, res, next) {
+		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
+		.then((league) =>  {
+			res.render('league_rankings', { title: league.name, league: JSON.stringify(league), user_session_auth: req.session.loggedin, user_session_name: req.session.username});
+		})
+		.catch((err) => {
+			console.log(err);
+			res.redirect("/404");
+		});
+	});
+
+
+
+
+	router.post('/api/leagues/:leagueID/activity_report', function(req, res, next) {
+		var activity = req.body;
+
+		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
+		.then((league) =>  {
+			if(!league.activity_reports) {
+				league.activity_reports = [];
+			}
+
+			league.activity_reports.push({time: new Date().getTime(), data: req.body.data});
+			
+			leaguesDB.collection("leagues").updateOne({code: req.params.leagueID}, { $set: { activity_reports: league.activity_reports}})
+			.then((update_result) => {
+				res.json({msg: "Accepted"});
+			})
+			.catch((update_err) => {
+				res.json({err: err});
+			});
+		})
+		.catch((err) => {
+			res.json({err: err});
+		});
+	});
 
 	router.get('/api/leagues/:leagueID/draftInfo', function(req, res, next) {
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
@@ -157,7 +204,6 @@ MongoClient.connect('mongodb://localhost:27017')
 
 	router.post('/api/leagues/:leagueID/newTeam', function(req, res, next) { 
 		if(req.session.loggedin) {
-
 			console.log("attempting to add a new team to " + req.params.leagueID);
 			var new_team = req.body;
 

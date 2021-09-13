@@ -1,0 +1,205 @@
+extends layout
+
+block content
+	div#league_rankings
+		draft_info(
+			v-bind:league_info="league_info",
+		)
+
+		div(v-if="activity_report != null")#report_wrapper
+
+			h1.activity_header.
+				<i class="fas fa-calendar"></i>
+				{{fancyDate}} Activity Report
+
+			team-item(
+				v-for="(team, index) in teams"
+				v-bind:team="team",
+				v-bind:managers="managers",
+				v-bind:team_index="index",
+				v-bind:activity_report="activity_report",
+				v-bind:total_points="total_points",
+				v-bind:get_index="getIndex",
+				v-bind:highest_points="highestPoints",
+			)
+		div(v-else)
+			h1 Waiting on report to be generated.
+
+	script.
+		var league = !{JSON.stringify(league)}
+		league = JSON.parse(league)
+
+		Vue.component('team-item', {
+			props: ['team', 'managers', 'team_index', 'activity_report', 'total_points', 'get_index', 'highest_points'],
+		 	template: `
+
+		 	<div class="team">
+		 	 <h2 class="points" :style="'color:'+team.color2"> <i class="fas fa-star"></i> {{total_points(get_index(team.id))}} All-Time Points </h2>
+
+			 <h4 class="points" :style="'color:'+team.color2"> {{Math.round(activity_report.data[get_index(team.id)].total_points)}} Points This Week </h4>
+
+		 	<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
+			 	<div class="team_text">
+				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
+				 	<h3 class="team_manager"> {{managers[get_index(team.id)].name}}</h3>
+				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
+			 	</div>
+
+			 	<div class="team_players">
+				 	<mini_player 
+						v-for="(player, index) in team.drafted_players"
+						v-bind:player="player"
+						v-bind:team_activity="activity_report.data[get_index(team.id)].players"
+						v-bind:index="index"
+						v-bind:team_color="team.color2"
+						v-bind:highest_points="highest_points">
+				</div>
+		 	</div>
+
+		 	`
+		})
+
+		Vue.component('draft_info', {
+			props: ['league_info'],
+		 	template: `
+		 	<div> 
+		 		<div class="league_wrapper" :style="'color:'+league.color1"> 
+		 		<img class="league_logo" :src="'/images/league_icons/' + league.icon">
+		 		<h1 class="league_name"> {{league_info.name}} </h1> 
+		 	</div>
+
+		 	<div class="league_links_wrapper">
+		 		<ol class="league_links">
+		 			<a :href="'/leagues/' + league_info.code"> <i class="fas fa-home"></i> League Home </a>
+		 			<a :href="'/leagues/' + league_info.code + '/teams'"> <i class="fas fa-flag"></i> Teams </a>
+		 			<a :href="'/leagues/' + league_info.code + '/rankings'"> <i class="fas fa-calendar-alt"></i> Rankings </a>
+		 		</ol>
+		 	</div>
+		 	`
+		})
+
+
+
+		Vue.component('mini_player', {
+			props: ['player', 'team_activity', 'team_color', 'highest_points'],
+		 	template: `
+		 	<div v-if="team_activity[player.name].points.total > 0" class="team_mini_player">
+		 		<h4 class="mini_role">{{player.role}}</h4>
+				<h4 :class="'mini_player '+player.class">{{player.name}}</h4>
+				<h4 class="mini_guild">{{player.guild}}</h4>
+				<h4 class="mini_points" :style="'color:'+team_color"> <i class="fas fa-star"></i> {{team_activity[player.name].points.total}} </h4>
+				<h4 class="title"> {{highest_points(team_activity[player.name].points)}} </h4>
+			</div>
+			<div v-else class="team_mini_player absent">
+				<h4 class="mini_role">{{player.role}}</h4>
+				<h4 :class="'mini_player '+player.class">{{player.name}}</h4>
+				<h4 class="mini_guild">{{player.guild}}</h4>
+				<h4 class="mini_points"> Absent </h4>
+			</div>
+
+
+			`
+		})
+
+
+		if(!league.activity_reports) {
+			league.activity_reports = [];
+		}
+
+		var app = new Vue({
+		  el: '#league_rankings',
+		  data: {
+		  	teams: league.teams,
+		  	managers: league.managers,
+		  	activity_reports: league.activity_reports,
+		  	league_info: league,
+		  },
+		  computed: {
+		  	fancyDate:function() {
+		  		if(this.activity_report != null) {
+		  			var date = new Date(this.activity_report.time);
+		  			return `${date.getMonth()}/${date.getDate()}`
+		  		}
+		  	},
+		  	activity_report:function() {
+		  		if(this.activity_reports != []) {
+		  			return this.activity_reports[0];
+		  		} else {
+		  			return null;
+		  		}
+		  	}
+		  },
+		  methods: {
+		  	total_points:function(team_index) {
+		  		var total = 0;
+		  		for(var x=0;x<this.activity_reports.length;x++) {
+		  			var report = this.activity_reports[x];
+		  			console.log(report.data);
+		  			console.log(team_index);
+		  			total += report.data[team_index].total_points;
+		  		}
+
+		  		return Math.round(total);
+		  	},
+		  	getIndex:function(your_team_id) {
+		  		if(this.activity_report != null) {
+		  			for(var x=0;x<this.activity_report.data.length;x++) {
+		  				var team = this.activity_report.data[x];
+		  				if(team.team_id == your_team_id) {
+		  					return x;
+		  				} 
+		  			}
+		  		}
+		  		return -1;
+		  	},
+		  	titles:function(highest) {
+		  		var msg = "";
+		  		switch(highest) {
+		  			case("dps"):
+		  				msg = "High DPS"
+		  				break;
+		  			case("parse"):
+		  				msg = "Parser"
+		  				break;
+		  			case("bosses_down"):
+		  				msg = "Boss Killer"
+		  				break;
+		  			case("new_best"):
+		  				msg = "Record Setter"
+		  				break;
+		  			case("speedy_clear"):
+		  				msg = "Speed Clearer"
+		  				break;
+		  			case("precise_execution"):
+		  				msg = "Surgically Precise"
+		  				break;
+		  			default:
+		  				msg = "";
+		  		}
+
+		  		return msg;
+		  	},
+		  	highestPoints:function(dist) {
+		  		var fakeDist = Object.assign({}, dist);
+		  		delete fakeDist.total;
+
+		  		var html = "";
+		  		var highest = Object.keys(fakeDist).reduce((a, b) => fakeDist[a] > fakeDist[b] ? a : b);
+		  		delete fakeDist[highest];
+		  		var secondHighest = Object.keys(fakeDist).reduce((a, b) => fakeDist[a] > fakeDist[b] ? a : b);
+
+		  		console.log(highest);
+		  		console.log(secondHighest);
+
+		  		msg = this.titles(highest);
+		  		msg += ` (${dist[highest]}pts)`
+		  		msg += this.titles(secondHighest);
+
+		  		html = `
+		  			${this.titles(highest)} (${dist[highest]}pts)
+		  		`
+
+		  		return html;
+		  	}
+		  }
+		})

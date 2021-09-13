@@ -11,6 +11,7 @@
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "express-session": "^1.17.2",
+    "graphql-request": "^3.5.0",
     "http-errors": "~1.6.3",
     "jsonfile": "^6.1.0",
     "mongodb": "^4.1.1",

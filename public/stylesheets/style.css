@@ -86,7 +86,6 @@ a {
 	display: flex;
 	flex-wrap: wrap;
 	max-width: 500px;
-
 }
 
 .parseBadge {
@@ -187,7 +186,7 @@ p, a {
 	font-weight: 800;
 }
 
-#teams {
+#teams{
 	padding: 0;
 	margin: 0;
 }
@@ -200,6 +199,7 @@ p, a {
 	max-width: 550px;
 	min-width: 300px;
 	margin: 0 auto;
+	margin-bottom: 35px;
 }
 
 
@@ -363,6 +363,7 @@ header {
 
 .team_mini_player {
 	width: 33%;
+	margin-bottom: 20px;
 }
 
 .pick_order {
@@ -493,3 +494,11 @@ header {
 	display: block;
 }
 
+.absent {
+	opacity: 0.2;
+}
+
+.activity_header {
+	text-align: center;
+	margin-bottom: 30px;
+}
