@@ -3,8 +3,6 @@ extends layout
 block content
 	div#league
 
-		link(rel="shortcut icon" :href="'/images/league_icons/'+league.icon+'.png'" type="image/x-icon")
-
 		draft_info(
 			v-bind:league_info="league_info",
 			v-bind:status_slug="statusSlug"
