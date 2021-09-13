@@ -502,3 +502,8 @@ header {
 	text-align: center;
 	margin-bottom: 30px;
 }
+
+#about {
+	max-width: 500px;
+	margin-bottom: 30px;
+}

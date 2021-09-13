@@ -2,9 +2,14 @@ extends layout
 
 block content
 
-	h1 Welcome to WowDraft!
-
-	h1 All Leagues
+	div#about
+		h1 Welcome to WowDraft Beta!
+		h2 It's like Fantasy Football, but for World of Warcraft.
+		br
+		h2 Get started by making a league for yourself and your friends, or joining one that hasn't drafted yet!
+	h1.
+		<i class="fas fa-book-open"></i>
+		All Leagues
 
 	div#leagues
 		ol
@@ -38,7 +43,7 @@ block content
 			<br><br>
 			</h3> </div>
 			<h2> 
-			<a :href="'/leagues/' + league_info.code"><i class="fas fa-door-open"></i> Enter </a>
+			<a :href="'/leagues/' + league_info.code"><i class="fas fa-door-open"></i> View </a>
 			</h2>
 			`
 		})
@@ -46,7 +51,7 @@ block content
 		var app = new Vue({
 			el: '#leagues',
 			data: {
-				leagues: leagues
+				leagues: leagues.reverse()
 			},
 			methods: {
 				slugify(x) {
