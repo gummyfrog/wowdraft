@@ -19,7 +19,7 @@ router.use(session({
 
 router.use(defaultSession);
 
-MongoClient.connect('mongodb://localhost:27017')
+MongoClient.connect('mongodb://frogeye.duckdns.org:27017')
 .then((client) => {
 	console.log("Connected to Database");
 	const leaguesDB = client.db("wowdraft");
