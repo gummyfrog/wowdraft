@@ -19,7 +19,12 @@ router.use(session({
 
 router.use(defaultSession);
 
-MongoClient.connect('mongodb://frogeye.duckdns.org:27017')
+var username = process.env.MONGO_USER;
+var password = process.env.MONGO_PASSWORD;
+
+const uri = `mongodb+srv://${username}:${password}@cluster0.qrezy.mongodb.net?retryWrites=true&w=majority`;
+
+MongoClient.connect(uri)
 .then((client) => {
 	console.log("Connected to Database");
 	const leaguesDB = client.db("wowdraft");
@@ -387,6 +392,7 @@ MongoClient.connect('mongodb://frogeye.duckdns.org:27017')
 })
 
 .catch((err) => {
+	console.log(err);
 	console.log("MONGODB Server Error");
 });
 
