@@ -333,7 +333,7 @@ MongoClient.connect(uri)
 
 	});
 
-	router.get('/leagues/:leagueID/skip', function(req, res, next) => {
+	router.get('/leagues/:leagueID/skip', function(req, res, next) {
 		var leagueID = req.params.leagueID;
 
 		leaguesDB.collection("leagues").findOne({code: leagueID})
@@ -385,8 +385,6 @@ MongoClient.connect(uri)
 			conosle.log(err);
 			res.redirect("/403");
 		});
-
-
 	});
 
 	router.post('/api/leagues/:leagueID/draftPlayer', function(req, res, next) {
