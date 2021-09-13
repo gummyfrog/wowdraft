@@ -448,7 +448,7 @@ router.get('/auth', function(req, res, next) {
 		params.append('client_secret', clientSecret);
 		params.append('code', code);
 		params.append('grant_type', 'authorization_code');
-		params.append('redirect_uri', 'http://localhost:3000/auth');
+		params.append('redirect_uri', 'https://wowdraft.herokuapp.com/auth');
 		params.append('scope', 'identify');
 
 		axios.post("https://discord.com/api/oauth2/token", params, {
