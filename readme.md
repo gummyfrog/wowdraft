@@ -8,4 +8,4 @@ TODO:
 4. Move user accounts away from discord
 5. Clean Style.css, make a real, actual font stack
 6. Better Mobile Styling 
-7. Rankings! That's the important part!
+7. uhhhhhh the way points are handled is dogshit and needs to be improved

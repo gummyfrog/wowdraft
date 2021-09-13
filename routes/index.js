@@ -333,6 +333,62 @@ MongoClient.connect(uri)
 
 	});
 
+	router.get('/leagues/:leagueID/skip', function(req, res, next) => {
+		var leagueID = req.params.leagueID;
+
+		leaguesDB.collection("leagues").findOne({code: leagueID})
+		.then((league) =>  {
+
+			// draft is over
+			if(league.draft.started && !league.draft.inProgress) {
+				res.redirect("/403");
+				return;
+			}
+
+			if(league.admin.name != req.session.username) {
+				res.redirect("/403");
+			} 
+
+			var current_team = league.draft.pick_order[league.draft.pick_index];
+
+			var mini_player = { 
+				id: "nonexisto", name: "No Pick", class: "", guild: "", spec: "", role: ""};
+
+			league.draft.picks.push({
+				team: league.teams[current_team],
+				manager: league.managers[current_team],
+				player: mini_player,
+			});
+			league.teams[current_team].drafted_players.push(mini_player);
+
+			league.draft.pick_index++;
+
+			if(league.draft.pick_index == league.draft.pick_order.length) {
+				// draft is over!
+				console.log("DRAFT IS OVER!!!... but we skipped the last pick. This logic is in two places– really, shouldn't there just be a league handler for these kinds of things?");
+				// this could get messy fast! shoot me
+				league.draft.inProgress = false;
+				league.status = "Completed";
+			}
+
+			leaguesDB.collection("leagues").updateOne({code: leagueID}, { $set: { draft: league.draft, teams: league.teams, status: league.status }})
+			.then((update_result) => {
+				res.redirect(`/leagues/${req.params.leagueID}/`);
+			})
+			.catch((update_err) => {
+				console.log(update_err);
+			});
+
+
+		})
+		.catch((err) => {
+			conosle.log(err);
+			res.redirect("/403");
+		});
+
+
+	});
+
 	router.post('/api/leagues/:leagueID/draftPlayer', function(req, res, next) {
 
 		var leagueID = req.params.leagueID;
@@ -368,7 +424,6 @@ MongoClient.connect(uri)
 				});
 
 				league.teams[current_team].drafted_players.push(mini_player);
-
 				league.teams[current_team].roles_drafted[tag]++;
 
 				player.drafted.push(leagueID);

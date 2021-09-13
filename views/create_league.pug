@@ -36,6 +36,15 @@ block content
 				option(value="Friday") Friday
 				option(value="Saturday") Saturday
 
+			h3 Proposed Draft Start Date/Time
+			div.reminder
+				h4. 
+					<i class="fas fa-exclamation-circle"></i> Remember!
+					You'll need to start the draft manually.
+				h4 This is just for scheduling, so be informative (and on time!)
+
+			input(v-model="start_date" type="text" name="start_date")
+
 
 			h3 Customization
 			select(name="color1" v-model="color1" required)
@@ -84,5 +93,6 @@ block content
 				color1: "#0070FF",
 				icon: "banner_Human.png",
 				report_day: "Tuesday",
+				start_date: "next monday at 3pm",
 				}
 			})

@@ -489,6 +489,14 @@ header {
 	padding-left: 30px;
 }
 
+.reminder {
+	color: maroon;
+}
+
+.SKIP {
+	color: maroon;
+}
+
 .view_players {
 	margin-bottom: 30px;
 	display: block;
@@ -506,4 +514,12 @@ header {
 #about {
 	max-width: 500px;
 	margin-bottom: 30px;
+}
+
+#league_create h3{
+	margin-top: 15px;
+}
+
+#team_create h3{
+	margin-top: 15px;
 }
