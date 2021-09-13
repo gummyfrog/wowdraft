@@ -127,15 +127,16 @@ block content
 		  		} else {
 		  			return null;
 		  		}
-		  	}
+		  	},
+		  	sorted_teams:function() {
+
+		  	},
 		  },
 		  methods: {
 		  	total_points:function(team_index) {
 		  		var total = 0;
 		  		for(var x=0;x<this.activity_reports.length;x++) {
 		  			var report = this.activity_reports[x];
-		  			console.log(report.data);
-		  			console.log(team_index);
 		  			total += report.data[team_index].total_points;
 		  		}
 
@@ -187,9 +188,6 @@ block content
 		  		var highest = Object.keys(fakeDist).reduce((a, b) => fakeDist[a] > fakeDist[b] ? a : b);
 		  		delete fakeDist[highest];
 		  		var secondHighest = Object.keys(fakeDist).reduce((a, b) => fakeDist[a] > fakeDist[b] ? a : b);
-
-		  		console.log(highest);
-		  		console.log(secondHighest);
 
 		  		msg = this.titles(highest);
 		  		msg += ` (${dist[highest]}pts)`

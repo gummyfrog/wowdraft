@@ -20,7 +20,7 @@ MongoClient.connect(uri)
 				const db = client.db("proplayers");
 				var tag = file.substring(0, file.length-5).toLowerCase();
 				var collection = db.collection(tag);
-
+				
 				collection.insertMany(arr)
 				.then((result) => {
 					console.log(result)

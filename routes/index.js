@@ -130,14 +130,74 @@ MongoClient.connect(uri)
 	router.get('/api/proplayers/:league/:tag/:page', function(req, res, next) {
 		var { league, page, tag } = req.params;
 
-		players.collection(tag).find({drafted: {$nin: [league]}}).skip(parseInt(page*10)).limit(10).toArray()
-		.then((proplayers) =>  {
-			res.json(proplayers);
+		leaguesDB.collection("leagues").findOne({code: req.params.league})
+		.then((league) =>  {
+			var faction = 0;
+			if(league.faction == "Horde") { faction = 1; }
+
+			players.collection(tag).find({drafted: {$nin: [league]}, faction: faction}).skip(parseInt(page*10)).limit(10).toArray()
+			.then((proplayers) =>  {
+				res.json(proplayers);
+			})
+			.catch((err) => {
+				res.json(err);
+			});
 		})
 		.catch((err) => {
-			res.redirect("/404");
+			console.log(err);
+			res.json(err);
 		});
 	});
+
+	router.get('/api/proplayer/:league/:tag/:name/', function(req, res, next) {
+		var { league, name, tag } = req.params;
+
+		leaguesDB.collection("leagues").findOne({code: req.params.league})
+		.then((league) =>  {
+			var faction = 0;
+			if(league.faction == "Horde") { faction = 1; }
+
+			players.collection(tag).find({drafted: {$nin: [league]}, faction: faction, name: { $regex: `${name}`, $options : 'i'}}).limit(10).toArray()
+			.then((proplayers) =>  {
+				res.json(proplayers);
+			})
+			.catch((err) => {
+				console.log(err);
+				res.json(err);
+			});
+		})
+		.catch((err) => {
+			console.log(err);
+			res.json(err);
+		});
+	});
+
+
+	router.get('/api/proplayer/guild/:league/:tag/:guild/:page', function(req, res, next) {
+		var { league, guild, tag, page } = req.params;
+
+		leaguesDB.collection("leagues").findOne({code: req.params.league})
+		.then((league) =>  {
+			var faction = 0;
+			if(league.faction == "Horde") { faction = 1; }
+
+			players.collection(tag).find({drafted: {$nin: [league]}, faction: faction, guild: { $regex: `${guild}`, $options : 'i'}}).skip(parseInt(page*10)).limit(10).toArray()
+			.then((proplayers) =>  {
+				res.json(proplayers);
+			})
+			.catch((err) => {
+				console.log(err);
+				res.json(err);
+			});
+		})
+		.catch((err) => {
+			console.log(err);
+			res.json(err);
+		})
+	});
+
+
+
 
 	router.get('/api/leagues/:leagueID', function(req, res, next) {
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
@@ -217,6 +277,12 @@ MongoClient.connect(uri)
 				var hasTeamAlready = false;
 				var hasUniqueName = true;
 
+
+				if(league.status != "Setting Up") {
+					res.redirect('/405');
+				}
+
+
 				for(var manager in league.managers) {
 					if(league.managers[manager].name == req.session.username) {
 						hasTeamAlready = true;
@@ -232,10 +298,6 @@ MongoClient.connect(uri)
 				if(!hasUniqueName || hasTeamAlready) {
 					res.redirect('/405');
 					return;
-				}
-
-				if(league.status != "Setting Up") {
-					res.redirect('/405');
 				}
 
 				new_team.id = short.generate();
@@ -347,12 +409,16 @@ MongoClient.connect(uri)
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
 		.then((league) =>  {
 			var current_team = league.draft.pick_order[league.draft.pick_index];
+
 			var onClock = false;
 
 			if(league.draft) {
+
+				if(league.draft.inProgress) {
 				// should store an actual onClock variable here rather than calculating it
-				if(league.managers[current_team].name == req.session.username) {
-					onClock = true;
+					if(league.managers[current_team].name == req.session.username) {
+						onClock = true;
+					}
 				}
 			}
 

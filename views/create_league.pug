@@ -3,19 +3,41 @@ extends layout
 block content
 	div#league_create
 		form(action='/api/leagues/create' method='post')
+
+			h2 Please Enter...
+
+			h3 A name & description for your league:
 			input(v-model="name" type='text' placeholder='Goldshire Inn League' name='name' required)
+
 			input(v-model="description" type='text' placeholder='Describe your League here!' name='description' required)
 
+			h3 # of Rounds per player:
 			input(v-model="rounds" type='number' placeholder='10' name='rounds' required)
+
+			h3 Draft Style:
 			select(v-model="style" name="style" required)
 				option(value="Standard") Standard
 
+			h3 Server & Side:
 			select(v-model="server" name="server")
 				option(value="Grobbulus") Grobbulus
 
 			select(v-model="faction" name="faction")
 				option(value="Alliance") Alliance
+				option(value="Horde") Horde
 
+			h3 Activity Report Day
+			select(v-model="report_day" name="report_day")
+				option(value="Sunday") Sunday
+				option(value="Monday") Monday
+				option(value="Tuesday") Tuesday
+				option(value="Wednesday") Wednesday
+				option(value="Thursday") Thursday
+				option(value="Friday") Friday
+				option(value="Saturday") Saturday
+
+
+			h3 Customization
 			select(name="color1" v-model="color1" required)
 				option(style="color:#0070FF" value="#0070FF") Rare
 				option(style="color:#A335EE" value="#A335EE") Epic
@@ -37,8 +59,10 @@ block content
 				option(value="banner_Scourge.png") Scourge Banner
 				option(value="banner_Tauren.png") Tauren Banner
 				option(value="banner_Troll.png") Troll Banner
+				option(value="symbol_Brewfest.png") Brewfest
 
-			button(type='submit') Submit
+			h3
+				button(type='submit') All Done!
 
 		h1 Preview:
 		div(:style="'color:'+color1").league_wrapper
@@ -59,5 +83,6 @@ block content
 				style:"Standard",
 				color1: "#0070FF",
 				icon: "banner_Human.png",
+				report_day: "Tuesday",
 				}
 			})

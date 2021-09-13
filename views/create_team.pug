@@ -3,6 +3,9 @@ extends layout
 block content
 	div#team_create
 		form(action=`/api/leagues/${leagueID}/newTeam` method='post')
+			h2 Please Enter...
+
+			h3 A name & motto for your team:
 			input(type='text' placeholder='Lower City Sluggers' maxlength="25" name='name' v-model="name" required)
 			input(type='text' placeholder='For the Alliance!' maxlength="70" name='motto' v-model="motto")
 
@@ -17,6 +20,9 @@ block content
 			//- 	option(style="color:#FF4700" value="#FF4700") Raid Warning Red
 			//- 	option(style="color:#00ADEF" value="#00ADEF") BNet Blue
 
+			h3 Customization
+			span color:
+
 			select(name="color2" v-model="color2" required)
 				option(style="color:#0070FF" value="#0070FF") Rare
 				option(style="color:#A335EE" value="#A335EE") Epic
@@ -26,23 +32,33 @@ block content
 				option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
 				option(style="color:#FF4700" value="#FF4700") Raid Warning Red
 				option(style="color:#00ADEF" value="#00ADEF") BNet Blue
-
-
+			br
+			span icon:
 			select(name="icon" v-model="icon" required)
-				option(style="background-image:url('/images/icons/icon1.png')" value="icon1") Challenging Roar
-				option(style="background-image:url('/images/icons/icon2.png')" value="icon2") Gauntlet
-				option(style="background-image:url('/images/icons/icon3.png')" value="icon3") Helmet
-				option(style="background-image:url('/images/icons/icon4.png')" value="icon4") Card
-				option(style="background-image:url('/images/icons/icon5.png')" value="icon5") Skull
-				option(style="background-image:url('/images/icons/icon6.png')" value="icon6") Hearthstone
-				option(style="background-image:url('/images/icons/icon7.png')" value="icon7") Pants
-				option(style="background-image:url('/images/icons/icon8.png')" value="icon8") Destro Pot		
-				option(style="background-image:url('/images/icons/icon9.png')" value="icon9") Seal of Protection	
-				option(style="background-image:url('/images/icons/icon10.png')" value="icon10") Shadow Soulgem
+				option(value="icon1") Challenging Roar
+				option(value="icon2") Gauntlet
+				option(value="icon3") Helmet
+				option(value="icon4") Card
+				option(value="icon5") Skull
+				option(value="icon6") Hearthstone
+				option(value="icon7") Pants
+				option(value="icon8") Destro Pot		
+				option(value="icon9") Seal of Protection	
+				option(value="icon10") Shadow Soulgem
+				option(value="icon11") Milk
+				option(value="icon12") Goop
+				option(value="icon13") Ale
+				option(value="icon14") Coffee
+				option(value="icon15") Gnomish Bomb
+				option(value="icon16") Gold Coins
+				option(value="icon17") Silver Coins
+				option(value="icon18") Copper Coins
+				option(value="icon19") Dice
+				option(value="icon20") Question Mark
 
 
-
-			button(type='submit') Submit
+			h3
+				button(type='submit') Submit
 
 
 		h1 Preview:

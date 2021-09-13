@@ -12,18 +12,25 @@ block content
 			option(value="healers") Healers
 
 
-
 		button(v-on:click="pageUp").pageButton
 			i.fas.fa-arrow-circle-right
 
+
+		h2 Search by Name
+		input(type="text", v-model="playername", @change="fetchSource")
+
+		h2 Search by Guild
+		input(type="text", v-model="guild", @change="fetchSource")
+
 		h1 Page: {{ page+1 }}
 
-		ul#players
+		ul(v-if=found)#players
 			player-item(
 				v-for="(player, index) in players",
 				v-bind:player="player",
 				v-bind:leagueID="leagueID"
 			)
+		h2(v-else) Player not found.
 
 	script.
 		var leagueID = "!{leagueID}";
@@ -92,11 +99,32 @@ block content
 			el: '#proplayers',
 			data: {
 					players: [],
+					found: true,
 					page: 0,
 					tag: "dps",
 					leagueID: leagueID,
+					playername: "",
+					guild: "",
+					lastSource: "generic",
 			},
 			methods: {
+				fetchSource:function(event) {
+					var newSource = "generic";
+					if(this.playername != "") {
+						this.fetchPlayer();
+						newSource = "player";
+					} else if(this.guild != "") {
+						this.fetchGuild();
+						newSource = "guild";
+					} else {
+						this.fetchData();
+					}
+
+					if(this.lastSource != newSource) {
+						this.lastSource = newSource;
+						this.page = 0;
+					}
+				},
 				fetchData: function(event) {
 					fetch(`/api/proplayers/${this.leagueID}/${this.tag}/${this.page}`)
 					.then(res => res.json())
@@ -115,44 +143,91 @@ block content
 					})
 				},
 
+				fetchPlayer:function(event) {
+					fetch(`/api/proplayer/${this.leagueID}/${this.tag}/${this.playername}`)
+					.then(res => res.json())
+					.then((response) => {
+						console.log(response);
+						if(response != null) {
+							app.players = response;
+							app.found = true;
+						} else {
+							app.players = [];
+							app.found = false;
+						}
+					})
+					.then(() => {
+						$('.parse').each((i, obj) => {
+							var obj = $(obj);
+							obj.css("color", parseStyle(obj.text()))
+						})
+					})
+					.catch((err) => {
+						console.log(err);
+					})
+				},
+
+				fetchGuild:function(event) {
+					fetch(`/api/proplayer/guild/${this.leagueID}/${this.tag}/${this.guild}/${this.page}`)
+					.then(res => res.json())
+					.then((response) => {
+						console.log(response);
+						if(response != null) {
+							app.players = response;
+							app.found = true;
+						} else {
+							app.players = [];
+							app.found = false;
+						}
+					})
+					.then(() => {
+						$('.parse').each((i, obj) => {
+							var obj = $(obj);
+							obj.css("color", parseStyle(obj.text()))
+						})
+					})
+					.catch((err) => {
+						console.log(err);
+					})
+				},
+
 				pageDown:function(event) {
 					if(this.page-1 < 0) {
 						return;
 					}
 					this.page--;
-					this.fetchData();
+					this.fetchSource();
 				},
 				pageUp:function(event) {
 					this.page++;
-					this.fetchData();
+					this.fetchSource();
 				},
 				resetFetch:function(event){
 					this.page = 0;
-					this.fetchData();
+					this.fetchSource();
 				}
 			}
 		})
 
 		function parseStyle(parse){
-			var me = "Gray";
+			var color = "Gray";
 			parse=parseInt(parse);
 
 			if(parse < 25) {
-				me = "Gray"
+				color = "Gray"
 			} else if(parse < 50) {
-				me = "Green"
+				color = "Green"
 			} else if(parse < 75) {
-				me = "Blue"
+				color = "Blue"
 			} else if(parse < 95) {
-				me = "Purple"
+				color = "Purple"
 			} else if(parse < 99) {
-				me = "Orange"
+				color = "Orange"
 			} else {
-				me = "Gold"
+				color = "Gold"
 			}
 
-			console.log(parse, me);
-			return me;
+			return color;
 		}
 
 		app.fetchData("dps", 0);
