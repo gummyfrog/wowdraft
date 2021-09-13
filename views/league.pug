@@ -85,7 +85,10 @@ block content
 		 	<br> Draft Style: {{league_info.style}}
 		 	<br> {{league_info.server}}, {{league_info.faction}} 
 		 	<br> # of Rounds: {{league_info.rounds}}
-		 	<br> Report Day: {{league_info.report_day || "Monday"}} </h4> 
+		 	<br> Report Day: {{league_info.report_day || "Monday"}} 
+		 	<br> Organizer will start the draft: {{league_info.start_date || "didn't say!"}}
+		 	<br>
+		 	</h4> 
 
 		 	<br>
 		 	<a v-if="!{canMakeTeam}" :href="'/leagues/' + league_info.code + '/newTeam'"> <h4> <i class="fas fa-long-arrow-alt-right"></i> Create Team </h4> </a>
