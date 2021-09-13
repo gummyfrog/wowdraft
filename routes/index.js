@@ -346,7 +346,9 @@ MongoClient.connect(uri)
 			}
 
 			if(league.admin.name != req.session.username) {
+				console.log("non-organizer attempted skip");
 				res.redirect("/403");
+				return;
 			} 
 
 			var current_team = league.draft.pick_order[league.draft.pick_index];
@@ -378,8 +380,6 @@ MongoClient.connect(uri)
 			.catch((update_err) => {
 				console.log(update_err);
 			});
-
-
 		})
 		.catch((err) => {
 			conosle.log(err);
