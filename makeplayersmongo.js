@@ -4,8 +4,12 @@ var json = require("jsonfile");
 var fs = require("fs");
 
 var progress = 0;
+var username = process.env.MONGO_USER;
+var password = process.env.MONGO_PASSWORD;
 
-MongoClient.connect('mongodb://localhost:27017')
+const uri = `mongodb+srv://${username}:${password}@cluster0.qrezy.mongodb.net?retryWrites=true&w=majority`;
+
+MongoClient.connect(uri)
 .then((client) => {
 	console.log("Connected to Database");
 
