@@ -9,29 +9,22 @@ block content
 			input(type='text' placeholder='Lower City Sluggers' maxlength="25" name='name' v-model="name" required)
 			input(type='text' placeholder='For the Alliance!' maxlength="70" name='motto' v-model="motto")
 
-			//- select(name="color1" v-model="color1")
-			//- 	option(style="color:black" value="black" selected) Void Black
-			//- 	option(style="color:#0070FF" value="#0070FF") Rare
-			//- 	option(style="color:#A335EE" value="#A335EE") Epic
-			//- 	option(style="color:#FF8000" value="#FF8000") Legendary
-			//- 	option(style="color:#3CE13F" value="#3CE13F") Guild Chat Green
-			//- 	option(style="color:#77C8FF" value="#77C8FF") Party Lead Teal
-			//- 	option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
-			//- 	option(style="color:#FF4700" value="#FF4700") Raid Warning Red
-			//- 	option(style="color:#00ADEF" value="#00ADEF") BNet Blue
-
 			h3 Customization
 			span color:
 
 			select(name="color2" v-model="color2" required)
-				option(style="color:#0070FF" value="#0070FF") Rare
-				option(style="color:#A335EE" value="#A335EE") Epic
-				option(style="color:#FF8000" value="#FF8000" selected) Legendary
-				option(style="color:#3CE13F" value="#3CE13F") Guild Chat Green
-				option(style="color:#77C8FF" value="#77C8FF") Party Lead Teal
-				option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
+				option(style="color:#C41E3A" value="#C41E3A" selected) Demon Hunter Red
 				option(style="color:#FF4700" value="#FF4700") Raid Warning Red
-				option(style="color:#00ADEF" value="#00ADEF") BNet Blue
+				option(style="color:#FF8000" value="#FF8000") Legendary Orange
+				option(style="color:#FFF468" value="#FFF468") Rogue Yellow
+				option(style="color:#3CE13F" value="#3CE13F") Guild Chat Green
+				option(style="color:#40BC40" value="#40BC40") Officer Chat Green
+				option(style="color:#77C8FF" value="#77C8FF") Party Lead Teal
+				option(style="color:#0070FF" value="#0070FF") Rare Blue
+				option(style="color:#00ADEF" value="#00ADEF") BattleNet Blue
+				option(style="color:#A335EE" value="#A335EE") Epic Purple
+				option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
+
 			br
 			span icon:
 			select(name="icon" v-model="icon" required)
@@ -54,7 +47,7 @@ block content
 				option(value="icon17") Silver Coins
 				option(value="icon18") Copper Coins
 				option(value="icon19") Dice
-				option(value="icon20") Question Mark
+				option(value="icon20" selected) Question Mark
 
 
 			h3
@@ -72,10 +65,10 @@ block content
 		var app = new Vue({
 			el: '#team_create',
 			data: {
-				name:"Goldshire Sluggers",
-				motto:"For the Alliance!",
+				name:"Lower City Sluggers",
+				motto:"Aldori Little League",
 				color1: "black",
-				color2: "#FF8000",
-				icon: "icon6",
+				color2: "#C41E3A",
+				icon: "icon20",
 				}
 			})
