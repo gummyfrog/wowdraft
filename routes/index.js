@@ -287,7 +287,7 @@ MongoClient.connect(uri)
 
 				var current_team = league.draft.pick_order[league.draft.pick_index];
 
-				if(managers[current_team].name != req.session.username) {
+				if(league.managers[current_team].name != req.session.username) {
 					res.redirect("/403");
 					return;
 				}
@@ -306,10 +306,16 @@ MongoClient.connect(uri)
 				league.teams[current_team].roles_drafted[tag]++;
 
 				player.drafted.push(leagueID);
-				players.collection(tag).updateOne({_id: playerID}, { $set: { drafted: player.drafted}});
+
+				players.collection(tag).updateOne({_id: playerID}, { $set: { drafted: player.drafted}})
+				.then((p_update_res) => {
+					console.log("Player updated successfully");
+				})
+				.catch((p_err) => {
+					console.log("player update error", p_err);
+				});
 
 				league.draft.pick_index++;
-
 
 				if(league.draft.pick_index == league.draft.pick_order.length) {
 					// draft is over!
@@ -326,6 +332,9 @@ MongoClient.connect(uri)
 					console.log(update_err);
 				});
 			});
+		})
+		.catch((err) => {
+			console.log("league err", err);
 		});
 	});
 

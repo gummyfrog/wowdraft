@@ -313,7 +313,7 @@ axios.get("http://localhost:3000/api/leagues/fea9e2f9-a1cc-49bf-8764-a65fdbd4e17
 
 			if(teams_done == res.data.length) {
 				console.log("Activity Report Done");
-				axios.post("http://localhost:3000/api/leagues/fea9e2f9-a1cc-49bf-8764-a65fdbd4e17c/activity_report", {
+				axios.post("https://wowdraft.herokuapp.com/api/leagues/fea9e2f9-a1cc-49bf-8764-a65fdbd4e17c/activity_report", {
 					data: processed
 				})
 				.then((res) => {
