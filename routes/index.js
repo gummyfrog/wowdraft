@@ -273,7 +273,7 @@ MongoClient.connect(uri)
 
 
 				if(league.status != "Setting Up") {
-					res.redirect('/405');
+					res.redirect('/403');
 				}
 
 
@@ -290,7 +290,7 @@ MongoClient.connect(uri)
 				}
 
 				if(!hasUniqueName || hasTeamAlready) {
-					res.redirect('/405');
+					res.redirect('/403');
 					return;
 				}
 
