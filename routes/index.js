@@ -485,7 +485,7 @@ MongoClient.connect(uri)
 	router.post('/api/leagues/create', function(req, res, next) {
 		if(req.session.loggedin) {
 			var new_league = req.body;
-			new_league.code = uuidv4();
+			new_league.code = short.generate();
 			new_league.admin = {name: req.session.username};
 			new_league.teams = [];
 			new_league.managers = [];
