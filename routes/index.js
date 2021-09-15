@@ -193,11 +193,8 @@ MongoClient.connect(uri)
 		.catch((err) => {
 			console.log(err);
 			res.json(err);
-		})
+		});
 	});
-
-
-
 
 	router.get('/api/leagues/:leagueID', function(req, res, next) {
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
@@ -229,9 +226,6 @@ MongoClient.connect(uri)
 			res.redirect("/404");
 		});
 	});
-
-
-
 
 	router.post('/api/leagues/:leagueID/activity_report', function(req, res, next) {
 		var activity = req.body;
@@ -563,11 +557,7 @@ router.get('/403', function(req, res, next) {
 });
 
 
-
-
 var clientId = process.env.CLIENTID;
-
-
 var clientSecret = process.env.CLIENTSECRET;
 var port = 3000;
 

@@ -1,7 +1,11 @@
 extends layout
 
 block content
+
 	div#league
+
+		meta(property="og:title" :content="league.name")
+		meta(property="og:image" :content="'/images/league_icons/' + league.icon")
 
 		draft_info(
 			v-bind:league_info="league_info",
@@ -179,7 +183,6 @@ block content
 		 		<h4> {{teams[team_number].name}} </h4>
 		 	</div>
 		 	`
-
 		})
 
 		Vue.component('mini_player', {
