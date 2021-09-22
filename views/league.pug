@@ -14,7 +14,6 @@ block content
 
 		draft_progress(
 			v-bind:draft_info="draft_info",
-			v-bind:managers="managers",
 			v-bind:teams="teams",
 			v-bind:league_info="league_info"
 			v-bind:yti="yourTeamIndex"
@@ -32,7 +31,6 @@ block content
 			team-item(
 				v-for="(team, index) in teams"
 				v-bind:team="team"
-				v-bind:managers="managers",
 				v-bind:index="index",
 			)
 
@@ -41,16 +39,25 @@ block content
 		league = JSON.parse(league)
 
 		Vue.component('team-item', {
-			props: ['team', 'managers', 'index'],
+			props: ['team', 'index'],
 		 	template: `
 
 		 	<div class="team">
 
 		 	<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
 			 	<div class="team_text">
-				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
-				 	<h3 class="team_manager"> {{managers[index].name}}</h3>
-				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
+
+				 	<h1 class="team_name" :style="'color:'+team.color2"> 	{{team.name}} 
+				 	</h1> 
+
+				 	<h3 class="team_manager"> 
+				 		{{team.manager}}
+				 	</h3>
+
+				 	<h2 class="team_motto" :style="'color:'+team.color2"> 
+				 		{{team.motto}} 
+				 	</h2> 
+
 			 	</div>
 
 			 	<div class="team_players">
@@ -70,7 +77,10 @@ block content
 		 	<div> 
 		 		<div class="league_wrapper" :style="'color:'+league.color1"> 
 		 		<img class="league_logo" :src="'/images/league_icons/' + league.icon">
-		 		<h1 class="league_name"> {{league_info.name}} </h1> 
+		 		<h1 class="league_name"> 
+		 			{{league_info.name}} 
+		 		</h1> 
+
 		 	</div>
 
 		 	<div class="league_links_wrapper">
@@ -80,35 +90,64 @@ block content
 		 			<a :href="'/leagues/' + league_info.code + '/rankings'"> <i class="fas fa-calendar-alt"></i> Rankings </a>
 		 		</ol>
 		 	</div>
-		 	<p class="league_description"> {{league_info.description}} <p>
 
-		 	<h3> Organized by {{league_info.admin.name}}
-		 	<br> <span :class="'league_status '+status_slug">Draft {{league_info.status}} </span>
-		 	</h3> 
-		 	<h3> 
-		 	<br> Draft Style: {{league_info.style}}
-		 	<br> {{league_info.server}}, {{league_info.faction}} 
-		 	<br> # of Rounds: {{league_info.rounds}}
-		 	<br> Report Day: {{league_info.report_day || "Monday"}} 
-		 	<br> Draft Will Start: "{{league_info.start_date || "didn't say!"}}"
-		 	<br>
-		 	</h4> 
+		 	<div class="league_body">
 
-		 	<br>
-		 	<a v-if="!{canMakeTeam}" :href="'/leagues/' + league_info.code + '/newTeam'"> <h4> <i class="fas fa-long-arrow-alt-right"></i> Create Team </h4> </a>
-		 	<br>
-		 	<a class="startbutton" v-if="!{organizer} && league.status == 'Setting Up' && league.teams.length >=2" :href="'/leagues/' + league_info.code + '/start'"> Start Drafting! </a>
+			 		<p :class="'league_status '+status_slug">Draft 
+				 		{{league_info.status}} 
+			 		</p>
+
+				 	<p class="organizedby">
+				 	Organized by {{league_info.admin.name}}
+				 	</p>
+
+				 	<div class="league_information">
+
+					 	<p class="style" 
+					 	Draft Style: {{league_info.style}}
+					 	</p> 
+
+					 	<p class="factioninfo">
+					 	{{league_info.server}}, {{league_info.faction}} 
+					 	</p> 
+
+					 	<p class="rounds">{{league_info.rounds}} Picks per Team
+					 	</p>
+
+					 	<p class="reportday"> 
+					 	Report Day: {{league_info.report_day || "Monday"}} 
+					 	</p>
+
+					 	<p class="startday"> 
+					 	Draft Will Start: "{{league_info.start_date || "didn't say!"}}"
+					 	</p>
+
+					</div>
+
+				 	<p class="flavor">
+				 		"{{league_info.description}}"
+			 		</p> 
+
+			 	<a v-if="!{canMakeTeam}" :href="'/leagues/' + league_info.code + '/newTeam'"> 
+			 		<h4> 
+			 			<i class="fas fa-long-arrow-alt-right"></i> Create Team 
+		 			</h4> 
+				</a>
+
+			 	<a class="startbutton" v-if="!{organizer} && league.status == 'Setting Up' && league.teams.length >=2" :href="'/leagues/' + league_info.code + '/start'"> 
+			 		Start Drafting! 
+			 	</a>
 
 		 	</div>
 		 	`
 		})
 
 		Vue.component('draft_progress', {
-			props: ['draft_info', 'managers', 'teams', 'league_info', 'yti', 'reqs'],
+			props: ['draft_info', 'teams', 'league_info', 'yti', 'reqs'],
 		 	template: `
-		 	<div v-if=draft_info.started class="draft"> 
-		 		<div v-if=draft_info.inProgress class="progress">
-			 		<h2> <i class="fas fa-clock"></i> On The Clock: <br> {{managers[draft_info.pick_order[draft_info.pick_index]].name}} ({{teams[draft_info.pick_order[draft_info.pick_index]].name}})</h2>
+		 	<div v-if="draft_info.status!=0" class="draft"> 
+		 		<div v-if="draft_info.status==1" class="progress">
+			 		<h2> <i class="fas fa-clock"></i> On The Clock: <br> {{teams[draft_info.pick_order[draft_info.pick_index]].manager}} ({{teams[draft_info.pick_order[draft_info.pick_index]].name}})</h2>
 
 			 		<div v-if="!{organizer}" class="SKIP">
 			 			<h3> Skip this team's turn? </skip>
@@ -116,10 +155,15 @@ block content
 			 		</div>
 
 			 		<div class="youreup" v-if="draft_info.pick_order[draft_info.pick_index] == yti"> 
+			 		    <audio id="audio" src="/sounds/levelup2.ogg" autoplay="true"> </audio>
+
 			 			<h2> <i class="fas fa-user-clock"></i> You're Up! </h2>
 			 			<ul class="requirements" v-html="reqs"> </ul>
 			 		</div>
-			 		<h2> <a class="view_players" :href="'/leagues/' + league_info.code+'/proplayers'"> <i class="fas fa-long-arrow-alt-right"></i> View Players </a> </h2>
+			 		<a class="view_players view_players_button" :href="'/leagues/' + league_info.code+'/proplayers'"> <i class="fas fa-long-arrow-alt-right"></i> View Players </a>
+
+
+
 		 		</div>
 		 		<h1 v-else>Draft is over! Great job!</h1>
 
@@ -133,7 +177,7 @@ block content
 					</div>
 		 		</div>
 
-		 		<div v-if="draft_info.inProgress">
+		 		<div v-if="draft_info.status!=0">
 		 			<h2><i class="fas fa-list-ul"></i> Pick Order: </h2>
 		 			<div class="pick_order">
 					<pick_order_item 
@@ -200,7 +244,6 @@ block content
 		  el: '#league',
 		  data: {
 		  	teams: league.teams,
-		  	managers: league.managers,
 		  	league_info: league,
 		  	has_real_draft_info: false,
 		  	draft_info: {pick_order:[0], pick_index:0, started: false, inProgress:false},
@@ -220,7 +263,6 @@ block content
 				.then((response) => {
 					league = response;
 					this.teams = league.teams;
-					this.managers = league.managers;
 					this.league_info = league;
 				})
 			}
@@ -233,10 +275,10 @@ block content
 		  		return this.teams.length == 0;
 		  	},
 		  	yourTeamIndex() {
-		  		for(var x=0; x<this.managers.length;x++) {
-		  			if(this.managers[x].name == `!{user_session_name}`) {
-		  				return this.managers[x].team;
-		  			}
+		  		for(var x=0; x<this.teams.length;x++) {
+		  			if(this.teams[x].manager == `!{user_session_name}`) {
+		  				return x
+			  		}
 		  		}
 		  		return -1;
 		  	},

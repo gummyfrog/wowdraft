@@ -16,10 +16,6 @@
   box-sizing: border-box;
 }
 
-body {
-  padding: 50px;
-  font: 1em "Lucida Grande", Helvetica, Arial, sans-serif;
-}
 
 @font-face {
   font-family: Fritz;
@@ -27,8 +23,14 @@ body {
 }
 
 
+body {
+	line-height: 1.15;
+ 	padding: 50px;
+	font: 1.1em "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
 a {
-  color: #00B7FF;
+  color: #0070FF;
 }
 
 #logged-in, #logged-out {
@@ -194,7 +196,6 @@ p, a {
 	font-weight: normal;
 }
 
-
 #teams{
 	padding: 0;
 	margin: 0;
@@ -211,7 +212,6 @@ p, a {
 	margin-bottom: 35px;
 }
 
-
 .team_text {
 	display: inline;
 	margin: 0 auto;
@@ -224,6 +224,7 @@ p, a {
 	padding-left: 10px;
 	padding-right: 10px;
 	border-bottom: black inset 2px;
+
 }
 
 .team_manager {
@@ -233,7 +234,7 @@ p, a {
 	float: right;
 	color: white;
 	background-color: black;
-	border-radius: 10px;
+	border-radius: 4px;
 	padding-left: 10px;
 	padding-right: 10px;
 }
@@ -247,10 +248,16 @@ p, a {
 .team_logo {
 	margin-left: 10px;
 	margin-top: 3px;
-	clip-path: circle(50%);
-	height: 30px;
+	/*clip-path: circle(50%);*/
+	background-color: black;
+	height: 50px;
 	float: left;
 	pointer-events: none;
+
+	border-style: solid;
+	border-width: 5px;
+	border-image: url(/images/tooltip.png) 5 repeat;
+	border-radius: 4px;
 }
 
 
@@ -266,19 +273,20 @@ p, a {
 }
 
 .league_status.setting-up {
-	color: purple;
+	color: #40BC40;
 }
 
+
 .league_status.in-progress {
-	color: green;
+	color: #0070FF;
 }
 
 .league_status.completed {
-	color: blue;
+	color: #FF8000;
 }
 
 .draft {
-	border-radius: 15px;
+	border-radius: 4px;
 }
 
 .pick_history {
@@ -321,7 +329,7 @@ p, a {
 }
 
 .mini_player {
-	border-radius: 15px;
+	border-radius: 4px;
 }
 
 .mini_guild {
@@ -431,9 +439,9 @@ header {
 }
 
 
-.league_wrapper, .teams_wrapper {
+.teams_wrapper {
 	max-width: 100%;
-	border-radius: 15px;
+	border-radius: 4px;
 	padding: 5px;
 	border-bottom: black inset 5px;
 	margin-bottom: 10px;
@@ -442,7 +450,7 @@ header {
 
 .league_wrapper_mini {
 	max-width: 500px;
-	border-radius: 15px;
+	border-radius: 4px;
 	padding: 10px;
 	border-bottom: black inset 5px;
 	margin-bottom: 10px;
@@ -450,20 +458,13 @@ header {
 
 }
 
-.league_logo {
-	margin-right: 15px;
-	clip-path: circle(50%);
-	height: 2.7em;
-	float: left;
-	pointer-events: none;
-}
 
 .league_name{
 	font-weight: 900;
 	padding-left: 10px;
 	padding-right: 10px;
 	font-weight: 800;
-	border-radius: 20px;
+	border-radius: 4px;
 }
 
 .startbutton {
@@ -535,7 +536,20 @@ header {
 }
 
 
-.league_body {
+.view_players_button {
+	border: none;
+	background-color: black;
+	color: white;
+	border-radius: 4px;
+	padding: 5px;
+	font-size: 1em;
+	cursor: pointer;
+	padding-left: 15px;
+	padding-right: 15px;
+	margin-top: 10px;
+}
+
+.league_body, .league_wrapper {
 	text-shadow: 0 1px 0 black;
 	border-style: solid;
 	border-width: 5px;
@@ -552,6 +566,38 @@ header {
 	max-width: 24em;
 	margin-bottom: 20px;
 }
+
+.league_logo {
+	margin-right: 15px;
+	background-color: black;
+	height: 50px;
+	float: left;
+	pointer-events: none;
+
+	border-style: solid;
+	border-width: 5px;
+	border-image: url(/images/tooltip.png) 5 repeat;
+	border-radius: 4px;
+	float: left;
+}
+
+
+.team_logo {
+	margin-left: 10px;
+	margin-top: 3px;
+	/*clip-path: circle(50%);*/
+	background-color: black;
+	height: 50px;
+	float: left;
+	pointer-events: none;
+
+	border-style: solid;
+	border-width: 5px;
+	border-image: url(/images/tooltip.png) 5 repeat;
+	border-radius: 4px;
+}
+
+
 
 
 .league_information p {

@@ -6,23 +6,23 @@ var ObjectId = require('mongodb').ObjectId;
 var session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 const short = require('short-uuid');
-
-
+const LeagueLogic = require('./league.js');
 var router = express.Router();
+var clientId = process.env.CLIENTID;
+var clientSecret = process.env.CLIENTSECRET;
+var port = 3000;
+var username = process.env.MONGO_USER;
+var password = process.env.MONGO_PASSWORD;
+const uri = `mongodb+srv://${username}:${password}@cluster0.qrezy.mongodb.net?retryWrites=true&w=majority`;
 
 router.use(session({
   genid: function(req) {
     return uuidv4(); 
   },
-  secret: 'funny secret :)'
+  secret: process.env.CLIENTSECRET
 }));
 
 router.use(defaultSession);
-
-var username = process.env.MONGO_USER;
-var password = process.env.MONGO_PASSWORD;
-
-const uri = `mongodb+srv://${username}:${password}@cluster0.qrezy.mongodb.net?retryWrites=true&w=majority`;
 
 MongoClient.connect(uri)
 .then((client) => {
@@ -30,44 +30,50 @@ MongoClient.connect(uri)
 	const leaguesDB = client.db("wowdraft");
 	const players = client.db("proplayers");
 
+	// All Leagues Page
 	router.get('/leagues', function(req, res, next) {
 		leaguesDB.collection("leagues").find().toArray()
 		.then((leagues) =>  {
-			res.render('leagues', { title: 'All Leagues', leagues: JSON.stringify(leagues), user_session_auth: req.session.loggedin, user_session_name: req.session.username});
+			res.render('leagues', { 
+				title: 'All Leagues', 
+				leagues: JSON.stringify(leagues), 
+				user_session_auth: req.session.loggedin, 
+				user_session_name: req.session.username
+			});
 		});
 	});
 
+	// League Home Page
 	router.get('/leagues/:leagueID', function(req, res, next) {
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
 		.then((league) =>  {
-			var canMakeTeam = true;
-			var organizer = false;
 
-			for(var manager in league.managers) {
-				if(league.managers[manager].name == req.session.username) {
-					canMakeTeam = false;
-				}
-			}
+			var leaguelogic = new LeagueLogic(league, req.session);
 
-			if(!req.session.loggedin) {
-				canMakeTeam = false;
-			}
-
-			if(league.admin.name == req.session.username) {
-				organizer = true;
-			}
-
-			res.render('league', { title: league.name, league: JSON.stringify(league), organizer: organizer, canMakeTeam: canMakeTeam, user_session_auth: req.session.loggedin, user_session_name: req.session.username});
+			res.render('league', { 
+				title: league.name, 
+				league: JSON.stringify(league), 
+				organizer: leaguelogic.sessionIsAdmin(), 
+				canMakeTeam: leaguelogic.canMakeTeam(), 
+				user_session_auth: req.session.loggedin, 
+				user_session_name: req.session.username
+			});
 		})
 		.catch((err) => {
 			res.redirect("/404");
 		});
 	});
 
+	// League Teams Page
 	router.get('/leagues/:leagueID/teams', function(req, res, next) {
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
 		.then((league) =>  {
-			res.render('league_teams', { title: league.name, league: JSON.stringify(league), user_session_auth: req.session.loggedin, user_session_name: req.session.username});
+			res.render('league_teams', { 
+				title: league.name, 
+				league: JSON.stringify(league), 
+				user_session_auth: req.session.loggedin, 
+				user_session_name: req.session.username
+			});
 		})
 		.catch((err) => {
 			console.log(err);
@@ -75,11 +81,16 @@ MongoClient.connect(uri)
 		});
 	});
 
-
+	// Team Creation Form
 	router.get('/leagues/:leagueID/newTeam', function(req, res, next) {
 		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
 		.then((league) =>  {
-			res.render('create_team', { title: league.name, leagueID: req.params.leagueID, user_session_auth: req.session.loggedin, user_session_name: req.session.username});
+			res.render('create_team', { 
+				title: league.name, 
+				leagueID: req.params.leagueID, 
+				user_session_auth: req.session.loggedin, 
+				user_session_name: req.session.username
+			});
 		})
 		.catch((err) => {
 			res.redirect('/404');
@@ -87,55 +98,94 @@ MongoClient.connect(uri)
 	});
 
 
+	router.get('/leagues/:leagueID/rankings', function(req, res, next) {
+		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
+		.then((league) =>  {
+			res.render('league_rankings', { title: league.name, league: JSON.stringify(league), user_session_auth: req.session.loggedin, user_session_name: req.session.username});
+		})
+		.catch((err) => {
+			console.log(err);
+			res.redirect("/404");
+		});
+	});
+
 	router.get('/leagues/:leagueID/start', function(req, res, next) {
  		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
 		.then((league) =>  {
-			var pick_order = [];
-			var	pick_index = 0;
+			var leaguelogic = new LeagueLogic(league, req.session);
 
-			// check if ur the organizer
-			if((!league.admin.name == req.session.username) || league.teams.length < 2) {
-				res.redirect('/403');
-			}
+			leaguelogic.startDraft();
 
-			for(var x=0; x<parseInt(league.rounds);x++) {
-				for(var y=0; y<league.teams.length;y++) {
-					pick_order.push(y);
-				}
-			}
-
-			var draft = {
-				pick_order: pick_order,
-				pick_index: 0,
-				picks: [],
-				inProgress: true,
-				started: true,
-			};
-
-			leaguesDB.collection("leagues").updateOne({code: req.params.leagueID}, { $set: { status: "In Progress", draft: draft }})
+			leaguesDB.collection("leagues").updateOne({code: req.params.leagueID}, {$set: leaguelogic.league})
 			.then((update_result) => {
-				// success!
+				res.redirect(`/leagues/${req.params.leagueID}/`);
+			})
+			.catch((update_err) => {
+				console.log(update_err);
+				res.redirect('/404');
+			});
+		})
+		.catch((err) => {
+			res.redirect('/404');
+		});
+	});
+
+
+	router.get('/leagues/:leagueID/skip', function(req, res, next) {
+		var leagueID = req.params.leagueID;
+
+		leaguesDB.collection("leagues").findOne({code: leagueID})
+		.then((league) =>  {
+
+			var leaguelogic = new LeagueLogic(league, req.session);
+			leaguelogic.skip();
+
+			leaguesDB.collection("leagues").updateOne({code: leagueID}, {$set: leaguelogic.league})
+			.then((update_result) => {
 				res.redirect(`/leagues/${req.params.leagueID}/`);
 			})
 			.catch((update_err) => {
 				console.log(update_err);
 			});
+		})
+		.catch((err) => {
+			conosle.log(err);
+			res.redirect("/403");
+		});
+	});
 
+	router.get('/leagues/:leagueID/proplayers', function(req, res, next) {
+		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
+		.then((league) =>  {
+
+			var leaguelogic = new LeagueLogic(league, req.session);
+
+			res.render('proplayers', { 
+				title: league.name, 
+				leagueID: req.params.leagueID, 
+				onClock:leaguelogic.isCurrentTeamManager(), 
+				user_session_auth: req.session.loggedin, 
+				user_session_name: req.session.username});
 		})
 		.catch((err) => {
 			res.redirect('/404');
 		});
 	});
 
-	router.get('/api/proplayers/:league/:tag/:page', function(req, res, next) {
-		var { league, page, tag } = req.params;
 
-		leaguesDB.collection("leagues").findOne({code: req.params.league})
+
+	router.get('/api/proplayers/:leagueID/:tag/:page', function(req, res, next) {
+		var { leagueID, tag, page } = req.params;
+
+		leaguesDB.collection("leagues").findOne({code: leagueID})
 		.then((league) =>  {
 			var faction = 0;
 			if(league.faction == "Horde") { faction = 1; }
 
-			players.collection(tag).find({drafted: {$nin: [league]}, faction: faction}).skip(parseInt(page*10)).limit(10).toArray()
+			players.collection(tag).find({
+				drafted: { $nin: [leagueID] }, 
+				faction: faction
+			}).skip(parseInt(page*10)).limit(10).toArray()
 			.then((proplayers) =>  {
 				res.json(proplayers);
 			})
@@ -149,20 +199,25 @@ MongoClient.connect(uri)
 		});
 	});
 
-	router.get('/api/proplayer/:league/:tag/:name/', function(req, res, next) {
-		var { league, name, tag } = req.params;
+	router.get('/api/proplayer/:leagueID/:tag/:name/', function(req, res, next) {
+		var { leagueID, tag, name } = req.params;
 
-		leaguesDB.collection("leagues").findOne({code: req.params.league})
+		leaguesDB.collection("leagues").findOne({code: leagueID})
 		.then((league) =>  {
 			var faction = 0;
 			if(league.faction == "Horde") { faction = 1; }
 
-			players.collection(tag).find({drafted: {$nin: [league]}, faction: faction, name: { $regex: `${name}`, $options : 'i'}}).limit(10).toArray()
+			players.collection(tag).find({
+				drafted: {$nin: [leagueID]}, 
+				faction: faction, 
+				name: { 
+					$regex: `${name}`, 
+					$options : 'i'}
+				}).limit(10).toArray()
 			.then((proplayers) =>  {
 				res.json(proplayers);
 			})
 			.catch((err) => {
-				console.log(err);
 				res.json(err);
 			});
 		})
@@ -173,15 +228,15 @@ MongoClient.connect(uri)
 	});
 
 
-	router.get('/api/proplayer/guild/:league/:tag/:guild/:page', function(req, res, next) {
-		var { league, guild, tag, page } = req.params;
+	router.get('/api/proplayer/guild/:leagueID/:tag/:guild/:page', function(req, res, next) {
+		var { leagueID, tag, guild, page } = req.params;
 
-		leaguesDB.collection("leagues").findOne({code: req.params.league})
+		leaguesDB.collection("leagues").findOne({code: leagueID})
 		.then((league) =>  {
 			var faction = 0;
 			if(league.faction == "Horde") { faction = 1; }
 
-			players.collection(tag).find({drafted: {$nin: [league]}, faction: faction, guild: { $regex: `${guild}`, $options : 'i'}}).skip(parseInt(page*10)).limit(10).toArray()
+			players.collection(tag).find({drafted: {$nin: [leagueID]}, faction: faction, guild: { $regex: `${guild}`, $options : 'i'}}).skip(parseInt(page*10)).limit(10).toArray()
 			.then((proplayers) =>  {
 				res.json(proplayers);
 			})
@@ -216,16 +271,6 @@ MongoClient.connect(uri)
 		});
 	});
 
-	router.get('/leagues/:leagueID/rankings', function(req, res, next) {
-		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
-		.then((league) =>  {
-			res.render('league_rankings', { title: league.name, league: JSON.stringify(league), user_session_auth: req.session.loggedin, user_session_name: req.session.username});
-		})
-		.catch((err) => {
-			console.log(err);
-			res.redirect("/404");
-		});
-	});
 
 	router.post('/api/leagues/:leagueID/activity_report', function(req, res, next) {
 		var activity = req.body;
@@ -264,121 +309,30 @@ MongoClient.connect(uri)
 	router.post('/api/leagues/:leagueID/newTeam', function(req, res, next) { 
 		if(req.session.loggedin) {
 			console.log("attempting to add a new team to " + req.params.leagueID);
-			var new_team = req.body;
+			var team_body = req.body;
 
 			leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
 			.then((league) => {
-				var hasTeamAlready = false;
-				var hasUniqueName = true;
+				var leaguelogic = new LeagueLogic(league, req.session);
 
+				leaguelogic.addTeam(team_body);
 
-				if(league.status != "Setting Up") {
-					res.redirect('/403');
-				}
-
-
-				for(var manager in league.managers) {
-					if(league.managers[manager].name == req.session.username) {
-						hasTeamAlready = true;
-					}
-				}
-
-				for(var team in league.teams) {
-					if(league.teams[team].name == new_team.name) {
-						hasUniqueName = false;
-					}
-				}
-
-				if(!hasUniqueName || hasTeamAlready) {
-					res.redirect('/403');
-					return;
-				}
-
-				new_team.id = short.generate();
-				new_team.drafted_players = [];
-				new_team.roles_drafted = {
-					dps: 0,
-					healers: 0,
-					tanks: 0
-				};
-
-				league.teams.push(new_team);
-				league.managers.push({
-					"name": req.session.username,
-					"team": league.teams.length-1
-				});
-
-				leaguesDB.collection("leagues").updateOne({code: req.params.leagueID}, { $set: { teams: league.teams, managers: league.managers }})
-				.then((update_result) => {
-					// success!
+				leaguesDB.collection("leagues").updateOne({code: req.params.leagueID}, {$set: leaguelogic.league})
+				.then((update_result) => {	
 					res.redirect(`/leagues/${req.params.leagueID}/`);
 				})
 				.catch((update_err) => {
 					console.log(update_err);
 				});
-
 			})
 			.catch((league_error) => {
+				console.log(league_error);
 				console.log("league doesn't exist");
+				res.redirect("/404");
 			});
 		} else {
 			res.redirect("/403");
 		}
-
-	});
-
-	router.get('/leagues/:leagueID/skip', function(req, res, next) {
-		var leagueID = req.params.leagueID;
-
-		leaguesDB.collection("leagues").findOne({code: leagueID})
-		.then((league) =>  {
-
-			// draft is over
-			if(league.draft.started && !league.draft.inProgress) {
-				res.redirect("/403");
-				return;
-			}
-
-			if(league.admin.name != req.session.username) {
-				console.log("non-organizer attempted skip");
-				res.redirect("/403");
-				return;
-			} 
-
-			var current_team = league.draft.pick_order[league.draft.pick_index];
-
-			var mini_player = { 
-				id: "nonexisto", name: "No Pick", class: "", guild: "", spec: "", role: ""};
-
-			league.draft.picks.push({
-				team: league.teams[current_team],
-				manager: league.managers[current_team],
-				player: mini_player,
-			});
-			league.teams[current_team].drafted_players.push(mini_player);
-
-			league.draft.pick_index++;
-
-			if(league.draft.pick_index == league.draft.pick_order.length) {
-				// draft is over!
-				console.log("DRAFT IS OVER!!!... but we skipped the last pick. This logic is in two places– really, shouldn't there just be a league handler for these kinds of things?");
-				// this could get messy fast! shoot me
-				league.draft.inProgress = false;
-				league.status = "Completed";
-			}
-
-			leaguesDB.collection("leagues").updateOne({code: leagueID}, { $set: { draft: league.draft, teams: league.teams, status: league.status }})
-			.then((update_result) => {
-				res.redirect(`/leagues/${req.params.leagueID}/`);
-			})
-			.catch((update_err) => {
-				console.log(update_err);
-			});
-		})
-		.catch((err) => {
-			conosle.log(err);
-			res.redirect("/403");
-		});
 	});
 
 	router.post('/api/leagues/:leagueID/draftPlayer', function(req, res, next) {
@@ -389,55 +343,25 @@ MongoClient.connect(uri)
 
 		leaguesDB.collection("leagues").findOne({code: leagueID})
 		.then((league) =>  {
-
-			// draft is over
-			if(league.draft.started && !league.draft.inProgress) {
-				res.redirect("/403");
-				return;
-			}
-
 			players.collection(tag).findOne({_id: playerID})
 			.then((player) => {
+				var leaguelogic = new LeagueLogic(league, req.session);
 
-				var current_team = league.draft.pick_order[league.draft.pick_index];
-
-				if(league.managers[current_team].name != req.session.username) {
-					res.redirect("/403");
-					return;
+				// draft player, if successful go ahead and tell the db the player was
+				// league'd
+				if(leaguelogic.draftPlayer(player)) {
+					player.drafted.push(leagueID);
+					
+					players.collection(tag).updateOne({_id: playerID}, { $set: { drafted: player.drafted}})
+					.then((p_update_res) => {
+						console.log("Player updated successfully");
+					})
+					.catch((p_err) => {
+						console.log("player update error", p_err);
+					});
 				}
 
-				var mini_player = { 
-					id: playerID, name: player.name, class: player.class, guild: player.guild, spec: player.rankings[0].spec, role: tag};
-
-				league.draft.picks.push({
-					team: league.teams[current_team],
-					manager: league.managers[current_team],
-					player: mini_player,
-				});
-
-				league.teams[current_team].drafted_players.push(mini_player);
-				league.teams[current_team].roles_drafted[tag]++;
-
-				player.drafted.push(leagueID);
-
-				players.collection(tag).updateOne({_id: playerID}, { $set: { drafted: player.drafted}})
-				.then((p_update_res) => {
-					console.log("Player updated successfully");
-				})
-				.catch((p_err) => {
-					console.log("player update error", p_err);
-				});
-
-				league.draft.pick_index++;
-
-				if(league.draft.pick_index == league.draft.pick_order.length) {
-					// draft is over!
-					console.log("DRAFT IS OVER!!!");
-					league.draft.inProgress = false;
-					league.status = "Completed";
-				}
-
-				leaguesDB.collection("leagues").updateOne({code: leagueID}, { $set: { draft: league.draft, teams: league.teams, status: league.status }})
+				leaguesDB.collection("leagues").updateOne({code: leagueID}, {$set: leaguelogic.league})
 				.then((update_result) => {
 					res.redirect(`/leagues/${req.params.leagueID}/`);
 				})
@@ -451,51 +375,18 @@ MongoClient.connect(uri)
 		});
 	});
 
-
-	router.get('/leagues/:leagueID/proplayers', function(req, res, next) {
-		leaguesDB.collection("leagues").findOne({code: req.params.leagueID})
-		.then((league) =>  {
-			var current_team = league.draft.pick_order[league.draft.pick_index];
-
-			var onClock = false;
-
-			if(league.draft) {
-
-				if(league.draft.inProgress) {
-				// should store an actual onClock variable here rather than calculating it
-					if(league.managers[current_team].name == req.session.username) {
-						onClock = true;
-					}
-				}
-			}
-
-			res.render('proplayers', { 
-				title: league.name, 
-				leagueID: req.params.leagueID, 
-				onClock:onClock, 
-				user_session_auth: req.session.loggedin, 
-				user_session_name: req.session.username});
-		})
-		.catch((err) => {
-			res.redirect('/404');
-		});
-	});
-
-
 	router.post('/api/leagues/create', function(req, res, next) {
 		if(req.session.loggedin) {
 			var new_league = req.body;
 			new_league.code = short.generate();
 			new_league.admin = {name: req.session.username};
 			new_league.teams = [];
-			new_league.managers = [];
 			new_league.status = "Setting Up";
 			new_league.draft = {
 				pick_order: [0],
 				pick_index: 0,
 				picks: [],
-				inProgress: false,
-				started: false,
+				status: 0,
 			};
 
 			new_league.requirements = {
@@ -557,10 +448,6 @@ router.get('/403', function(req, res, next) {
 });
 
 
-var clientId = process.env.CLIENTID;
-var clientSecret = process.env.CLIENTSECRET;
-var port = 3000;
-
 router.get('/auth', function(req, res, next) {
 	const { code } = req.query;
 
@@ -570,7 +457,14 @@ router.get('/auth', function(req, res, next) {
 		params.append('client_secret', clientSecret);
 		params.append('code', code);
 		params.append('grant_type', 'authorization_code');
-		params.append('redirect_uri', 'https://wowdraft.herokuapp.com/auth');
+
+		if(process.env.NODE_ENV != "production") {
+			params.append('redirect_uri', 'http://localhost:3000/auth');
+
+		} else {
+			params.append('redirect_uri', 'https://wowdraft.herokuapp.com/auth');
+
+		}
 		params.append('scope', 'identify');
 
 		axios.post("https://discord.com/api/oauth2/token", params, {

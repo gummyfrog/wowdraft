@@ -9,7 +9,6 @@ block content
 		team-item(
 			v-for="(team, index) in teams"
 			v-bind:team="team"
-			v-bind:managers="managers",
 			v-bind:index="index",
 		)
 
@@ -18,7 +17,7 @@ block content
 		league = JSON.parse(league)
 
 		Vue.component('team-item', {
-			props: ['team', 'managers', 'index'],
+			props: ['team', 'index'],
 		 	template: `
 
 		 	<div class="team">
@@ -26,7 +25,7 @@ block content
 		 	<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
 			 	<div class="team_text">
 				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
-				 	<h3 class="team_manager"> {{managers[index].name}}</h3>
+				 	<h3 class="team_manager"> {{team.manager}}</h3>
 				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
 			 	</div>
 
@@ -77,7 +76,6 @@ block content
 		  el: '#teams',
 		  data: {
 		  	teams: league.teams,
-		  	managers: league.managers,
 		  	league_info: league,
 		  }
 		})

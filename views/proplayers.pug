@@ -147,7 +147,6 @@ block content
 					fetch(`/api/proplayer/${this.leagueID}/${this.tag}/${this.playername}`)
 					.then(res => res.json())
 					.then((response) => {
-						console.log(response);
 						if(response != null) {
 							app.players = response;
 							app.found = true;
