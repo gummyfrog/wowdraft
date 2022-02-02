@@ -17,8 +17,17 @@
 }
 
 body {
-  padding: 50px;
-  font: 1em "Lucida Grande", Helvetica, Arial, sans-serif;
+	background-color: #001020;
+	color: #e1f2f5;
+	text-shadow: 1px 1px 1px #000;
+	padding: 0;
+	margin: 0 auto;
+	font: 1em "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+#content {
+	padding: 30px;
+	padding-top: 30px;
 }
 
 @font-face {
@@ -26,23 +35,70 @@ body {
   src: url(/fonts/fritz.otf);
 }
 
-
 a {
   color: #00B7FF;
 }
 
+h1, h2, h3, h4, span {
+	margin: 0;
+	font-family: 'Montserrat', monospace;
+	font-weight: normal;
+}
+
+
+p {
+	font-family: 'Montserrat', sans-serif;
+	font-weight: normal;
+}
+
+a {
+	font-family: 'Roboto', sans-serif;
+	font-weight: normal;
+}
+
+header {
+	padding: 20px;
+	padding-left: 40px;
+	padding-right: 40px;
+	background: linear-gradient(180deg,#161616,#0a0a0a);
+	box-shadow: 0 1px 1px rgba(0,0,0,.2);
+	text-shadow: 1px 1px 1px #000;
+	border-bottom: 2px solid #555555;
+}
+
+footer {
+	width: auto;
+	max-width: 100%;
+	padding: 10px;
+	margin-bottom: 10px;
+	text-align: center;
+	font-size: 0.8em;
+	opacity: 0.8;
+}
+
+/*
+	Top-Level Layout Syling
+*/
+
 #logged-in, #logged-out {
 	float: right;
+	color: white;
 }
 
 #username {
-	float: left;
 	margin: 0;
 	padding-right: 10px;
 }
 
 
-#players, .league_links  {
+
+
+/*
+	Player Search Styling
+*/
+
+
+#players {
 	list-style-type: none;
 	padding: 0;
 }
@@ -144,6 +200,27 @@ a {
 	border-radius: 10px;
 }
 
+.pageButton {
+	border: none;
+	background: none;
+	color: black;
+	font-size: 1.5em;
+}
+
+
+.pageButton:hover {
+	opacity: 0.9;
+	transform: scale(0.96);
+}
+.pageButton:active {
+	opacity: 0.8;
+	transform: scale(0.95);
+}
+
+
+
+
+
 .Druid {
 	background-color: var(--druid);
 }
@@ -182,48 +259,36 @@ a {
 }
 
 
-h1, h2, h3, h4, span {
-	margin: 0;
-	font-family: 'Fritz', monospace;
-	font-weight: normal;
-}
 
 
-p, a {
-	font-family: 'Fritz', sans-serif;
-	font-weight: normal;
-}
+/*
+	League Teams Styling
+*/
 
-
-#teams{
-	padding: 0;
-	margin: 0;
-}
 
 .team {
 	position: relative;
 	min-height: 100px;
-	border-radius: 20px;
-	color: black;
+
 	max-width: 550px;
 	min-width: 300px;
+
 	margin: 0 auto;
-	margin-bottom: 35px;
+	margin-top: 20px;
+
+	border: 2px solid #555555;
+	background-image: linear-gradient(#161616,#0a0a0a);
 }
 
-
-.team_text {
-	display: inline;
+.team_head {
+	padding: 5px;
 	margin: 0 auto;
+	border-bottom: 2px solid #555555;
 }
 
-.team_name {
-	text-indent: 20px;
-	background-color: black;
-	border-radius: 10px;
-	padding-left: 10px;
-	padding-right: 10px;
-	border-bottom: black inset 2px;
+.team_misc {
+	padding: 5px;
+	border-bottom: 2px solid #555555;
 }
 
 .team_manager {
@@ -232,57 +297,48 @@ p, a {
 	display: inline-block;
 	float: right;
 	color: white;
-	background-color: black;
-	border-radius: 10px;
-	padding-left: 10px;
-	padding-right: 10px;
 }
 
 .team_motto {
 	display: inline-block;
-	padding: 10px;
 	margin: 0 auto;
+	font-style:italic;
 }
 
 .team_logo {
-	margin-left: 10px;
 	margin-top: 3px;
-	clip-path: circle(50%);
 	height: 30px;
 	float: left;
-	pointer-events: none;
 }
 
+.team_name {
+	text-indent: 10px;
+}
+
+/*
+	League Info Styling
+*/
 
 .league_status {
-	color: white;
-/*	padding-left: 10px;
-	padding-right: 10px;*/
-	font-weight: normal;
-	border-radius: 4px;
-	font-size: 1.4em;
-	padding: 0;
 	margin: 0;
+	font-weight: bold;
 }
 
 .league_status.setting-up {
-	color: purple;
+	color: #40BC40;
 }
 
 .league_status.in-progress {
-	color: green;
+	color: #C41E3A;
 }
 
 .league_status.completed {
-	color: blue;
+	color: #FF8000;
 }
+
 
 .draft {
-	border-radius: 15px;
-}
-
-.pick_history {
-	margin-top: 25px;
+	margin-top: 30px;
 }
 
 .picks {
@@ -306,59 +362,70 @@ p, a {
 	padding: 0;
 	position: absolute;
 	font-size: 5em;
-	z-index: -1;
 	line-height: 0.8em;
 	mix-blend-mode: invert;
-	transform: translateX(-60px) rotateZ(-6deg); 
-	opacity: 0.3;
+	transform: translateX(-50px);
+	opacity: 0.5;
 }
 
+
+.league_body {
+	padding: 10px;
+	border: 2px solid #555555;
+	background-image: linear-gradient(#161616,#0a0a0a);
+}
+
+
+.league_information p {
+	padding: 0;
+	margin: 0;
+}
+
+.flavor {
+	color: #FFD100;
+	padding-bottom: 0;
+	margin-bottom: 0;
+}
+
+/*
+	Minis
+*/
+
 .mini_team_name, .mini_team_manager, .mini_player, .mini_role {
-	width: 100%;
-	display: block;
-	margin: 0 auto;
-	text-align: center;
+	display: inline-block;
+	text-align: left;
 }
 
 .mini_player {
-	border-radius: 15px;
+	padding-left: 5px;
+	padding-right: 5px;
+	margin-left: 10px;
+}
+
+.team_mini_player {
+	min-width: 30px;
+	min-height: 40px;
 }
 
 .mini_guild {
 	color: green;
-	text-align: center;
+	text-align: left;
+	display: inline-block;
+	width: 100%;
+	font-size: 1em;
 }
 
-.mini_role {
-
-}
-
-header {
-	margin-bottom: 10px;
+.mini_role, .mini_class {
+	display: inline;
+	float: left;
+	height: 24px;
+	width: 24px;
 }
 
 .role_select {
 	font-family: 'Roboto Mono', monospace;
 	border: none;
 	font-size: 1.5em;
-
-}
-
-.pageButton {
-	border: none;
-	background: none;
-	color: black;
-	font-size: 1.5em;
-}
-
-
-.pageButton:hover {
-	opacity: 0.9;
-	transform: scale(0.96);
-}
-.pageButton:active {
-	opacity: 0.8;
-	transform: scale(0.95);
 }
 
 .current_pick {
@@ -366,6 +433,7 @@ header {
 }
 
 .team_players {
+	padding: 10px;
 	width: 100%;
 	display: inline-flex;
 	flex-wrap: wrap;
@@ -373,10 +441,11 @@ header {
 
 .team_mini_player {
 	width: 33%;
-	margin-bottom: 20px;
+	margin-bottom: 10px;
 }
 
 .pick_order {
+	padding: 10px;
 	display: inline-flex;
 	flex-wrap: wrap;
 }
@@ -431,39 +500,61 @@ header {
 }
 
 
-.league_wrapper, .teams_wrapper {
-	max-width: 100%;
-	border-radius: 15px;
-	padding: 5px;
-	border-bottom: black inset 5px;
-	margin-bottom: 10px;
-	background-color: black;
+#leagues, #about, .teams_wrapper, .progress, .pick_order, .pick_history {
+	border: 2px solid #555555;
+	background-image: linear-gradient(#161616,#0a0a0a);
+}
+
+.progress {
+	padding: 10px;
+}
+
+#about {
+	padding: 15px;
+	margin-bottom: 30px;
+}
+
+.title-bar {
+	margin-top: 30px;
+	width: 100%;
+	padding: 10px;
+	border: 2px solid #555555;
+	border-bottom: none;
+	background-image: linear-gradient(#161616,#0a0a0a);
+}
+
+.league_wrapper, .create_team_box {
+	padding: 10px;
+	margin-top: 10px;
+	border: 2px solid #555555;
+	background-image: linear-gradient(#161616,#0a0a0a);
+}
+
+.create_team_box {
+	margin-bottom: 50px;
 }
 
 .league_wrapper_mini {
-	max-width: 500px;
-	border-radius: 15px;
-	padding: 10px;
-	border-bottom: black inset 5px;
 	margin-bottom: 10px;
-	background-color: black;
-
+	border-bottom: 2px solid #555555;
 }
 
 .league_logo {
-	margin-right: 15px;
-	clip-path: circle(50%);
-	height: 2.7em;
-	float: left;
+	clip-path: circle(60%);
 	pointer-events: none;
+	display: inline-block;
+	height: 32px;
+	width: 32px;
 }
 
 .league_name{
-	font-weight: 900;
-	padding-left: 10px;
-	padding-right: 10px;
-	font-weight: 800;
-	border-radius: 20px;
+	display: inline;
+}
+
+
+.league_links {
+	list-style-type: none;
+	padding: 0;
 }
 
 .startbutton {
@@ -481,7 +572,11 @@ header {
 }
 
 .mini_league {
+	max-width: 500px;
 	margin-bottom: 20px;
+	border: 2px solid #555555;
+	background-image: linear-gradient(#161616,#0a0a0a);
+	padding: 15px;
 }
 
 .league_description {
@@ -508,7 +603,6 @@ header {
 }
 
 .view_players {
-	margin-bottom: 30px;
 	display: block;
 }
 
@@ -521,11 +615,6 @@ header {
 	margin-bottom: 30px;
 }
 
-#about {
-	max-width: 500px;
-	margin-bottom: 30px;
-}
-
 #league_create h3{
 	margin-top: 15px;
 }
@@ -534,33 +623,3 @@ header {
 	margin-top: 15px;
 }
 
-
-.league_body {
-	text-shadow: 0 1px 0 black;
-	border-style: solid;
-	border-width: 5px;
-	border-image: url(/images/tooltip.png) 5 repeat;
-	border-radius: 4px;
-	color: white;
-	background-color: rgba(10, 0, 5, 0.95);
-	font-family: "friz", serif;
-	font-size: 1.12em;
-	font-weight: normal;
-	padding: 0.5em 0.6em;
-	text-shadow: 0 1px 0 black;
-	box-shadow: -1px -1px 1px rgba(10, 0, 5, 0.5), -1px 1px 1px rgba(10, 0, 5, 0.5), 1px 1px 1px rgba(10, 0, 5, 0.5), 1px -1px 1px rgba(10, 0, 5, 0.5);
-	max-width: 24em;
-	margin-bottom: 20px;
-}
-
-
-.league_information p {
-	padding: 0;
-	margin: 0;
-}
-
-.flavor {
-	color: #FFD100;
-	padding-bottom: 0;
-	margin-bottom: 0;
-}

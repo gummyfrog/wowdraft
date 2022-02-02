@@ -2,46 +2,50 @@ extends layout
 
 block content
 	div#league_rankings
-		draft_info(
-			v-bind:league_info="league_info",
-		)
+		div#content
 
-		div(v-if="activity_report != null")#report_wrapper
-
-			h1.activity_header.
-				<i class="fas fa-calendar"></i>
-				{{fancyDate}} Activity Report
-
-			team-item(
-				v-for="(team, index) in teams"
-				v-bind:team="team",
-				v-bind:managers="managers",
-				v-bind:team_index="index",
-				v-bind:activity_report="activity_report",
-				v-bind:total_points="total_points",
-				v-bind:get_index="getIndex",
-				v-bind:highest_points="highestPoints",
+			draft_info(
+				v-bind:league_info="league_info",
 			)
-		div(v-else)
-			h1 Waiting on report to be generated.
+
+			div(v-if="activity_report != null")#report_wrapper
+
+				h1.activity_header.
+					<i class="fas fa-calendar"></i>
+					{{fancyDate}} Activity Report
+
+				team-item(
+					v-for="(team, index) in teams"
+					v-bind:team="team",
+					v-bind:team_index="index",
+					v-bind:activity_report="activity_report",
+					v-bind:total_points="total_points",
+					v-bind:get_index="getIndex",
+					v-bind:highest_points="highestPoints",
+				)
+			div(v-else)
+				h1 Waiting on report to be generated.
 
 	script.
 		var league = !{JSON.stringify(league)}
 		league = JSON.parse(league)
 
 		Vue.component('team-item', {
-			props: ['team', 'managers', 'team_index', 'activity_report', 'total_points', 'get_index', 'highest_points'],
+			props: ['team', 'team_index', 'activity_report', 'total_points', 'get_index', 'highest_points'],
 		 	template: `
 
 		 	<div class="team">
-		 	 <h2 class="points" :style="'color:'+team.color2"> <i class="fas fa-star"></i> {{total_points(get_index(team.id))}} All-Time Points </h2>
 
-			 <h4 class="points" :style="'color:'+team.color2"> {{Math.round(activity_report.data[get_index(team.id)].total_points)}} Points This Week </h4>
-
-		 	<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
-			 	<div class="team_text">
+			 	<div class="team_head">
+			 		<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
 				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
-				 	<h3 class="team_manager"> {{managers[get_index(team.id)].name}}</h3>
+			 	</div>
+
+			 	<div class="team_misc">
+			 		<h2 class="points" :style="'color:'+team.color2"> <i class="fas fa-star"></i> {{total_points(get_index(team.id))}} All-Time Points </h2>
+			 		<h4 class="points" :style="'color:'+team.color2"> {{Math.round(activity_report.data[get_index(team.id)].total_points)}} Points This Week </h4>
+
+				 	<h3 class="team_manager"> {{team.manager}}</h3>
 				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
 			 	</div>
 
@@ -84,14 +88,19 @@ block content
 			props: ['player', 'team_activity', 'team_color', 'highest_points'],
 		 	template: `
 		 	<div v-if="team_activity[player.name].points.total > 0" class="team_mini_player">
-		 		<h4 class="mini_role">{{player.role}}</h4>
+		 	<img class="mini_role" :src="'/images/roles/'+player.role+'.png'">
+		 	<img class="mini_class" :src="'/images/classes/'+player.class+'.png'">
+
 				<h4 :class="'mini_player '+player.class">{{player.name}}</h4>
 				<h4 class="mini_guild">{{player.guild}}</h4>
 				<h4 class="mini_points" :style="'color:'+team_color"> <i class="fas fa-star"></i> {{team_activity[player.name].points.total}} </h4>
 				<h4 class="title"> {{highest_points(team_activity[player.name].points)}} </h4>
 			</div>
 			<div v-else class="team_mini_player absent">
-				<h4 class="mini_role">{{player.role}}</h4>
+
+		 	<img class="mini_role" :src="'/images/roles/'+player.role+'.png'">
+		 	<img class="mini_class" :src="'/images/classes/'+player.class+'.png'">
+
 				<h4 :class="'mini_player '+player.class">{{player.name}}</h4>
 				<h4 class="mini_guild">{{player.guild}}</h4>
 				<h4 class="mini_points"> Absent </h4>
@@ -106,11 +115,12 @@ block content
 			league.activity_reports = [];
 		}
 
+		console.log(league);
+
 		var app = new Vue({
 		  el: '#league_rankings',
 		  data: {
 		  	teams: league.teams,
-		  	managers: league.managers,
 		  	activity_reports: league.activity_reports,
 		  	league_info: league,
 		  },
@@ -129,7 +139,7 @@ block content
 		  		}
 		  	},
 		  	sorted_teams:function() {
-
+		  	
 		  	},
 		  },
 		  methods: {

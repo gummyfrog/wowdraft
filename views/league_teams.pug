@@ -2,15 +2,16 @@ extends layout
 
 block content
 	div#teams
-		draft_info(
-			v-bind:league_info="league_info",
-		)
+		div#content
+			draft_info(
+				v-bind:league_info="league_info",
+			)
 
-		team-item(
-			v-for="(team, index) in teams"
-			v-bind:team="team"
-			v-bind:index="index",
-		)
+			team-item(
+				v-for="(team, index) in teams"
+				v-bind:team="team"
+				v-bind:index="index",
+			)
 
 	script.
 		var league = !{JSON.stringify(league)}
@@ -22,10 +23,13 @@ block content
 
 		 	<div class="team">
 
-		 	<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
-			 	<div class="team_text">
+			 	<div class="team_head">
+		 			<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
 				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
-				 	<h3 class="team_manager"> {{team.manager}}</h3>
+				</div>
+
+				<div class="team_misc">
+				 	<h3 class="team_manager"> {{team.manager}} </h3>
 				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
 			 	</div>
 
@@ -65,10 +69,12 @@ block content
 			props: ['player'],
 		 	template: `
 		 	<div class="team_mini_player">
-		 	<h4 class="mini_role">{{player.role}}</h4>
-			 <h4 :class="'mini_player '+player.class">{{player.name}}</h4>
-			 <h4 class="mini_guild">{{player.guild}}</h4>
-			 </div>`
+		 	<img class="mini_role" :src="'/images/roles/'+player.role+'.png'">
+		 	<img class="mini_class" :src="'/images/classes/'+player.class+'.png'">
+
+			<span :class="'mini_player '+player.class">{{player.name}}</span>
+			<span class="mini_guild">{{player.guild}}</span>
+			</div>`
 		})
 
 

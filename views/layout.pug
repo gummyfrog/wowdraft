@@ -13,6 +13,8 @@ html
 		link(href='https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap' rel='stylesheet')
 		link(href='https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap' rel='stylesheet')
 		link(rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous")
+		link(href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500&display=swap" rel="stylesheet")
+
 		
 		link(rel='apple-touch-icon' sizes='180x180' href='/apple-touch-icon.png')
 		link(rel='icon' type='image/png' sizes='32x32' href='/favicon-32x32.png')
@@ -29,7 +31,9 @@ html
 	body
 		header
 			div#logged-in
-				p#username
+				span
+					p#username
+
 				a(href="/logout").
 					logout
 					<i class="fas fa-sign-out-alt"></i>
@@ -47,10 +51,10 @@ html
 				a(href="/leagues/create").
 					<i class="fas fa-book-open"></i>
 					 new league
-
 		block content
 
 	footer
+		p This site is under development! :) <3
 		script.
 			$("#logged-in").hide();
 

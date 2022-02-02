@@ -19,6 +19,8 @@ router.use(session({
   genid: function(req) {
     return uuidv4(); 
   },
+  resave: true,
+  saveUninitialized: true,
   secret: process.env.CLIENTSECRET
 }));
 
@@ -29,6 +31,51 @@ MongoClient.connect(uri)
 	console.log("Connected to Database");
 	const leaguesDB = client.db("wowdraft");
 	const players = client.db("proplayers");
+
+
+
+	if(process.env.DEBUG) {
+		router.get('/admin', function(req, res, next) {
+			console.log(req.session);
+			if(req.session.loggedin && req.session.username == "monarlisarrr#8207") {
+
+				leaguesDB.collection("leagues").find().toArray()
+				.then((leagues) =>  {
+					res.render('admin', { 
+						title: 'All Leagues ADMIN MODE', 
+						leagues: JSON.stringify(leagues), 
+						user_session_auth: req.session.loggedin, 
+						user_session_name: req.session.username
+					});
+				});
+			} else {
+				res.redirect("/");
+			}
+		});
+
+		router.get('/admin/leagues/delete/:leagueID', function(req, res, next) {
+			if(req.session.loggedin && req.session.username == "monarlisarrr#8207") {
+				leaguesDB.collection("leagues").deleteOne({code: req.params.leagueID})
+
+				.then(res.redirect("/admin"));
+			} else {
+				res.redirect("/");
+			}
+		});
+
+		router.get('/admin/flush', function(req, res, next) {
+			if(req.session.loggedin && req.session.username == "monarlisarrr#8207") {
+				console.log("flushing");
+				players.collection("dps").drop();
+				players.collection("healers").drop();
+				players.collection("tanks").drop();
+
+				res.redirect("/admin");
+			}
+		});
+
+	}
+
 
 	// All Leagues Page
 	router.get('/leagues', function(req, res, next) {
@@ -281,7 +328,7 @@ MongoClient.connect(uri)
 				league.activity_reports = [];
 			}
 
-			league.activity_reports.push({time: new Date().getTime(), data: req.body.data});
+			league.activity_reports.push({time: new Date(), data: req.body.data});
 			
 			leaguesDB.collection("leagues").updateOne({code: req.params.leagueID}, { $set: { activity_reports: league.activity_reports}})
 			.then((update_result) => {
@@ -460,11 +507,10 @@ router.get('/auth', function(req, res, next) {
 
 		if(process.env.NODE_ENV != "production") {
 			params.append('redirect_uri', 'http://localhost:3000/auth');
-
 		} else {
 			params.append('redirect_uri', 'https://wowdraft.herokuapp.com/auth');
-
 		}
+
 		params.append('scope', 'identify');
 
 		axios.post("https://discord.com/api/oauth2/token", params, {
@@ -485,10 +531,13 @@ router.get('/auth', function(req, res, next) {
 				res.redirect("/");
 			})
 			.catch((user_err) => {
+				console.log("user error");
+				console.log(user_err)
 				res.redirect('/404');
 			});
 		})
 		.catch(err => {
+			console.log(err)
 			res.redirect('/404');
 		});
 	}

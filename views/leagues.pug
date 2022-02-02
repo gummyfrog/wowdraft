@@ -2,24 +2,27 @@ extends layout
 
 block content
 
-	div#about
-		h1 Welcome to WowDraft Beta!
-		h2 It's like Fantasy Football, but for World of Warcraft.
-		br
-		h2 Get started by making a league for yourself and your friends, or joining one that hasn't drafted yet!
-		h3 Oh, and make sure you log in.
-	h1.
-		<i class="fas fa-book-open"></i>
-		All Leagues
+	div#content
+		div#about
+			h1 Welcome to WowDraft Beta!
+			h3 It's like Fantasy Football, but for World of Warcraft.
+			br
+			h3 Get started by logging in with Discord and making a league for you and your friends, or joining one that hasn't drafted yet!
 
-	div#leagues
-		ol
-			league-item(
-				v-for="(league, index) in leagues"
-				v-bind:league_info="league"
-				v-bind:index="index",
-				v-bind:slugify="slugify"
-			)
+			
+		div.title-bar
+			h2.
+				<i class="fas fa-book-open"></i>
+				All Leagues
+
+		div#leagues
+			ol
+				league-item(
+					v-for="(league, index) in leagues"
+					v-bind:league_info="league"
+					v-bind:index="index",
+					v-bind:slugify="slugify"
+				)
 
 	script.
 
@@ -29,26 +32,25 @@ block content
 			props: ['league_info', 'slugify'],
 			template: `
 			<div class="mini_league">
-			<div>
 			   <div class="league_wrapper_mini" :style="'color:'+league_info.color1">
 			      <img class="league_logo" :src="'/images/league_icons/' + league_info.icon">
-			      <h1 class="league_name"> {{league_info.name}} </h1>
+			      <h2 class="league_name"> {{league_info.name}} </h1>
 			   </div>
-			   <h3> Organized by {{league_info.admin.name}}
-			      <br> <span :class="'league_status '+slugify(league_info.status)">Draft {{league_info.status}} </span>
-			   </h3>
-			   <h3> 
-			      <br> Draft Style: {{league_info.style}}
-			      <br> {{league_info.server}}, {{league_info.faction}} 
-			      <br> # of Rounds: {{league_info.rounds}} 
-			      <br> Report Day: {{league_info.report_day || "Monday"}} 
+
+			   <p> Organized by {{league_info.admin.name}}
+			      <br> Status: <span :class="'league_status '+slugify(league_info.status)">Draft {{league_info.status}} </span>
+			   </p>
+			   <p> 
+			   	  Report Day: {{league_info.report_day || "Monday"}} 
 			      <br> Draft Will Start: "{{league_info.start_date || "didn't say!"}}"
-			      <br><br>
-			   </h3>
-			</div>
-			<h2> 
+			      <br>
+			      <br> Number of Rounds (Picks): {{league_info.rounds}} 
+			      <br>
+			   </p>
+			<h3> 
 			   <a :href="'/leagues/' + league_info.code"><i class="fas fa-door-open"></i> View </a>
-			</h2>
+			</h3>
+			</div>
 			`
 		})
 
