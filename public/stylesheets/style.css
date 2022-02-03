@@ -209,20 +209,20 @@ footer {
 
 
 
-.Druid {
+.druid {
 	background-color: var(--druid);
 }
-.Hunter {
+.hunter {
 	background-color: var(--hunter);
 }
-.Mage {
+.mage {
 	background-color: var(--mage);
 }
-.Paladin {
+.paladin {
 	background-color: var(--paladin);
 
 }
-.Priest {
+.priest {
 	background-color: var(--priest);
 }
 
@@ -230,18 +230,19 @@ footer {
 	color: black;
 } */
 
-.Rogue {
+.rogue {
 	background-color: var(--rogue);
-
 }
-.Shaman {
+
+.shaman {
 	background-color: var(--shaman);
 }
-.Warlock {
-	background-color: var(--warlock);
 
+.warlock {
+	background-color: var(--warlock);
 }
-.Warrior {
+
+.warrior {
 	background-color: var(--warrior);
 }
 
