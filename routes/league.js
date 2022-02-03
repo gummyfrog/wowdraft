@@ -152,6 +152,8 @@ class league_interpret {
 		mini_player.role = mini_player.role.toLowerCase();
 		mini_player.class = mini_player.class.toLowerCase();
 
+		console.log(mini_player);
+
 		this.league.teams[team_index].drafted_players.push(mini_player);
 		this.league.teams[team_index].roles_drafted[mini_player.role]++;
 
