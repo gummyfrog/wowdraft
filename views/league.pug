@@ -151,7 +151,7 @@ block content
 		Vue.component('draft_progress', {
 			props: ['draft_info', 'teams', 'league_info', 'yti', 'reqs'],
 		 	template: `
-		 	<div v-if="draft_info.status!=0" class="draft"> 
+		 	<div v-if="draft_info.status==1" class="draft"> 
 
 		 			<div class="title-bar">
 			 			<h2> <i class="fas fa-clock"></i> On The Clock: <br> {{teams[draft_info.pick_order[draft_info.pick_index]].manager}} ({{teams[draft_info.pick_order[draft_info.pick_index]].name}})</h2>
@@ -308,7 +308,7 @@ block content
 
 			  		console.log(roles_drafted);
 			  		console.log(reqs);
-			  		
+
 			  		if(roles_drafted.tanks < reqs.tanks) {
 			  			msg += `<li> <i class="fas fa-exclamation-circle"></i> You need ${reqs.tanks-roles_drafted.tanks} more tank(s). </li>`
 			  		}
