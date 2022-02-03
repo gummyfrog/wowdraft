@@ -1,6 +1,5 @@
 const short = require('short-uuid');
 
-
 class league_interpret {
 	constructor(league_info, session) {
 		this.league = league_info;
@@ -62,8 +61,7 @@ class league_interpret {
 		}
 
 		var pick_order = [];
-
-
+		
 		for(var x=0; x<this.league.rounds;x++) {
 			for(var y=0; y<this.league.teams.length;y++) {
 				pick_order.push(y);
@@ -151,6 +149,7 @@ class league_interpret {
 			player: mini_player,
 		});
 
+		mini_player.role = mini_player.role.toLowerCase();
 
 		this.league.teams[team_index].drafted_players.push(mini_player);
 		this.league.teams[team_index].roles_drafted[mini_player.role]++;

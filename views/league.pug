@@ -129,7 +129,10 @@ block content
 
 					</div>
 			 	<a class="startbutton" v-if="!{organizer} && league.status == 'Setting Up' && league.teams.length >=2" :href="'/leagues/' + league_info.code + '/start'"> 
-			 		Start Drafting! 
+			 		<br>
+			 		<h2>
+			 		 <i class="fas fa-hand-point-right "></i> Ready to go? Start Drafting!
+			 		</h2>
 			 	</a>
 
 		 	</div>
@@ -178,7 +181,7 @@ block content
 		 			<h2><i class="fas fa-history"></i> Pick History: </h2>
 		 		</div>
 
-		 		<div v-if="draft_info.picks.length>0" class="pick_history">
+		 		<div v-if="draft_info.status!=0" class="pick_history">
 		 			<div class="picks">
 						<pick_history_item 
 							v-for="(pick, index) in draft_info.picks"
@@ -214,11 +217,12 @@ block content
 		 	<div class="pick">
 		 		<h1 class="pick_number"> {{index+1}} </h1>
 			 	<h4 class="mini_team_name" :style="'color:'+pick.team.color2"> {{pick.team.name}} </h4> 
-			 	<img class="mini_role" :src="'/images/roles/'+player.role+'.png'">
-		 		<img class="mini_class" :src="'/images/classes/'+player.class+'.png'">
+			 	<br>
+
+			 	<img class="mini_role" :src="'/images/roles/'+pick.player.role+'.png'">
+		 		<img class="mini_class" :src="'/images/classes/'+pick.player.class+'.png'">
 
 			 	<h4 :class="'mini_player '+pick.player.class">{{pick.player.name}}</h4>
-			 	<h4 class="mini_guild">{{pick.player.guild}}</h4>
 		 	</div>`
 		})
 
@@ -301,6 +305,10 @@ block content
 			  		var roles_drafted = this.teams[this.yourTeamIndex].roles_drafted;
 			  		var reqs = this.league_info.requirements;
 			  		var msg = "";
+
+			  		console.log(roles_drafted);
+			  		console.log(reqs);
+			  		
 			  		if(roles_drafted.tanks < reqs.tanks) {
 			  			msg += `<li> <i class="fas fa-exclamation-circle"></i> You need ${reqs.tanks-roles_drafted.tanks} more tank(s). </li>`
 			  		}

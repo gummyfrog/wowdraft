@@ -1,30 +1,55 @@
 extends layout
 
 block content
-	div#league_create
-		form(action='/api/leagues/create' method='post')
+	div#content
+		div.title-bar
+				h2 Please Enter...
 
-			h2 Please Enter...
+		form.makeLeague(action='/api/leagues/create' method='post')
+			h3 A name for your League:
+			input(v-model="name" type='text' placeholder="Lion's Pride Inn League" name='name' required)
 
-			h3 A name & description for your league:
-			input(v-model="name" type='text' placeholder='Goldshire Inn League' name='name' required)
-
+			h3 A short blurb for your League:
 			input(v-model="description" type='text' placeholder='Describe your League here!' name='description' required)
 
+			h3 Customization:
+			select(name="icon" v-model="icon" required)
+				option(value="banner_Bloodelf.png") Bloodelf Banner
+				option(value="banner_Draenei.png") Draenei Banner
+				option(value="banner_Dwarf.png") Dwarf Banner
+				option(value="banner_Gnome.png") Gnome Banner
+				option(value="banner_Human.png") Human Banner
+				option(value="banner_Nightelf.png") Night Elf Banner
+				option(value="banner_Orc.png") Orc Banner
+				option(value="banner_Scourge.png") Scourge Banner
+				option(value="banner_Tauren.png") Tauren Banner
+				option(value="banner_Troll.png") Troll Banner
+				option(value="Symbol_Brewfest.png") Brewfest
+
+			img.preview_logo( :src="'/images/league_icons/' + icon")
+
+			input(type="color" v-model="color1" name="color1" required)
+
 			h3 # of Rounds (picks) per player:
-			input(v-model="rounds" type='number' placeholder='10' name='rounds' required)
+			input(v-model="rounds" type='number' placeholder='10' name='rounds' min="1" max="10" required)
 
-			h3 Draft Style:
-			select(v-model="style" name="style" required)
-				option(value="Standard") Standard
+			h4.disabled-note.
+				<i class="fas fa-exclamation-circle"></i> 
+				Not implemented just yet!
 
-			h3 Server & Side:
-			select(v-model="server" name="server")
-				option(value="Grobbulus") Grobbulus
+			div.disabled-input
+				h3 Draft Style:
+				select(v-model="style" name="style" required)
+					option(value="Standard") Standard
 
-			select(v-model="faction" name="faction")
-				option(value="Alliance") Alliance
-				option(value="Horde") Horde
+				h3 Server & Side:
+				select(v-model="server" name="server")
+					option(value="Grobbulus") Grobbulus
+
+				select(v-model="faction" name="faction")
+					option(value="Alliance") Alliance
+					option(value="Horde") Horde
+
 
 			h3 Activity Report Day
 			select(v-model="report_day" name="report_day")
@@ -37,56 +62,32 @@ block content
 				option(value="Saturday") Saturday
 
 			h3 Proposed Draft Start Date/Time
+
+
+			input(v-model="start_date" type="text" name="start_date" placeholder="Next Monday at 4pm!")
+
 			div.reminder
 				h4. 
 					<i class="fas fa-exclamation-circle"></i> Remember!
-					You'll need to start the draft manually.
+					You, as the organizer, need to start the draft manually.
 				h4 This is just for scheduling, so be informative (and on time!)
 
-			input(v-model="start_date" type="text" name="start_date")
-
-
-			h3 Customization
-			select(name="color1" v-model="color1" required)
-				option(style="color:#C41E3A" value="#C41E3A" selected) Demon Hunter Red
-				option(style="color:#FF4700" value="#FF4700") Raid Warning Red
-				option(style="color:#FF8000" value="#FF8000") Legendary Orange
-				option(style="color:#FFF468" value="#FFF468") Rogue Yellow
-				option(style="color:#3CE13F" value="#3CE13F") Guild Chat Green
-				option(style="color:#40BC40" value="#40BC40") Officer Chat Green
-				option(style="color:#77C8FF" value="#77C8FF") Party Lead Teal
-				option(style="color:#0070FF" value="#0070FF") Rare Blue
-				option(style="color:#00ADEF" value="#00ADEF") BattleNet Blue
-				option(style="color:#A335EE" value="#A335EE") Epic Purple
-				option(style="color:#FF7EFF" value="#FF7EFF") Whisper Pink
-				option(style="color:#FFFFFF" value="#FFFFFF") /say White
-
-			select(name="icon" v-model="icon" required)
-				option(value="banner_Bloodelf.png") Bloodelf Banner
-				option(value="banner_Draenei.png") Draenei Banner
-				option(value="banner_Dwarf.png") Dwarf Banner
-				option(value="banner_Gnome.png") Gnome Banner
-				option(value="banner_Human.png") Human Banner
-				option(value="banner_Nightelf.png") Nightelf Banner
-				option(value="banner_Orc.png") Orc Banner
-				option(value="banner_Scourge.png") Scourge Banner
-				option(value="banner_Tauren.png") Tauren Banner
-				option(value="banner_Troll.png") Troll Banner
-				option(value="Symbol_Brewfest.png") Brewfest
 
 			h3
-				button(type='submit') All Done!
+				button(type='submit').
+					<i class="fas fa-check"></i> 
+					All Done!
 
 		h1 Preview:
+
 		div(:style="'color:'+color1").league_wrapper
 			img.league_logo( :src="'/images/league_icons/' + icon")
 			h1.league_name {{name}}
-
-		p {{description}}
+			h4.flavor {{description}}
 
 	script.
 		var app = new Vue({
-			el: '#league_create',
+			el: '#content',
 			data: {
 				name:"Stormwind League",
 				description: "Light be with you.",

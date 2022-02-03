@@ -34,7 +34,7 @@ MongoClient.connect(uri)
 
 
 
-	if(process.env.DEBUG) {
+	if(process.env.NODE_ENV=="debug") {
 		router.get('/admin', function(req, res, next) {
 			console.log(req.session);
 			if(req.session.loggedin && req.session.username == "monarlisarrr#8207") {
@@ -424,7 +424,9 @@ MongoClient.connect(uri)
 
 	router.post('/api/leagues/create', function(req, res, next) {
 		if(req.session.loggedin) {
+			// move to leaguelogic lol
 			var new_league = req.body;
+			console.log(req.body)
 			new_league.code = short.generate();
 			new_league.admin = {name: req.session.username};
 			new_league.teams = [];

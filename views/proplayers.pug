@@ -1,36 +1,37 @@
 extends layout
 
 block content
-	div#proplayers
+	div#content
+		div#proplayers
+			div#player-filtering
 
-		button(v-on:click="pageDown").pageButton
-			i.fas.fa-arrow-circle-left
+				h3 Role Select:
+				select(name="role_select" @change="resetFetch" v-model="tag").role_select
+					option(value="dps" v-selected) DPS
+					option(value="tanks") Tanks
+					option(value="healers") Healers
 
-		select(name="role_select" @change="resetFetch" v-model="tag").role_select
-			option(value="dps" v-selected) DPS
-			option(value="tanks") Tanks
-			option(value="healers") Healers
+				h3 Search by Name:
+				input(type="text", v-model="playername", @change="fetchSource")
 
+				h3 Search by Guild:
+				input(type="text", v-model="guild", @change="fetchSource")
 
-		button(v-on:click="pageUp").pageButton
-			i.fas.fa-arrow-circle-right
+				br
+				button(v-on:click="pageDown").pageButton
+					i.fas.fa-arrow-circle-left
+				h2.pageIndicator Page: {{ page+1 }}
+				button(v-on:click="pageUp").pageButton
+					i.fas.fa-arrow-circle-right
 
-
-		h2 Search by Name
-		input(type="text", v-model="playername", @change="fetchSource")
-
-		h2 Search by Guild
-		input(type="text", v-model="guild", @change="fetchSource")
-
-		h1 Page: {{ page+1 }}
-
-		ul(v-if=found)#players
-			player-item(
-				v-for="(player, index) in players",
-				v-bind:player="player",
-				v-bind:leagueID="leagueID"
-			)
-		h2(v-else) Player not found.
+			div#player-display
+				ul(v-if=found)#players
+					player-item(
+						v-for="(player, index) in players",
+						v-bind:player="player",
+						v-bind:leagueID="leagueID"
+					)
+				h2(v-else) Player(s) not found.
 
 	script.
 		var leagueID = "!{leagueID}";
@@ -86,13 +87,12 @@ block content
 			props: ['rankings'],
 			template: `
 				<li class="parseBadge"> 
+
 				<span id="encounter_boss"> {{rankings.encounter_data.encounter.name}} </span> 
 
-				<span id="encounter_dps">{{rankings.amount}} DPS </span> 
-
 				<span id="encounter_rankPercent" class="parse">{{rankings.rankPercent}}</span> 
-				</li>
-			`
+
+				</li>`
 		})
 
 		var app = new Vue({
