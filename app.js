@@ -7,6 +7,7 @@ var logger = require('morgan');
 var session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 var db = require('./db');
+var { startScheduler } = require('./services/scheduler');
 
 var indexRouter = require('./routes/index');
 var authRouter = require('./routes/auth');
@@ -76,7 +77,10 @@ app.use(function (err, req, res, next) {
 
 // connect to DB then export
 db.connect()
-  .then(() => console.log('App ready'))
+  .then(() => {
+    console.log('App ready');
+    startScheduler();
+  })
   .catch((err) => console.error('MongoDB connection failed:', err.message));
 
 module.exports = app;
