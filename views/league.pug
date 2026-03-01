@@ -94,8 +94,8 @@ block content
 					 	"{{league_info.description}}"
 				 	</h2> 
 
-			 		<p :class="'league_status '+status_slug">Draft 
-				 		{{league_info.status}} 
+			 		<p :class="'league_status '+status_slug">
+				 		{{league_info.status}}
 			 		</p>
 
 				 	<p class="organizedby">
@@ -138,11 +138,35 @@ block content
 		 	</div>
 
 		 	<div v-if="!{canMakeTeam}" class="create_team_box">
-			 	<a :href="'/leagues/' + league_info.code + '/newTeam'"> 
-			 		<h2> 
+			 	<a :href="'/leagues/' + league_info.code + '/newTeam'">
+			 		<h2>
 			 			<i class="fas fa-long-arrow-alt-right"></i> Register Your Team!
-		 			</h2> 
+		 			</h2>
 				</a>
+			</div>
+
+			<div v-if="league_info.status == 'Drafted'" class="start_season_box">
+				<h2><i class="fas fa-play"></i> Draft Complete! Ready to start the season?</h2>
+				<form :action="'/leagues/api/' + league_info.code + '/startSeason'" method="post" class="start-season-form">
+					<button type="submit"><i class="fas fa-check"></i> Start Season</button>
+				</form>
+			</div>
+
+			<div v-if="league_info.status == 'Active'" class="season_info">
+				<h2><i class="fas fa-trophy"></i> Season Active — Week {{currentWeek}}</h2>
+				<p>Report Day: {{league_info.report_day || 'Wednesday'}}</p>
+
+				<button @click="generateReport" :disabled="generating" class="update-scores-btn">
+					<i class="fas fa-sync"></i> {{generating ? 'Generating...' : 'Update Scores'}}
+				</button>
+			</div>
+
+			<div v-if="league_info.standings" class="standings">
+				<h2><i class="fas fa-list-ol"></i> Standings</h2>
+				<div v-for="team in sortedTeams" class="standing_row">
+					<span class="standing_name">{{team.name}}</span>
+					<span class="standing_record">{{getRecord(team.id)}}</span>
+				</div>
 			</div>
 
 		 	`
@@ -265,6 +289,7 @@ block content
 		  	league_info: league,
 		  	has_real_draft_info: false,
 		  	draft_info: {pick_order:[0], pick_index:0, started: false, inProgress:false},
+		  	generating: false,
 		  },
 		  methods: {
 			fetchDraftData: function(event) {
@@ -283,6 +308,22 @@ block content
 					this.teams = league.teams;
 					this.league_info = league;
 				})
+			},
+			generateReport: function() {
+				this.generating = true;
+				fetch(`/leagues/api/${league.code}/generateReport`, { method: 'POST' })
+					.then(res => res.json())
+					.then(() => {
+						this.generating = false;
+						this.fetchData();
+					})
+					.catch(() => {
+						this.generating = false;
+					});
+			},
+			getRecord: function(teamId) {
+				var s = this.league_info.standings && this.league_info.standings[teamId];
+				return s ? s.wins + 'W - ' + s.losses + 'L' : '0W - 0L';
 			}
 		  },
 		  computed: {
@@ -320,6 +361,17 @@ block content
 			  		}
 			  		return msg;
 		  		}
+		  	},
+		  	currentWeek: function() {
+		  		return (this.league_info.activity_reports || []).length + 1;
+		  	},
+		  	sortedTeams: function() {
+		  		var standings = this.league_info.standings || {};
+		  		return this.teams.slice().sort(function(a, b) {
+		  			var sa = standings[a.id] || { wins: 0 };
+		  			var sb = standings[b.id] || { wins: 0 };
+		  			return sb.wins - sa.wins;
+		  		});
 		  	}
 		  }
 		})
