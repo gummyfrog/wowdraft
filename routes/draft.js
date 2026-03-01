@@ -1,5 +1,4 @@
 const express = require('express');
-const { ObjectId } = require('mongodb');
 const db = require('../db');
 const LeagueLogic = require('./league');
 const { generateReport } = require('../services/reports');
@@ -50,30 +49,57 @@ router.get('/api/:leagueID/draftInfo', function (req, res) {
 // API: Draft a player
 router.post('/api/:leagueID/draftPlayer', function (req, res) {
   var leagueID = req.params.leagueID;
-  var tag = req.body.tag.toLowerCase();
-  var playerID = new ObjectId(req.body.player_id);
+  var playerName = req.body.player_name;
 
   db.leagues().findOne({ code: leagueID })
     .then((league) => {
-      db.players(tag).findOne({ _id: playerID })
-        .then((player) => {
-          var leaguelogic = new LeagueLogic(league, req.session);
+      // Find player in the league's player pool
+      var player = (league.player_pool || []).find(p => p.name === playerName);
 
-          if (leaguelogic.draftPlayer(player)) {
-            player.drafted.push(leagueID);
-            db.players(tag).updateOne(
-              { _id: playerID },
-              { $set: { drafted: player.drafted } }
-            );
-          }
+      if (!player) {
+        // Fallback: try the old proplayers DB (for leagues without player_pool)
+        var tag = (req.body.tag || 'dps').toLowerCase();
+        var playerID = req.body.player_id;
+        if (playerID) {
+          const { ObjectId } = require('mongodb');
+          db.players(tag).findOne({ _id: new ObjectId(playerID) })
+            .then((dbPlayer) => {
+              if (!dbPlayer) return res.redirect(`/leagues/${leagueID}/`);
+              var leaguelogic = new LeagueLogic(league, req.session);
+              if (leaguelogic.draftPlayer(dbPlayer)) {
+                dbPlayer.drafted.push(leagueID);
+                db.players(tag).updateOne(
+                  { _id: new ObjectId(playerID) },
+                  { $set: { drafted: dbPlayer.drafted } }
+                );
+              }
+              db.leagues().updateOne(
+                { code: leagueID },
+                { $set: leaguelogic.league }
+              ).then(() => res.redirect(`/leagues/${leagueID}/`));
+            });
+          return;
+        }
+        return res.redirect(`/leagues/${leagueID}/`);
+      }
 
-          db.leagues().updateOne(
-            { code: leagueID },
-            { $set: leaguelogic.league }
-          ).then(() => res.redirect(`/leagues/${leagueID}/`));
-        });
+      var leaguelogic = new LeagueLogic(league, req.session);
+
+      if (leaguelogic.draftPlayer(player)) {
+        // Mark drafted in the player pool
+        var poolPlayer = league.player_pool.find(p => p.name === playerName);
+        if (poolPlayer) poolPlayer.drafted.push(leagueID);
+      }
+
+      db.leagues().updateOne(
+        { code: leagueID },
+        { $set: leaguelogic.league }
+      ).then(() => res.redirect(`/leagues/${leagueID}/`));
     })
-    .catch((err) => console.log('league err', err));
+    .catch((err) => {
+      console.log('draft err', err);
+      res.redirect(`/leagues/${leagueID}/`);
+    });
 });
 
 // API: Generate report (admin only)
