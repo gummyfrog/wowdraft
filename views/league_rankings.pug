@@ -12,7 +12,7 @@ block content
 
 			div(v-if="activity_report != null")#report_wrapper
 
-				div.week_selector
+				div.week-selector
 					button(@click="prevWeek" :disabled="selectedWeek <= 0")
 						i.fas.fa-arrow-left
 					h1.activity_header.
@@ -30,16 +30,27 @@ block content
 					v-bind:get_index="getIndex",
 					v-bind:highest_points="highestPoints",
 				)
-			div(v-if="activity_report && activity_report.matchups").matchup_results
-				h2.
-					<i class="fas fa-trophy"></i>
-					Matchup Results
-				div(v-for="m in activity_report.matchups").matchup
-					span(v-if="m.bye") {{getTeamName(m.bye)}} — Bye Week
-					span(v-else)
-						| {{getTeamName(m.home)}} ({{m.homeScore}}) vs {{getTeamName(m.away)}} ({{m.awayScore}})
-						strong(v-if="m.winner")  — {{getTeamName(m.winner)}} wins!
-						strong(v-if="m.tie")  — Tie!
+			div(v-if="activity_report && activity_report.matchups").matchups-section
+				div.title-bar
+					h2.
+						<i class="fas fa-trophy"></i>
+						Matchup Results
+				div.matchups-container
+					div(v-for="m in activity_report.matchups")
+						div(v-if="m.bye").matchup-bye
+							| {{getTeamName(m.bye)}} — Bye Week
+						div(v-else).matchup-card
+							div.matchup-team.home(:class="{winner: m.winner === m.home}")
+								span.matchup-team-name {{getTeamName(m.home)}}
+								img(:src="getTeamIcon(m.home)")
+							div.matchup-score
+								span.matchup-vs VS
+								div.matchup-score-numbers {{m.homeScore}} - {{m.awayScore}}
+								div(v-if="m.winner").matchup-result {{getTeamName(m.winner)}} wins!
+								div(v-if="m.tie").matchup-result Tie!
+							div.matchup-team.away(:class="{winner: m.winner === m.away}")
+								img(:src="getTeamIcon(m.away)")
+								span.matchup-team-name {{getTeamName(m.away)}}
 
 			div(v-else)
 				h1 Waiting on report to be generated.
@@ -239,6 +250,12 @@ block content
 		  			if(this.teams[x].id == teamId) return this.teams[x].name;
 		  		}
 		  		return teamId;
+		  	},
+		  	getTeamIcon:function(teamId) {
+		  		for(var x=0;x<this.teams.length;x++) {
+		  			if(this.teams[x].id == teamId) return '/images/icons/' + this.teams[x].icon + '.png';
+		  		}
+		  		return '';
 		  	},
 		  	highestPoints:function(dist) {
 		  		var fakeDist = Object.assign({}, dist);
