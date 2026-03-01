@@ -9,40 +9,71 @@ block content
 				current_page="players"
 			)
 
-			div#player-filtering
+			div(v-if="yourTeam && league_info.requirements").requirements-tracker
+				span.req-label Need:
+				span.req-slot(:class="{fulfilled: tanksNeeded === 0}")
+					span.req-count {{tanksNeeded}}
+					span Tank(s)
+				span.req-slot(:class="{fulfilled: dpsNeeded === 0}")
+					span.req-count {{dpsNeeded}}
+					span DPS
+				span.req-slot(:class="{fulfilled: healersNeeded === 0}")
+					span.req-count {{healersNeeded}}
+					span Healer(s)
 
-				h3 Role Select:
-				select(name="role_select" @change="resetFetch" v-model="tag").role_select
-					option(value="dps" v-selected) DPS
-					option(value="tanks") Tanks
-					option(value="healers") Healers
-
-				h3 Search by Name:
-				input(type="text", v-model="playername", @change="fetchSource")
-
-				h3 Search by Guild:
-				input(type="text", v-model="guild", @change="fetchSource")
-
-				br
-				button(v-on:click="pageDown").pageButton
-					i.fas.fa-arrow-circle-left
-				h2.pageIndicator Page: {{ page+1 }}
-				button(v-on:click="pageUp").pageButton
-					i.fas.fa-arrow-circle-right
+			div.player-filters
+				div.filter-group
+					div.role-tabs
+						button.role-tab(:class="{active: tag === 'dps'}" @click="setTag('dps')") DPS
+						button.role-tab(:class="{active: tag === 'tanks'}" @click="setTag('tanks')") Tanks
+						button.role-tab(:class="{active: tag === 'healers'}" @click="setTag('healers')") Healers
+				div.filter-group
+					label Name:
+					input(type="text" v-model="playername" @input="debouncedFetch" placeholder="Search...")
+				div.filter-group
+					label Guild:
+					input(type="text" v-model="guild" @input="debouncedFetch" placeholder="Filter guild...")
+				div.player-pagination
+					button(@click="pageDown" :disabled="page === 0").pageButton
+						i.fas.fa-chevron-left
+					span Page {{page + 1}}
+					button(@click="pageUp").pageButton
+						i.fas.fa-chevron-right
 
 			div#player-display
-				ul(v-if=found)#players
-					player-item(
-						v-for="(player, index) in players",
-						v-bind:player="player",
-						v-bind:leagueID="leagueID"
-					)
+				table.player-table(v-if="found")
+					thead
+						tr
+							th Class
+							th(@click="sortBy('name')") Name
+							th(@click="sortBy('guild')") Guild
+							th Role
+							th(@click="sortBy('avgParse')") Parse
+							th(v-if="onClock")
+					tbody
+						tr(v-for="player in sortedPlayers" :class="['player-row', {inactive: player.active === false}]")
+							td
+								img(:src="'/images/classes/'+player.class+'.png'" style="height:22px;width:22px")
+							td
+								span.player-name-text(:class="player.class") {{player.name}}
+							td {{player.guild}}
+							td
+								span.role-pill(:class="player.tag") {{player.tag === 'dps' ? 'DPS' : player.tag === 'tanks' ? 'Tank' : 'Healer'}}
+							td
+								span(v-if="player.avgParse != null" :style="'color:' + parseColor(player.avgParse)").parse-value {{Math.round(player.avgParse)}}
+								span(v-else).parse-value --
+							td(v-if="onClock")
+								form(v-if="player.active !== false" :action="'/leagues/api/' + leagueID + '/draftPlayer'" method="post" style="display:inline")
+									input(type="hidden" name="player_name" :value="player.name")
+									button(type="submit").draft-btn Draft
+								span(v-else style="opacity:0.4; font-size:0.8em") Inactive
 				h2(v-else) Player(s) not found.
 
 	script.
 		var leagueID = "!{leagueID}";
 		var league = JSON.parse('!{league}');
-
+		var yourTeam = !{yourTeam};
+		var onClock = !{onClock};
 
 		Vue.component('draft_info', {
 			props: ['league_info', 'status_slug', 'current_page'],
@@ -74,203 +105,142 @@ block content
 			`
 		})
 
-		Vue.component('player-item', {
-			props: ['player', 'leagueID'],
-		 	template: `
-		 	<li :class="'player ' + player.class"> 
-
-		 	<div id="player-info"> 
-			 	<div id="info">
-				 	<h2> {{player.name}} </h2>
-				 	<h3> {{player.guild}} </h3>
-				 	<span v-if="player.active === false" class="inactive_badge">Inactive</span>
-				 	<h3> {{player.rankings[0].spec}} {{player.class}}</h3>
-			 	</div>
-
-			 	<div id="averages">
-				 	<div v-if="player.avgParse != null" id="avg_parse_badge">
-				 		<span id="avg_parse" class="parse">{{Math.round(player.avgParse)}}</span>
-				 		<span>Average Parse</span>
-				 	</div>
-
-				 	<div v-if="player.avgDps != null" id="avg_dps_badge">
-			 			<span id="avg_dps">{{Math.round(player.avgDps)}}</span>
-			 			<span>Average DPS</span>
-			 		</div>
-
-			 		<div v-if="player.avgSpeed != null" id="avg_speed_badge">
-			 			<span id="avg_speed" class="parse">{{Math.round(player.avgSpeed)}}</span>
-			 			<span>Average Speed</span>
-			 		</div>
-			 	</div>
-		 	</div> 
-		 	<div id="rankings">
-		 	<player-rankings 
-				v-for="ranking in player.rankings.slice(0, 4)"
-				v-bind:rankings="ranking"
-			>
-			</div>
-
-		 	<form v-if="!{onClock}" action="/leagues/api/${leagueID}/draftPlayer" method='post'>
-		 		<input type="hidden" name="player_name" :value="player.name">
-		 		<button type="submit" class="draft_button"> <h3> <i class="fas fa-handshake"></i> draft this player </h3> </button>
-		 	</form>
-
-		 	</li>'`
-		})
-
-		//- <a v-if="!{onClock}"> draft me! </a>
-		Vue.component('player-rankings', {
-			props: ['rankings'],
-			template: `
-				<li class="parseBadge"> 
-
-				<span id="encounter_boss"> {{rankings.encounter_data.encounter.name}} </span> 
-
-				<span id="encounter_rankPercent" class="parse">{{rankings.rankPercent}}</span> 
-
-				</li>`
-		})
-
 		var app = new Vue({
 			el: '#proplayers',
 			data: {
-					players: [],
-					found: true,
-					page: 0,
-					tag: "dps",
-					leagueID: leagueID,
-					league_info: league,
-					playername: "",
-					guild: "",
-					lastSource: "generic",
+				players: [],
+				found: true,
+				page: 0,
+				tag: "dps",
+				leagueID: leagueID,
+				league_info: league,
+				yourTeam: yourTeam,
+				onClock: onClock,
+				playername: "",
+				guild: "",
+				sortKey: '',
+				sortAsc: true,
+				lastSource: "generic",
+				debounceTimer: null,
 			},
 			computed: {
 				statusSlug() {
 					return this.league_info.status.toLowerCase().replace(" ", '-');
-				}
+				},
+				sortedPlayers() {
+					if (!this.sortKey) return this.players;
+					var key = this.sortKey;
+					var asc = this.sortAsc;
+					return this.players.slice().sort(function(a, b) {
+						var va = a[key], vb = b[key];
+						if (va == null) return 1;
+						if (vb == null) return -1;
+						if (va < vb) return asc ? -1 : 1;
+						if (va > vb) return asc ? 1 : -1;
+						return 0;
+					});
+				},
+				tanksNeeded() {
+					if (!this.yourTeam || !this.league_info.requirements) return 0;
+					return Math.max(0, this.league_info.requirements.tanks - (this.yourTeam.roles_drafted ? this.yourTeam.roles_drafted.tanks : 0));
+				},
+				dpsNeeded() {
+					if (!this.yourTeam || !this.league_info.requirements) return 0;
+					return Math.max(0, this.league_info.requirements.dps - (this.yourTeam.roles_drafted ? this.yourTeam.roles_drafted.dps : 0));
+				},
+				healersNeeded() {
+					if (!this.yourTeam || !this.league_info.requirements) return 0;
+					return Math.max(0, this.league_info.requirements.healers - (this.yourTeam.roles_drafted ? this.yourTeam.roles_drafted.healers : 0));
+				},
 			},
 			methods: {
-				fetchSource:function(event) {
-					var newSource = "generic";
-					if(this.playername != "") {
+				parseColor(parse) {
+					parse = parseInt(parse);
+					if (parse < 25) return '#666';
+					if (parse < 50) return '#1eff00';
+					if (parse < 75) return '#0070dd';
+					if (parse < 95) return '#a335ee';
+					if (parse < 99) return '#ff8000';
+					return '#e5cc80';
+				},
+				sortBy(key) {
+					if (this.sortKey === key) {
+						this.sortAsc = !this.sortAsc;
+					} else {
+						this.sortKey = key;
+						this.sortAsc = true;
+					}
+				},
+				setTag(tag) {
+					this.tag = tag;
+					this.page = 0;
+					this.fetchSource();
+				},
+				debouncedFetch() {
+					clearTimeout(this.debounceTimer);
+					var self = this;
+					this.debounceTimer = setTimeout(function() { self.fetchSource(); }, 300);
+				},
+				fetchSource: function() {
+					if (this.playername != "") {
 						this.fetchPlayer();
-						newSource = "player";
-					} else if(this.guild != "") {
+					} else if (this.guild != "") {
 						this.fetchGuild();
-						newSource = "guild";
 					} else {
 						this.fetchData();
 					}
-
-					if(this.lastSource != newSource) {
-						this.lastSource = newSource;
-						this.page = 0;
+				},
+				fetchData: function() {
+					var self = this;
+					fetch('/proplayers/api/' + this.leagueID + '/' + this.tag + '/' + this.page)
+						.then(function(res) { return res.json(); })
+						.then(function(response) {
+							self.players = response;
+							self.found = response.length > 0;
+						})
+						.catch(function(err) { console.log(err); });
+				},
+				fetchPlayer: function() {
+					var self = this;
+					fetch('/proplayers/api/' + this.leagueID + '/' + this.tag + '/search/' + this.playername)
+						.then(function(res) { return res.json(); })
+						.then(function(response) {
+							if (response != null) {
+								self.players = response;
+								self.found = true;
+							} else {
+								self.players = [];
+								self.found = false;
+							}
+						})
+						.catch(function(err) { console.log(err); });
+				},
+				fetchGuild: function() {
+					var self = this;
+					fetch('/proplayers/api/' + this.leagueID + '/' + this.tag + '/guild/' + this.guild + '/' + this.page)
+						.then(function(res) { return res.json(); })
+						.then(function(response) {
+							if (response != null) {
+								self.players = response;
+								self.found = true;
+							} else {
+								self.players = [];
+								self.found = false;
+							}
+						})
+						.catch(function(err) { console.log(err); });
+				},
+				pageDown: function() {
+					if (this.page > 0) {
+						this.page--;
+						this.fetchSource();
 					}
 				},
-				fetchData: function(event) {
-					fetch(`/proplayers/api/${this.leagueID}/${this.tag}/${this.page}`)
-					.then(res => res.json())
-					.then((response) => {
-						app.players = response;
-						console.log(response);
-					})
-					.then(() => {
-						$('.parse').each((i, obj) => {
-							var obj = $(obj);
-							obj.css("color", parseStyle(obj.text()))
-						})
-					})
-					.catch((err) => {
-						console.log(err);
-					})
-				},
-
-				fetchPlayer:function(event) {
-					fetch(`/proplayers/api/${this.leagueID}/${this.tag}/search/${this.playername}`)
-					.then(res => res.json())
-					.then((response) => {
-						if(response != null) {
-							app.players = response;
-							app.found = true;
-						} else {
-							app.players = [];
-							app.found = false;
-						}
-					})
-					.then(() => {
-						$('.parse').each((i, obj) => {
-							var obj = $(obj);
-							obj.css("color", parseStyle(obj.text()))
-						})
-					})
-					.catch((err) => {
-						console.log(err);
-					})
-				},
-
-				fetchGuild:function(event) {
-					fetch(`/proplayers/api/${this.leagueID}/${this.tag}/guild/${this.guild}/${this.page}`)
-					.then(res => res.json())
-					.then((response) => {
-						console.log(response);
-						if(response != null) {
-							app.players = response;
-							app.found = true;
-						} else {
-							app.players = [];
-							app.found = false;
-						}
-					})
-					.then(() => {
-						$('.parse').each((i, obj) => {
-							var obj = $(obj);
-							obj.css("color", parseStyle(obj.text()))
-						})
-					})
-					.catch((err) => {
-						console.log(err);
-					})
-				},
-
-				pageDown:function(event) {
-					if(this.page-1 < 0) {
-						return;
-					}
-					this.page--;
-					this.fetchSource();
-				},
-				pageUp:function(event) {
+				pageUp: function() {
 					this.page++;
 					this.fetchSource();
 				},
-				resetFetch:function(event){
-					this.page = 0;
-					this.fetchSource();
-				}
 			}
 		})
 
-		function parseStyle(parse){
-			var color = "Gray";
-			parse=parseInt(parse);
-
-			if(parse < 25) {
-				color = "Gray"
-			} else if(parse < 50) {
-				color = "Green"
-			} else if(parse < 75) {
-				color = "Blue"
-			} else if(parse < 95) {
-				color = "Purple"
-			} else if(parse < 99) {
-				color = "Orange"
-			} else {
-				color = "Gold"
-			}
-
-			return color;
-		}
-
-		app.fetchData("dps", 0);
-
+		app.fetchData();

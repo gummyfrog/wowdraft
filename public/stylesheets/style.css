@@ -826,3 +826,197 @@ input, select {
   font-size: 0.85em;
   font-style: italic;
 }
+
+/*
+  Dense Player Table
+*/
+
+.player-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.player-table th {
+  text-align: left;
+  padding: 6px 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.6;
+  border-bottom: 2px solid #555;
+  cursor: pointer;
+  user-select: none;
+}
+
+.player-table th:hover {
+  opacity: 1;
+}
+
+.player-row {
+  border-bottom: 1px solid #222;
+  transition: background 0.1s;
+}
+
+.player-row:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.player-row td {
+  padding: 6px 10px;
+  vertical-align: middle;
+}
+
+.player-row.inactive {
+  opacity: 0.35;
+}
+
+.player-row.inactive .player-name-cell {
+  text-decoration: line-through;
+}
+
+.player-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.player-name-cell img {
+  height: 22px;
+  width: 22px;
+}
+
+.player-name-text {
+  font-weight: 500;
+}
+
+.role-pill {
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.role-pill.dps { background: #C41E3A; color: #fff; }
+.role-pill.tanks { background: #00B7FF; color: #000; }
+.role-pill.healers { background: #40BC40; color: #000; }
+
+.parse-value {
+  font-weight: 700;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.draft-btn {
+  border: none;
+  border-radius: 8px;
+  background: #00B7FF;
+  color: #000;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85em;
+  font-weight: 600;
+  transition: transform 0.1s, opacity 0.1s;
+}
+
+.draft-btn:hover {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+/*
+  Requirements Tracker
+*/
+
+.requirements-tracker {
+  display: flex;
+  gap: 12px;
+  padding: 10px 15px;
+  border: 2px solid #555;
+  background-image: linear-gradient(#161616, #0a0a0a);
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.req-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
+}
+
+.req-slot.fulfilled {
+  opacity: 0.4;
+}
+
+.req-slot .req-count {
+  font-weight: 700;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.req-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85em;
+  margin-right: 15px;
+  opacity: 0.7;
+}
+
+/*
+  Player Filters (updated)
+*/
+
+.player-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 15px;
+  border: 2px solid #555;
+  background-image: linear-gradient(#161616, #0a0a0a);
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-group label {
+  font-size: 0.8em;
+  opacity: 0.6;
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.role-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.role-tab {
+  padding: 4px 12px;
+  border: 1px solid #555;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85em;
+}
+
+.role-tab:first-child { border-radius: 4px 0 0 4px; }
+.role-tab:last-child { border-radius: 0 4px 4px 0; }
+
+.role-tab.active {
+  background: #00B7FF;
+  color: #000;
+  border-color: #00B7FF;
+}
+
+.player-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}

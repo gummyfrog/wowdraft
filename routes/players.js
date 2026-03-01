@@ -9,13 +9,21 @@ router.get('/:leagueID', function (req, res) {
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
       var onClock = leaguelogic.isCurrentTeamManager();
+
+      var yourTeam = null;
+      var teamIndex = league.teams.findIndex(function(t) { return t.manager === req.session.username; });
+      if (teamIndex !== -1) {
+        yourTeam = league.teams[teamIndex];
+      }
+
       res.render('proplayers', {
         title: league.name,
         leagueID: req.params.leagueID,
+        league: JSON.stringify(league),
+        yourTeam: JSON.stringify(yourTeam),
         onClock: onClock,
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
-        league: JSON.stringify(league),
       });
     })
     .catch(() => res.redirect('/404'));
