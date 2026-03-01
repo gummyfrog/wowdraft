@@ -85,25 +85,20 @@ block content
 
 		Vue.component('team-item', {
 			props: ['team', 'team_index', 'activity_report', 'total_points', 'get_index', 'highest_points'],
-		 	template: `
-
-		 	<div class="team">
-
-			 	<div class="team_head">
-			 		<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
-				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
-			 	</div>
-
-			 	<div class="team_misc">
-			 		<h2 class="points" :style="'color:'+team.color2"> <i class="fas fa-star"></i> {{total_points(get_index(team.id))}} All-Time Points </h2>
-			 		<h4 class="points" :style="'color:'+team.color2"> {{Math.round(activity_report.data[get_index(team.id)].total_points)}} Points This Week </h4>
-
-				 	<h3 class="team_manager"> {{team.manager}}</h3>
-				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
-			 	</div>
-
-			 	<div class="team_players">
-				 	<mini_player 
+			template: `
+			<div class="ranking-card" :style="'border-color:' + (team.color2 || '#555')">
+				<div class="ranking-card-head">
+					<img :src="'/images/icons/'+team.icon+'.png'">
+					<h2 :style="'color:'+team.color2">{{team.name}}</h2>
+					<div class="ranking-points">
+						<span class="ranking-points-week">{{Math.round(activity_report.data[get_index(team.id)].total_points)}} pts this week</span>
+						<span class="ranking-points-total" :style="'color:'+team.color2">
+							<i class="fas fa-star"></i> {{total_points(get_index(team.id))}}
+						</span>
+					</div>
+				</div>
+				<div class="ranking-roster">
+					<mini_player
 						v-for="(player, index) in team.drafted_players"
 						v-bind:player="player"
 						v-bind:team_activity="activity_report.data[get_index(team.id)].players"
@@ -111,9 +106,8 @@ block content
 						v-bind:team_color="team.color2"
 						v-bind:highest_points="highest_points">
 				</div>
-		 	</div>
-
-		 	`
+			</div>
+			`
 		})
 
 		Vue.component('draft_info', {
@@ -150,27 +144,18 @@ block content
 
 		Vue.component('mini_player', {
 			props: ['player', 'team_activity', 'team_color', 'highest_points'],
-		 	template: `
-		 	<div v-if="team_activity[player.name].points.total > 0" class="team_mini_player">
-		 	<img class="mini_role" :src="'/images/roles/'+player.role+'.png'">
-		 	<img class="mini_class" :src="'/images/classes/'+player.class+'.png'">
-
-				<h4 :class="'mini_player '+player.class">{{player.name}}</h4>
-				<h4 class="mini_guild">{{player.guild}}</h4>
-				<h4 class="mini_points" :style="'color:'+team_color"> <i class="fas fa-star"></i> {{team_activity[player.name].points.total}} </h4>
-				<h4 class="title"> {{highest_points(team_activity[player.name].points)}} </h4>
+			template: `
+			<div v-if="team_activity[player.name] && team_activity[player.name].points.total > 0" class="ranking-player">
+				<img :src="'/images/classes/'+player.class+'.png'">
+				<span :class="'rp-name '+player.class">{{player.name}}</span>
+				<span class="rp-title">{{highest_points(team_activity[player.name].points)}}</span>
+				<span class="rp-points" :style="'color:'+team_color">{{team_activity[player.name].points.total}}</span>
 			</div>
-			<div v-else class="team_mini_player absent">
-
-		 	<img class="mini_role" :src="'/images/roles/'+player.role+'.png'">
-		 	<img class="mini_class" :src="'/images/classes/'+player.class+'.png'">
-
-				<h4 :class="'mini_player '+player.class">{{player.name}}</h4>
-				<h4 class="mini_guild">{{player.guild}}</h4>
-				<h4 class="mini_points"> Absent </h4>
+			<div v-else class="ranking-player absent">
+				<img :src="'/images/classes/'+player.class+'.png'">
+				<span :class="'rp-name '+player.class">{{player.name}}</span>
+				<span class="rp-points">Absent</span>
 			</div>
-
-
 			`
 		})
 

@@ -1315,3 +1315,94 @@ input, select {
   font-style: italic;
   text-align: center;
 }
+
+/*
+  Rankings Team Cards
+*/
+
+.rankings-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ranking-card {
+  border: 2px solid #555;
+  background-image: linear-gradient(#161616, #0a0a0a);
+  border-radius: 4px;
+}
+
+.ranking-card-head {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.ranking-card-head img {
+  height: 26px;
+  width: 26px;
+}
+
+.ranking-card-head h2 {
+  font-size: 1.05em;
+  flex-grow: 1;
+}
+
+.ranking-points {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.ranking-points-total {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+  font-size: 1.1em;
+}
+
+.ranking-points-week {
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.ranking-roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2px;
+  padding: 6px;
+}
+
+.ranking-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+}
+
+.ranking-player img {
+  height: 18px;
+  width: 18px;
+}
+
+.ranking-player .rp-name {
+  flex-grow: 1;
+  font-size: 0.85em;
+}
+
+.ranking-player .rp-points {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.ranking-player .rp-title {
+  font-size: 0.75em;
+  opacity: 0.5;
+  margin-left: 4px;
+}
+
+.ranking-player.absent {
+  opacity: 0.25;
+}
