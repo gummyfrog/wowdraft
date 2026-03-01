@@ -153,4 +153,36 @@ router.post('/api/:leagueID/activity_report', function (req, res) {
     .catch((err) => res.json({ err }));
 });
 
+// API: Start season (admin only, after draft completes)
+router.post('/api/:leagueID/startSeason', function (req, res) {
+  if (!req.session.loggedin) return res.redirect('/403');
+
+  db.leagues().findOne({ code: req.params.leagueID })
+    .then((league) => {
+      var leaguelogic = new LeagueLogic(league, req.session);
+      var result = leaguelogic.startSeason(req.body);
+
+      if (!result) return res.status(400).json({ error: 'Cannot start season' });
+
+      db.leagues().updateOne(
+        { code: req.params.leagueID },
+        { $set: leaguelogic.league }
+      ).then(() => res.redirect(`/leagues/${req.params.leagueID}/`));
+    })
+    .catch(() => res.redirect('/404'));
+});
+
+// API: Get standings
+router.get('/api/:leagueID/standings', function (req, res) {
+  db.leagues().findOne({ code: req.params.leagueID })
+    .then((league) => {
+      res.json({
+        standings: league.standings || {},
+        schedule: league.schedule || [],
+        currentWeek: (league.activity_reports || []).length + 1,
+      });
+    })
+    .catch(() => res.redirect('/404'));
+});
+
 module.exports = router;
