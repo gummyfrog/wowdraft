@@ -732,3 +732,97 @@ input, select {
   color: #00B7FF;
   border-bottom: 2px solid #00B7FF;
 }
+
+/*
+  Team Cards Grid
+*/
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.team-card {
+  border: 2px solid #555;
+  background-image: linear-gradient(#161616, #0a0a0a);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.team-card-head {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  gap: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.team-card-head img {
+  height: 28px;
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.team-card-head h2 {
+  font-size: 1.1em;
+  flex-grow: 1;
+}
+
+.team-card-head .team-record {
+  font-size: 0.85em;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.team-card-manager {
+  padding: 4px 10px;
+  font-size: 0.85em;
+  opacity: 0.7;
+  border-bottom: 1px solid #222;
+}
+
+.team-card-motto {
+  padding: 4px 10px;
+  font-size: 0.85em;
+  font-style: italic;
+  border-bottom: 1px solid #222;
+}
+
+.team-card-roster {
+  padding: 6px 10px;
+}
+
+.roster-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.roster-player img {
+  height: 20px;
+  width: 20px;
+}
+
+.roster-player .player-name {
+  font-size: 0.9em;
+}
+
+.roster-player .player-guild {
+  font-size: 0.75em;
+  opacity: 0.5;
+  margin-left: auto;
+}
+
+.roster-empty {
+  opacity: 0.3;
+  padding: 3px 0;
+  font-size: 0.85em;
+  font-style: italic;
+}

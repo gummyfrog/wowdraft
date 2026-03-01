@@ -67,15 +67,13 @@ block content
 					<i class="fas fa-flag"></i>
 					Registered Teams
 
-			div.teams_wrapper
-				h3(v-if="noTeams") ...none... yet!
-
-				ol#teams
-					team-item(
-						v-for="(team, index) in teams"
-						v-bind:team="team"
-						v-bind:index="index",
-					)
+			div.teams-grid
+				team-item(
+					v-for="(team, index) in teams"
+					v-bind:team="team"
+					v-bind:index="index"
+					v-bind:record="getRecord(team.id)"
+				)
 
 
 	script.
@@ -83,30 +81,27 @@ block content
 		league = JSON.parse(league)
 
 		Vue.component('team-item', {
-			props: ['team', 'index'],
-		 	template: `
-
-		 	<div class="team">
-
-			 	<div class="team_head">
-		 			<img class="team_logo" :src="'/images/icons/'+team.icon+'.png'">
-				 	<h1 class="team_name" :style="'color:'+team.color2"> {{team.name}} </h1> 
+			props: ['team', 'index', 'record'],
+			template: `
+			<div class="team-card" :style="'border-color:' + (team.color2 || '#555')">
+				<div class="team-card-head">
+					<img :src="'/images/icons/'+team.icon+'.png'">
+					<h2 :style="'color:'+team.color2">{{team.name}}</h2>
+					<span v-if="record" class="team-record">{{record}}</span>
 				</div>
-
-				<div class="team_misc">
-				 	<h3 class="team_manager"> {{team.manager}} </h3>
-				 	<h2 class="team_motto" :style="'color:'+team.color2"> {{team.motto}} </h2> 
-			 	</div>
-
-			 	<div class="team_players">
-				 	<mini_player 
-						v-for="(player, index) in team.drafted_players"
-						v-bind:player="player"
-						v-bind:index="index">
+				<div class="team-card-manager">{{team.manager}}</div>
+				<div v-if="team.motto" class="team-card-motto" :style="'color:'+team.color2">{{team.motto}}</div>
+				<div class="team-card-roster">
+					<div v-for="player in team.drafted_players" class="roster-player">
+						<img :src="'/images/classes/'+player.class+'.png'">
+						<img :src="'/images/roles/'+player.role+'.png'">
+						<span class="player-name" :class="player.class">{{player.name}}</span>
+						<span class="player-guild">{{player.guild}}</span>
+					</div>
+					<div v-if="team.drafted_players.length === 0" class="roster-empty">No players drafted yet</div>
 				</div>
-		 	</div>
-
-		 	`
+			</div>
+			`
 		})
 
 		Vue.component('draft_info', {
