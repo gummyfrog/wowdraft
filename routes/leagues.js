@@ -3,6 +3,7 @@ const short = require('short-uuid');
 const db = require('../db');
 const LeagueLogic = require('./league');
 const { getClient } = require('../services/warcraftlogs');
+const { buildPlayerPool } = require('../services/playerpool');
 const router = express.Router();
 
 // List all leagues
@@ -162,9 +163,39 @@ router.post('/api/create', function (req, res) {
   new_league.region = new_league.region || 'us';
   new_league.season_length = parseInt(new_league.season_length) || 8;
 
-  db.leagues().insertOne(new_league)
+  // Parse guilds from form (comma-separated or JSON array)
+  var guildNames = [];
+  if (new_league.guilds) {
+    if (typeof new_league.guilds === 'string') {
+      guildNames = new_league.guilds.split(',').map(g => g.trim()).filter(Boolean);
+    } else if (Array.isArray(new_league.guilds)) {
+      guildNames = new_league.guilds;
+    }
+  }
+  new_league.guilds = guildNames.map(name => ({ name }));
+
+  // Parse raids from form (array of zone IDs)
+  if (new_league.raids) {
+    if (typeof new_league.raids === 'string') {
+      try { new_league.raids = JSON.parse(new_league.raids); } catch (e) { new_league.raids = []; }
+    }
+  } else {
+    // Default: all zones for this game version
+    const { getZonesForVersion } = require('../data/zones');
+    new_league.raids = getZonesForVersion(new_league.game_version);
+  }
+
+  // Build player pool
+  buildPlayerPool(new_league)
+    .then((pool) => {
+      new_league.player_pool = pool;
+      return db.leagues().insertOne(new_league);
+    })
     .then(() => res.redirect('/leagues'))
-    .catch(() => res.redirect('/403'));
+    .catch((err) => {
+      console.error('League creation failed:', err.message);
+      res.redirect('/403');
+    });
 });
 
 // API: Create team
