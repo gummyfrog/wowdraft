@@ -56,6 +56,26 @@ block content
 			h3 Season Length (weeks):
 			input(v-model="season_length" type='number' placeholder='8' name='season_length' min="2" max="20" required)
 
+			h3 Guilds:
+			div.guild_search
+				input(v-model="guildSearch" type='text' placeholder='Search for a guild...' @keyup.enter="searchGuilds")
+				button(type='button' @click="searchGuilds") Search
+			div.guild_results(v-if="guildResults.length > 0")
+				div.guild_result(v-for="g in guildResults" @click="addGuild(g.name)")
+					span {{g.name}}
+					span.guild_faction(v-if="g.faction")  ({{g.faction}})
+			div.selected_guilds
+				div.selected_guild(v-for="(g, i) in selectedGuilds")
+					span {{g}}
+					button(type='button' @click="removeGuild(i)") x
+			input(type='hidden' name='guilds' :value="selectedGuilds.join(',')")
+
+			h3 Raids:
+			div.raid_selection
+				label(v-for="zone in availableZones")
+					input(type='checkbox' :value="zone.id" v-model="selectedRaidIds")
+					span  {{zone.name}}
+			input(type='hidden' name='raids' :value="JSON.stringify(selectedRaids)")
 
 			h3 Activity Report Day
 			select(v-model="report_day" name="report_day")
@@ -108,5 +128,59 @@ block content
 				icon: "banner_Human.png",
 				report_day: "Tuesday",
 				start_date: "next monday at 3pm",
-				}
-			})
+				guildSearch: "",
+				guildResults: [],
+				selectedGuilds: [],
+				selectedRaidIds: [],
+			},
+			methods: {
+				searchGuilds: function() {
+					if (!this.guildSearch) return;
+					fetch('/leagues/api/guilds/search?q=' + encodeURIComponent(this.guildSearch) + '&server=' + encodeURIComponent(this.server) + '&region=' + this.region + '&game_version=' + this.game_version)
+						.then(function(res) { return res.json(); })
+						.then(function(guilds) { app.guildResults = guilds; });
+				},
+				addGuild: function(name) {
+					if (this.selectedGuilds.length >= 5) return;
+					if (!this.selectedGuilds.includes(name)) {
+						this.selectedGuilds.push(name);
+					}
+					this.guildResults = [];
+					this.guildSearch = "";
+				},
+				removeGuild: function(index) {
+					this.selectedGuilds.splice(index, 1);
+				},
+			},
+			computed: {
+				availableZones: function() {
+					var zones = {
+						classic: [
+							{ id: 1000, name: 'Molten Core' },
+							{ id: 1001, name: "Onyxia's Lair" },
+							{ id: 1002, name: 'Blackwing Lair' },
+							{ id: 1003, name: "Zul'Gurub" },
+							{ id: 1004, name: "Temple of Ahn'Qiraj" },
+							{ id: 1005, name: "Ruins of Ahn'Qiraj" },
+							{ id: 1006, name: 'Naxxramas' },
+						],
+						retail: [
+							{ id: 38, name: "Nerub'ar Palace" },
+							{ id: 37, name: 'Amirdrassil' },
+						],
+					};
+					return zones[this.game_version] || zones.retail;
+				},
+				selectedRaids: function() {
+					return this.availableZones.filter(z => this.selectedRaidIds.includes(z.id));
+				},
+			},
+			watch: {
+				game_version: function() {
+					this.selectedRaidIds = this.availableZones.map(z => z.id);
+				},
+			},
+			mounted: function() {
+				this.selectedRaidIds = this.availableZones.map(z => z.id);
+			},
+		})
