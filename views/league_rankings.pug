@@ -10,9 +10,14 @@ block content
 
 			div(v-if="activity_report != null")#report_wrapper
 
-				h1.activity_header.
-					<i class="fas fa-calendar"></i>
-					{{fancyDate}} Activity Report
+				div.week_selector
+					button(@click="prevWeek" :disabled="selectedWeek <= 0")
+						i.fas.fa-arrow-left
+					h1.activity_header.
+						<i class="fas fa-calendar"></i>
+						Week {{selectedWeek + 1}} Activity Report
+					button(@click="nextWeek" :disabled="selectedWeek >= activity_reports.length - 1")
+						i.fas.fa-arrow-right
 
 				team-item(
 					v-for="(team, index) in teams"
@@ -23,6 +28,17 @@ block content
 					v-bind:get_index="getIndex",
 					v-bind:highest_points="highestPoints",
 				)
+			div(v-if="activity_report && activity_report.matchups").matchup_results
+				h2.
+					<i class="fas fa-trophy"></i>
+					Matchup Results
+				div(v-for="m in activity_report.matchups").matchup
+					span(v-if="m.bye") {{getTeamName(m.bye)}} — Bye Week
+					span(v-else)
+						| {{getTeamName(m.home)}} ({{m.homeScore}}) vs {{getTeamName(m.away)}} ({{m.awayScore}})
+						strong(v-if="m.winner")  — {{getTeamName(m.winner)}} wins!
+						strong(v-if="m.tie")  — Tie!
+
 			div(v-else)
 				h1 Waiting on report to be generated.
 
@@ -123,23 +139,33 @@ block content
 		  	teams: league.teams,
 		  	activity_reports: league.activity_reports,
 		  	league_info: league,
+		  	selectedWeek: league.activity_reports.length > 0 ? league.activity_reports.length - 1 : 0,
 		  },
 		  computed: {
 		  	fancyDate:function() {
 		  		if(this.activity_report != null) {
 		  			var date = new Date(this.activity_report.time);
-		  			return `${date.getMonth()}/${date.getDate()}`
+		  			return (date.getMonth()+1) + '/' + date.getDate();
 		  		}
+		  		return '';
 		  	},
 		  	activity_report:function() {
-		  		if(this.activity_reports != []) {
-		  			return this.activity_reports[0];
+		  		if(this.activity_reports.length > 0) {
+		  			return this.activity_reports[this.selectedWeek];
 		  		} else {
 		  			return null;
 		  		}
 		  	},
 		  	sorted_teams:function() {
-		  	
+		  		if(this.activity_report == null) return this.teams;
+		  		var report = this.activity_report;
+		  		var self = this;
+		  		return this.teams.slice().sort(function(a, b) {
+		  			var ia = self.getIndex(a.id);
+		  			var ib = self.getIndex(b.id);
+		  			if(ia === -1 || ib === -1) return 0;
+		  			return report.data[ib].total_points - report.data[ia].total_points;
+		  		});
 		  	},
 		  },
 		  methods: {
@@ -184,11 +210,22 @@ block content
 		  			case("precise_execution"):
 		  				msg = "Surgically Precise"
 		  				break;
+		  			case("consistency"):
+		  				msg = "Surgically Precise"
+		  				break;
 		  			default:
 		  				msg = "";
 		  		}
 
 		  		return msg;
+		  	},
+		  	prevWeek:function() { if(this.selectedWeek > 0) this.selectedWeek--; },
+		  	nextWeek:function() { if(this.selectedWeek < this.activity_reports.length - 1) this.selectedWeek++; },
+		  	getTeamName:function(teamId) {
+		  		for(var x=0;x<this.teams.length;x++) {
+		  			if(this.teams[x].id == teamId) return this.teams[x].name;
+		  		}
+		  		return teamId;
 		  	},
 		  	highestPoints:function(dist) {
 		  		var fakeDist = Object.assign({}, dist);
