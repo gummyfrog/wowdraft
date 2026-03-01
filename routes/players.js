@@ -15,6 +15,7 @@ router.get('/:leagueID', function (req, res) {
         onClock: onClock,
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        league: JSON.stringify(league),
       });
     })
     .catch(() => res.redirect('/404'));

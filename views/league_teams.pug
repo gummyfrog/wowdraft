@@ -5,6 +5,8 @@ block content
 		div#content
 			draft_info(
 				v-bind:league_info="league_info",
+				v-bind:status_slug="statusSlug",
+				current_page="teams"
 			)
 
 			team-item(
@@ -45,22 +47,33 @@ block content
 		})
 
 		Vue.component('draft_info', {
-			props: ['league_info'],
-		 	template: `
-		 	<div> 
-		 		<div class="league_wrapper" :style="'color:'+league.color1"> 
-		 		<img class="league_logo" :src="'/images/league_icons/' + league.icon">
-		 		<h1 class="league_name"> {{league_info.name}} </h1> 
-		 	</div>
-
-		 	<div class="league_links_wrapper">
-		 		<ol class="league_links">
-		 			<a :href="'/leagues/' + league_info.code"> <i class="fas fa-home"></i> League Home </a>
-		 			<a :href="'/leagues/' + league_info.code + '/teams'"> <i class="fas fa-flag"></i> Teams </a>
-		 			<a :href="'/leagues/' + league_info.code + '/rankings'"> <i class="fas fa-calendar-alt"></i> Rankings </a>
-		 		</ol>
-		 	</div>
-		 	`
+			props: ['league_info', 'status_slug', 'current_page'],
+			template: `
+			<div class="league-header">
+				<div class="league-header-top">
+					<img class="league-header-icon" :src="'/images/league_icons/' + league_info.icon">
+					<h1 class="league-header-name" :style="'color:'+league_info.color1">{{league_info.name}}</h1>
+					<span class="status-badge" :class="status_slug">{{league_info.status}}</span>
+				</div>
+				<div class="league-header-meta">
+					<span class="meta-chip">{{league_info.server || 'Any Server'}}</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.faction || 'Any'}}</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.style || 'Snake'}} Draft</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.report_day || 'Monday'}} reports</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">Org: {{league_info.admin.name}}</span>
+				</div>
+				<div class="league-header-nav">
+					<a :href="'/leagues/' + league_info.code" :class="{active: current_page === 'home'}"><i class="fas fa-home"></i> Home</a>
+					<a :href="'/leagues/' + league_info.code + '/teams'" :class="{active: current_page === 'teams'}"><i class="fas fa-flag"></i> Teams</a>
+					<a :href="'/leagues/' + league_info.code + '/rankings'" :class="{active: current_page === 'rankings'}"><i class="fas fa-calendar-alt"></i> Rankings</a>
+					<a :href="'/proplayers/' + league_info.code" :class="{active: current_page === 'players'}"><i class="fas fa-list"></i> Players</a>
+				</div>
+			</div>
+			`
 		})
 
 
@@ -83,5 +96,10 @@ block content
 		  data: {
 		  	teams: league.teams,
 		  	league_info: league,
+		  },
+		  computed: {
+		  	statusSlug() {
+		  		return this.league_info.status.toLowerCase().replace(" ", '-');
+		  	}
 		  }
 		})

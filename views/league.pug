@@ -11,9 +11,23 @@ block content
 
 			draft_info(
 				v-bind:league_info="league_info",
-				v-bind:status_slug="statusSlug"
+				v-bind:status_slug="statusSlug",
+				current_page="home"
 			)
-			
+
+			p(v-if="league_info.description") "{{league_info.description}}"
+
+			a.startbutton(v-if="!{organizer} && league_info.status == 'Setting Up' && league_info.teams && league_info.teams.length >= 2" :href="'/leagues/' + league_info.code + '/start'")
+				h2
+					i.fas.fa-hand-point-right
+					|  Ready to go? Start Drafting!
+
+			div.create_team_box(v-if="!{canMakeTeam}")
+				a(:href="'/leagues/' + league_info.code + '/newTeam'")
+					h2
+						i.fas.fa-long-arrow-alt-right
+						|  Register Your Team!
+
 			draft_progress(
 				v-bind:draft_info="draft_info",
 				v-bind:teams="teams",
@@ -21,6 +35,32 @@ block content
 				v-bind:yti="yourTeamIndex"
 				v-bind:reqs="requirements"
 			)
+
+			div(v-if="league_info.status == 'Drafted'").start_season_box
+				h2
+					i.fas.fa-play
+					|  Draft Complete! Ready to start the season?
+				form(:action="'/leagues/api/' + league_info.code + '/startSeason'" method="post")
+					button(type="submit")
+						i.fas.fa-check
+						|  Start Season
+
+			div(v-if="league_info.status == 'Active'").season_info
+				h2
+					i.fas.fa-trophy
+					|  Season Active — Week {{currentWeek}}
+				p Report Day: {{league_info.report_day || 'Wednesday'}}
+				button(@click="generateReport" :disabled="generating").update-scores-btn
+					i.fas.fa-sync
+					|  {{generating ? 'Generating...' : 'Update Scores'}}
+
+			div(v-if="league_info.standings").standings
+				h2
+					i.fas.fa-list-ol
+					|  Standings
+				div(v-for="team in sortedTeams").standing_row
+					span.standing_name {{team.name}}
+					span.standing_record {{getRecord(team.id)}}
 
 			div.title-bar
 				h2.
@@ -70,106 +110,33 @@ block content
 		})
 
 		Vue.component('draft_info', {
-			props: ['league_info', 'status_slug'],
-		 	template: `
-		 	<div> 
-		 		<div class="league_wrapper" :style="'color:'+league.color1"> 
-		 		<img class="league_logo" :src="'/images/league_icons/' + league.icon">
-		 		<h1 class="league_name"> 
-		 			{{league_info.name}} 
-		 		</h1> 
-		 	</div>
-
-		 	<div class="league_links_wrapper">
-		 		<ol class="league_links">
-		 			<a :href="'/leagues/' + league_info.code"> <i class="fas fa-home"></i> League Home </a>
-		 			<a :href="'/leagues/' + league_info.code + '/teams'"> <i class="fas fa-flag"></i> Teams </a>
-		 			<a :href="'/leagues/' + league_info.code + '/rankings'"> <i class="fas fa-calendar-alt"></i> Rankings </a>
-		 		</ol>
-		 	</div>
-
-		 	<div class="league_body">
-
-			 		<h2 class="flavor">
-					 	"{{league_info.description}}"
-				 	</h2> 
-
-			 		<p :class="'league_status '+status_slug">
-				 		{{league_info.status}}
-			 		</p>
-
-				 	<p class="organizedby">
-				 	Organizer: {{league_info.admin.name}}
-				 	</p>
-
-				 	<div class="league_information">
-
-					 	<p class="style" 
-					 	Draft Style: {{league_info.style}}
-					 	</p> 
-
-					 	<p class="reportday"> 
-					 	Report Day: {{league_info.report_day || "Monday"}} 
-					 	</p>
-
-					 	<p class="startday"> 
-					 	Draft Will Start: "{{league_info.start_date || "didn't say!"}}"
-					 	</p>
-
-						
-						<br>
-
-					 	<p class="rounds">{{league_info.rounds}} Picks per Team
-					 	</p>
-
-					 	<p class="factioninfo">
-					 	{{league_info.server}}, {{league_info.faction}} 
-					 	</p> 
-
-
-					</div>
-			 	<a class="startbutton" v-if="!{organizer} && league.status == 'Setting Up' && league.teams.length >=2" :href="'/leagues/' + league_info.code + '/start'"> 
-			 		<br>
-			 		<h2>
-			 		 <i class="fas fa-hand-point-right "></i> Ready to go? Start Drafting!
-			 		</h2>
-			 	</a>
-
-		 	</div>
-
-		 	<div v-if="!{canMakeTeam}" class="create_team_box">
-			 	<a :href="'/leagues/' + league_info.code + '/newTeam'">
-			 		<h2>
-			 			<i class="fas fa-long-arrow-alt-right"></i> Register Your Team!
-		 			</h2>
-				</a>
-			</div>
-
-			<div v-if="league_info.status == 'Drafted'" class="start_season_box">
-				<h2><i class="fas fa-play"></i> Draft Complete! Ready to start the season?</h2>
-				<form :action="'/leagues/api/' + league_info.code + '/startSeason'" method="post" class="start-season-form">
-					<button type="submit"><i class="fas fa-check"></i> Start Season</button>
-				</form>
-			</div>
-
-			<div v-if="league_info.status == 'Active'" class="season_info">
-				<h2><i class="fas fa-trophy"></i> Season Active — Week {{currentWeek}}</h2>
-				<p>Report Day: {{league_info.report_day || 'Wednesday'}}</p>
-
-				<button @click="generateReport" :disabled="generating" class="update-scores-btn">
-					<i class="fas fa-sync"></i> {{generating ? 'Generating...' : 'Update Scores'}}
-				</button>
-			</div>
-
-			<div v-if="league_info.standings" class="standings">
-				<h2><i class="fas fa-list-ol"></i> Standings</h2>
-				<div v-for="team in sortedTeams" class="standing_row">
-					<span class="standing_name">{{team.name}}</span>
-					<span class="standing_record">{{getRecord(team.id)}}</span>
+			props: ['league_info', 'status_slug', 'current_page'],
+			template: `
+			<div class="league-header">
+				<div class="league-header-top">
+					<img class="league-header-icon" :src="'/images/league_icons/' + league_info.icon">
+					<h1 class="league-header-name" :style="'color:'+league_info.color1">{{league_info.name}}</h1>
+					<span class="status-badge" :class="status_slug">{{league_info.status}}</span>
+				</div>
+				<div class="league-header-meta">
+					<span class="meta-chip">{{league_info.server || 'Any Server'}}</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.faction || 'Any'}}</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.style || 'Snake'}} Draft</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.report_day || 'Monday'}} reports</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">Org: {{league_info.admin.name}}</span>
+				</div>
+				<div class="league-header-nav">
+					<a :href="'/leagues/' + league_info.code" :class="{active: current_page === 'home'}"><i class="fas fa-home"></i> Home</a>
+					<a :href="'/leagues/' + league_info.code + '/teams'" :class="{active: current_page === 'teams'}"><i class="fas fa-flag"></i> Teams</a>
+					<a :href="'/leagues/' + league_info.code + '/rankings'" :class="{active: current_page === 'rankings'}"><i class="fas fa-calendar-alt"></i> Rankings</a>
+					<a :href="'/proplayers/' + league_info.code" :class="{active: current_page === 'players'}"><i class="fas fa-list"></i> Players</a>
 				</div>
 			</div>
-
-		 	`
+			`
 		})
 
 		Vue.component('draft_progress', {

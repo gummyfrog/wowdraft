@@ -642,3 +642,93 @@ input, select {
 	display: block;
 	margin: 8px 0;
 }
+
+/*
+  Compact League Header
+*/
+
+.league-header {
+  border: 2px solid #555555;
+  background-image: linear-gradient(#161616, #0a0a0a);
+  margin-bottom: 15px;
+}
+
+.league-header-top {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  gap: 10px;
+}
+
+.league-header-icon {
+  height: 32px;
+  width: 32px;
+  clip-path: circle(50%);
+  flex-shrink: 0;
+}
+
+.league-header-name {
+  font-size: 1.4em;
+  flex-grow: 1;
+}
+
+.status-badge {
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 3px 10px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  text-shadow: none;
+}
+
+.status-badge.setting-up { background: #40BC40; color: #000; }
+.status-badge.in-progress { background: #C41E3A; color: #fff; }
+.status-badge.drafted { background: #FF8000; color: #000; }
+.status-badge.active { background: #00B7FF; color: #000; }
+.status-badge.completed { background: #888; color: #fff; }
+
+.league-header-meta {
+  padding: 4px 15px 8px;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.meta-chip {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.meta-sep {
+  margin: 0 6px;
+  opacity: 0.5;
+}
+
+.league-header-nav {
+  display: flex;
+  border-top: 1px solid #333;
+}
+
+.league-header-nav a {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  color: #aaa;
+  text-decoration: none;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9em;
+  border-right: 1px solid #333;
+  transition: background 0.15s, color 0.15s;
+}
+
+.league-header-nav a:last-child {
+  border-right: none;
+}
+
+.league-header-nav a:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+
+.league-header-nav a.active {
+  color: #00B7FF;
+  border-bottom: 2px solid #00B7FF;
+}
