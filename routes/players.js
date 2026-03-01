@@ -8,10 +8,11 @@ router.get('/:leagueID', function (req, res) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
+      var onClock = leaguelogic.isCurrentTeamManager();
       res.render('proplayers', {
         title: league.name,
         leagueID: req.params.leagueID,
-        onClock: leaguelogic.isCurrentTeamManager(),
+        onClock: onClock,
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
       });
@@ -19,60 +20,62 @@ router.get('/:leagueID', function (req, res) {
     .catch(() => res.redirect('/404'));
 });
 
+/**
+ * Filter and paginate a league's player pool in memory.
+ */
+function filterPool(league, tag, page, extraFilter) {
+  const leagueCode = league.code;
+  const pool = league.player_pool || [];
+  const PAGE_SIZE = 10;
+
+  let filtered = pool.filter(p =>
+    p.tag === tag &&
+    !p.drafted.includes(leagueCode)
+  );
+
+  if (extraFilter) {
+    filtered = filtered.filter(extraFilter);
+  }
+
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  return paginated;
+}
+
 // API: List players by role (paginated)
 router.get('/api/:leagueID/:tag/:page', function (req, res) {
-  var { leagueID, tag, page } = req.params;
-
-  db.leagues().findOne({ code: leagueID })
+  db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
-      var faction = league.faction === 'Horde' ? 1 : 0;
-
-      db.players(tag).find({
-        drafted: { $nin: [leagueID] },
-        faction: faction,
-      }).skip(parseInt(page * 10)).limit(10).toArray()
-        .then((proplayers) => res.json(proplayers))
-        .catch((err) => res.json(err));
+      const page = parseInt(req.params.page) || 0;
+      const tag = req.params.tag.toLowerCase();
+      const players = filterPool(league, tag, page);
+      res.json(players);
     })
-    .catch((err) => res.json(err));
+    .catch(() => res.json([]));
 });
 
-// API: Search player by name
+// API: Search players by name
 router.get('/api/:leagueID/:tag/search/:name', function (req, res) {
-  var { leagueID, tag, name } = req.params;
-
-  db.leagues().findOne({ code: leagueID })
+  db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
-      var faction = league.faction === 'Horde' ? 1 : 0;
-
-      db.players(tag).find({
-        drafted: { $nin: [leagueID] },
-        faction: faction,
-        name: { $regex: name, $options: 'i' },
-      }).limit(10).toArray()
-        .then((proplayers) => res.json(proplayers))
-        .catch((err) => res.json(err));
+      const tag = req.params.tag.toLowerCase();
+      const nameRegex = new RegExp(req.params.name, 'i');
+      const players = filterPool(league, tag, 0, p => nameRegex.test(p.name));
+      res.json(players);
     })
-    .catch((err) => res.json(err));
+    .catch(() => res.json([]));
 });
 
-// API: Search player by guild (paginated)
+// API: Search players by guild (paginated)
 router.get('/api/:leagueID/:tag/guild/:guild/:page', function (req, res) {
-  var { leagueID, tag, guild, page } = req.params;
-
-  db.leagues().findOne({ code: leagueID })
+  db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
-      var faction = league.faction === 'Horde' ? 1 : 0;
-
-      db.players(tag).find({
-        drafted: { $nin: [leagueID] },
-        faction: faction,
-        guild: { $regex: guild, $options: 'i' },
-      }).skip(parseInt(page * 10)).limit(10).toArray()
-        .then((proplayers) => res.json(proplayers))
-        .catch((err) => res.json(err));
+      const tag = req.params.tag.toLowerCase();
+      const page = parseInt(req.params.page) || 0;
+      const guildRegex = new RegExp(req.params.guild, 'i');
+      const players = filterPool(league, tag, page, p => guildRegex.test(p.guild));
+      res.json(players);
     })
-    .catch((err) => res.json(err));
+    .catch(() => res.json([]));
 });
 
 module.exports = router;
