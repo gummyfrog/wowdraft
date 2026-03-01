@@ -2,6 +2,7 @@ const express = require('express');
 const short = require('short-uuid');
 const db = require('../db');
 const LeagueLogic = require('./league');
+const { getClient } = require('../services/warcraftlogs');
 const router = express.Router();
 
 // List all leagues
@@ -24,6 +25,48 @@ router.get('/create', function (req, res) {
     user_session_auth: req.session.loggedin,
     user_session_name: req.session.username,
   });
+});
+
+// API: Search guilds (for league creation)
+router.get('/api/guilds/search', function (req, res) {
+  const q = (req.query.q || '').toLowerCase();
+  const serverSlug = (req.query.server || '').toLowerCase().replace(/\s/g, '-');
+  const serverRegion = req.query.region || 'us';
+  const gameVersion = req.query.game_version || 'retail';
+
+  const wcl = getClient();
+  if (wcl && serverSlug) {
+    // Search WCL for guilds on this server
+    wcl.searchGuilds(serverSlug, serverRegion, gameVersion)
+      .then((result) => {
+        const guilds = (result && result.data) || [];
+        const filtered = q
+          ? guilds.filter(g => g.name.toLowerCase().includes(q))
+          : guilds;
+        res.json(filtered.slice(0, 20).map(g => ({
+          name: g.name,
+          faction: g.faction ? g.faction.name : null,
+        })));
+      })
+      .catch(() => res.json([]));
+  } else {
+    // Fallback: return distinct guild names from seed proplayers DB
+    const tags = ['dps', 'healers', 'tanks'];
+    const guildSet = new Set();
+
+    Promise.all(tags.map(tag =>
+      db.players(tag).distinct('guild')
+    )).then((results) => {
+      for (const guilds of results) {
+        for (const g of guilds) guildSet.add(g);
+      }
+      let guilds = [...guildSet].sort();
+      if (q) {
+        guilds = guilds.filter(g => g.toLowerCase().includes(q));
+      }
+      res.json(guilds.slice(0, 20).map(g => ({ name: g, faction: null })));
+    }).catch(() => res.json([]));
+  }
 });
 
 // League home page
