@@ -33,22 +33,28 @@ block content
 			h3 # of Rounds (picks) per player:
 			input(v-model="rounds" type='number' placeholder='10' name='rounds' min="1" max="10" required)
 
-			h4.disabled-note.
-				<i class="fas fa-exclamation-circle"></i> 
-				Not implemented just yet!
+			h3 Game Version:
+			select(v-model="game_version" name="game_version" required)
+				option(value="retail") Retail (The War Within)
+				option(value="classic") Classic
 
-			div.disabled-input
-				h3 Draft Style:
-				select(v-model="style" name="style" required)
-					option(value="Standard") Standard
+			h3 Server:
+			input(v-model="server" type='text' placeholder='Faerlina' name='server' required)
 
-				h3 Server & Side:
-				select(v-model="server" name="server")
-					option(value="Grobbulus") Grobbulus
+			h3 Region:
+			select(v-model="region" name="region" required)
+				option(value="us") US
+				option(value="eu") EU
+				option(value="kr") KR
+				option(value="tw") TW
 
-				select(v-model="faction" name="faction")
-					option(value="Alliance") Alliance
-					option(value="Horde") Horde
+			h3 Faction:
+			select(v-model="faction" name="faction" required)
+				option(value="Alliance") Alliance
+				option(value="Horde") Horde
+
+			h3 Season Length (weeks):
+			input(v-model="season_length" type='number' placeholder='8' name='season_length' min="2" max="20" required)
 
 
 			h3 Activity Report Day
@@ -92,8 +98,11 @@ block content
 				name:"Stormwind League",
 				description: "Light be with you.",
 				rounds: 10,
-				server: "Grobbulus",
+				game_version: "retail",
+				server: "",
+				region: "us",
 				faction: "Alliance",
+				season_length: 8,
 				style:"Standard",
 				color1: "#0070FF",
 				icon: "banner_Human.png",

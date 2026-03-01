@@ -115,6 +115,9 @@ router.post('/api/create', function (req, res) {
     status: 0,
   };
   new_league.requirements = { dps: 5, healers: 2, tanks: 2 };
+  new_league.game_version = new_league.game_version || 'retail';
+  new_league.region = new_league.region || 'us';
+  new_league.season_length = parseInt(new_league.season_length) || 8;
 
   db.leagues().insertOne(new_league)
     .then(() => res.redirect('/leagues'))
