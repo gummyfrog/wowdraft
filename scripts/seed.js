@@ -224,29 +224,183 @@ function generatePlayers(tag, count, namePool) {
 }
 
 // ---------------------------------------------------------------------------
-// Sample league
+// Sample league builder
 // ---------------------------------------------------------------------------
 
-const SAMPLE_LEAGUE = {
-  code: 'demo',
-  name: 'Azeroth Championship',
-  description: 'A demo league for testing',
-  icon: 'banner_Orc.png',
-  color1: '#8b0000',
-  color2: '#1a1a2e',
-  faction: 'Horde',
-  server: 'Faerlina',
-  style: 'Standard',
-  status: 'Setting Up',
-  rounds: 9,
-  report_day: 'Wednesday',
-  start_date: '2024-01-15',
-  admin: { name: 'Guest#1234' },
-  requirements: { dps: 5, healers: 2, tanks: 2 },
-  teams: [],
-  draft: { pick_order: [0], pick_index: 0, picks: [], status: 0 },
-  activity_reports: [],
-};
+function buildDemoLeague(dpsPlayers, healerPlayers, tankPlayers) {
+  // Pick players for two teams
+  const team1Players = [
+    ...dpsPlayers.slice(0, 5).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'dps' })),
+    ...healerPlayers.slice(0, 2).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'healers' })),
+    ...tankPlayers.slice(0, 2).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'tanks' })),
+  ];
+
+  const team2Players = [
+    ...dpsPlayers.slice(5, 10).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'dps' })),
+    ...healerPlayers.slice(2, 4).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'healers' })),
+    ...tankPlayers.slice(2, 4).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'tanks' })),
+  ];
+
+  const team3Players = [
+    ...dpsPlayers.slice(10, 15).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'dps' })),
+    ...healerPlayers.slice(4, 6).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'healers' })),
+    ...tankPlayers.slice(4, 6).map(p => ({ id: p.name, name: p.name, class: p.class.toLowerCase(), guild: p.guild, spec: p.rankings[0].spec, role: 'tanks' })),
+  ];
+
+  const teams = [
+    {
+      id: 'team_horde',
+      name: 'Lok\'tar Legion',
+      manager: 'Guest#1234',
+      icon: 'horde',
+      color2: '#8b0000',
+      motto: 'Victory or death!',
+      drafted_players: team1Players,
+      roles_drafted: { dps: 5, healers: 2, tanks: 2 },
+    },
+    {
+      id: 'team_alliance',
+      name: 'Stormwind Knights',
+      manager: 'Guest#5678',
+      icon: 'alliance',
+      color2: '#0070FF',
+      motto: 'For the Alliance!',
+      drafted_players: team2Players,
+      roles_drafted: { dps: 5, healers: 2, tanks: 2 },
+    },
+    {
+      id: 'team_neutral',
+      name: 'Steamwheedle Sharks',
+      manager: 'Guest#9999',
+      icon: 'neutral',
+      color2: '#FFD700',
+      motto: 'Time is money, friend!',
+      drafted_players: team3Players,
+      roles_drafted: { dps: 5, healers: 2, tanks: 2 },
+    },
+  ];
+
+  // Generate mock scoring data for reports
+  function mockPlayerScores(players) {
+    const scores = {};
+    for (const p of players) {
+      const parse = randInt(0, 10);
+      const dps = randInt(0, 8);
+      const bosses_down = randInt(0, 10);
+      const speedy_clear = randInt(0, 8);
+      const new_best = randInt(0, 8);
+      const consistency = randInt(0, 6);
+      const total = parse + dps + bosses_down + speedy_clear + new_best + consistency;
+      scores[p.name] = {
+        points: { total, parse, dps, bosses_down, speedy_clear, new_best, consistency },
+        title: total > 20 ? 'Parser' : total > 10 ? 'Boss Killer' : '',
+      };
+    }
+    return scores;
+  }
+
+  // Generate 2 weeks of mock reports
+  const report1Teams = teams.map(t => {
+    const players = mockPlayerScores(t.drafted_players);
+    const total_points = Object.values(players).reduce((sum, p) => sum + p.points.total, 0);
+    return { team_id: t.id, team_name: t.name, total_points, players };
+  });
+
+  const report2Teams = teams.map(t => {
+    const players = mockPlayerScores(t.drafted_players);
+    const total_points = Object.values(players).reduce((sum, p) => sum + p.points.total, 0);
+    return { team_id: t.id, team_name: t.name, total_points, players };
+  });
+
+  // Mock matchup results
+  const week1Matchups = [
+    {
+      home: 'team_horde', away: 'team_alliance',
+      homeScore: report1Teams[0].total_points,
+      awayScore: report1Teams[1].total_points,
+      winner: report1Teams[0].total_points >= report1Teams[1].total_points ? 'team_horde' : 'team_alliance',
+      loser: report1Teams[0].total_points >= report1Teams[1].total_points ? 'team_alliance' : 'team_horde',
+    },
+    { bye: 'team_neutral' },
+  ];
+
+  const week2Matchups = [
+    {
+      home: 'team_alliance', away: 'team_neutral',
+      homeScore: report2Teams[1].total_points,
+      awayScore: report2Teams[2].total_points,
+      winner: report2Teams[1].total_points >= report2Teams[2].total_points ? 'team_alliance' : 'team_neutral',
+      loser: report2Teams[1].total_points >= report2Teams[2].total_points ? 'team_neutral' : 'team_alliance',
+    },
+    { bye: 'team_horde' },
+  ];
+
+  // Compute standings from matchup results
+  const standings = {
+    'team_horde': { wins: 0, losses: 0 },
+    'team_alliance': { wins: 0, losses: 0 },
+    'team_neutral': { wins: 0, losses: 0 },
+  };
+  for (const m of [...week1Matchups, ...week2Matchups]) {
+    if (m.winner) standings[m.winner].wins++;
+    if (m.loser) standings[m.loser].losses++;
+    if (m.bye) standings[m.bye].wins++;
+  }
+
+  const activityReports = [
+    {
+      time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      week: 1,
+      data: report1Teams,
+      matchups: week1Matchups,
+    },
+    {
+      time: new Date(),
+      week: 2,
+      data: report2Teams,
+      matchups: week2Matchups,
+    },
+  ];
+
+  // Generate schedule for remaining weeks
+  const schedule = [
+    { week: 1, matchups: [{ home: 'team_horde', away: 'team_alliance' }, { bye: 'team_neutral' }] },
+    { week: 2, matchups: [{ home: 'team_alliance', away: 'team_neutral' }, { bye: 'team_horde' }] },
+    { week: 3, matchups: [{ home: 'team_neutral', away: 'team_horde' }, { bye: 'team_alliance' }] },
+    { week: 4, matchups: [{ home: 'team_horde', away: 'team_alliance' }, { bye: 'team_neutral' }] },
+    { week: 5, matchups: [{ home: 'team_alliance', away: 'team_neutral' }, { bye: 'team_horde' }] },
+    { week: 6, matchups: [{ home: 'team_neutral', away: 'team_horde' }, { bye: 'team_alliance' }] },
+    { week: 7, matchups: [{ home: 'team_horde', away: 'team_alliance' }, { bye: 'team_neutral' }] },
+    { week: 8, matchups: [{ home: 'team_alliance', away: 'team_neutral' }, { bye: 'team_horde' }] },
+  ];
+
+  return {
+    code: 'demo',
+    name: 'Azeroth Championship',
+    description: 'A demo league showcasing WoWDraft features',
+    icon: 'banner_Orc.png',
+    color1: '#8b0000',
+    color2: '#1a1a2e',
+    faction: 'Horde',
+    server: 'Faerlina',
+    region: 'us',
+    game_version: 'classic',
+    style: 'Standard',
+    status: 'Active',
+    rounds: 9,
+    report_day: 'Wednesday',
+    start_date: '2024-01-15',
+    season_length: 8,
+    admin: { name: 'Guest#1234' },
+    requirements: { dps: 5, healers: 2, tanks: 2 },
+    teams,
+    draft: { pick_order: [0], pick_index: 0, picks: [], status: 2 },
+    schedule,
+    standings,
+    activity_reports: activityReports,
+    player_snapshots: {},
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Main seed function
@@ -282,15 +436,18 @@ async function seed() {
   await playersDB.collection('healers').insertMany(healerPlayers);
   await playersDB.collection('tanks').insertMany(tankPlayers);
 
-  // Insert sample league
-  await leaguesDB.collection('leagues').insertOne(SAMPLE_LEAGUE);
+  // Build and insert sample league with mock season data
+  const demoLeague = buildDemoLeague(dpsPlayers, healerPlayers, tankPlayers);
+  await leaguesDB.collection('leagues').insertOne(demoLeague);
 
   console.log('\nSeed complete!');
   console.log(`  DPS:     ${dpsPlayers.length} players`);
   console.log(`  Healers: ${healerPlayers.length} players`);
   console.log(`  Tanks:   ${tankPlayers.length} players`);
   console.log(`  Total:   ${dpsPlayers.length + healerPlayers.length + tankPlayers.length} players`);
-  console.log(`  Sample league: "Azeroth Championship" (code: demo)`);
+  console.log(`  Sample league: "${demoLeague.name}" (code: demo, status: ${demoLeague.status})`);
+  console.log(`  Teams: ${demoLeague.teams.length} teams with drafted players`);
+  console.log(`  Reports: ${demoLeague.activity_reports.length} mock activity reports`);
 
   // Print a few sample players
   console.log('\n--- Sample DPS player ---');
