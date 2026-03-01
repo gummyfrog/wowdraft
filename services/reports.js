@@ -1,0 +1,201 @@
+const { getClient } = require('./warcraftlogs');
+const { scorePlayer, getTitle } = require('./scoring');
+const db = require('../db');
+
+async function fetchPlayerSnapshot(playerName, serverSlug, serverRegion, gameVersion) {
+  const wcl = getClient();
+  if (!wcl) return null;
+
+  try {
+    const character = await wcl.getCharacterRankings(
+      playerName, serverSlug, serverRegion, gameVersion
+    );
+
+    if (!character || !character.encounterRankings) return null;
+
+    // Transform WCL encounterRankings into our snapshot format
+    const encounters = {};
+    const rankings = character.encounterRankings;
+
+    if (Array.isArray(rankings)) {
+      for (const ranking of rankings) {
+        const bossName = ranking.encounter ? ranking.encounter.name : `Boss_${ranking.encounterID}`;
+        encounters[bossName] = {
+          rankPercent: ranking.rankPercent || 0,
+          bestAmount: ranking.bestAmount || 0,
+          totalKills: ranking.totalKills || 0,
+          fastestKill: ranking.fastestKill || 0,
+          medianPerformance: ranking.medianPerformance || 0,
+        };
+      }
+    }
+
+    return { encounters };
+  } catch (err) {
+    console.error(`Failed to fetch WCL data for ${playerName}:`, err.message);
+    return null;
+  }
+}
+
+async function generateReport(leagueCode) {
+  const league = await db.leagues().findOne({ code: leagueCode });
+  if (!league || league.status !== 'Active') {
+    throw new Error(`League ${leagueCode} is not in Active status`);
+  }
+
+  const serverSlug = (league.server || '').toLowerCase().replace(/\s/g, '-');
+  const serverRegion = league.region || 'us';
+  const gameVersion = league.game_version || 'retail';
+  const oldSnapshots = league.player_snapshots || {};
+  const allDraftedPlayers = [];
+
+  // Collect all drafted players across all teams
+  for (const team of league.teams) {
+    for (const player of team.drafted_players) {
+      if (player.name && player.name !== 'No Pick') {
+        allDraftedPlayers.push({ ...player, teamId: team.id });
+      }
+    }
+  }
+
+  // Fetch fresh snapshots from WCL for each player
+  const newSnapshots = {};
+  for (const player of allDraftedPlayers) {
+    const snapshot = await fetchPlayerSnapshot(
+      player.name, serverSlug, serverRegion, gameVersion
+    );
+    if (snapshot) {
+      newSnapshots[player.name] = snapshot;
+    } else {
+      // Player has no new data — use old snapshot or empty
+      newSnapshots[player.name] = oldSnapshots[player.name] || { encounters: {} };
+    }
+    // Rate limit: 1 request per second
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  // Score each player
+  const allNewSnapshots = Object.values(newSnapshots);
+  const teamReportData = [];
+
+  for (const team of league.teams) {
+    const playerScores = {};
+    let teamTotal = 0;
+
+    for (const player of team.drafted_players) {
+      if (player.name === 'No Pick') {
+        playerScores[player.name] = { points: { total: 0, parse: 0, dps: 0, bosses_down: 0, speedy_clear: 0, new_best: 0, consistency: 0 } };
+        continue;
+      }
+
+      const newSnap = newSnapshots[player.name] || { encounters: {} };
+      const oldSnap = oldSnapshots[player.name] || {};
+      const points = scorePlayer(newSnap, oldSnap, allNewSnapshots);
+
+      playerScores[player.name] = { points, title: getTitle(points) };
+      teamTotal += points.total;
+    }
+
+    teamReportData.push({
+      team_id: team.id,
+      team_name: team.name,
+      total_points: teamTotal,
+      players: playerScores,
+    });
+  }
+
+  // Resolve head-to-head matchup for current week
+  const currentWeek = (league.activity_reports || []).length;
+  let matchupResult = null;
+
+  if (league.schedule && league.schedule[currentWeek]) {
+    const weekSchedule = league.schedule[currentWeek];
+    matchupResult = resolveMatchups(weekSchedule, teamReportData);
+  }
+
+  // Build report
+  const report = {
+    time: new Date(),
+    week: currentWeek + 1,
+    data: teamReportData,
+    matchups: matchupResult,
+  };
+
+  // Update league
+  const updateFields = {
+    player_snapshots: newSnapshots,
+  };
+
+  if (matchupResult) {
+    // Update W/L records
+    const standings = league.standings || {};
+    for (const result of matchupResult) {
+      if (result.winner) {
+        if (!standings[result.winner]) standings[result.winner] = { wins: 0, losses: 0 };
+        standings[result.winner].wins++;
+      }
+      if (result.loser) {
+        if (!standings[result.loser]) standings[result.loser] = { wins: 0, losses: 0 };
+        standings[result.loser].losses++;
+      }
+      if (result.bye) {
+        if (!standings[result.bye]) standings[result.bye] = { wins: 0, losses: 0 };
+        standings[result.bye].wins++;
+      }
+    }
+    updateFields.standings = standings;
+  }
+
+  // Use $set for non-array fields and $push for array
+  await db.leagues().updateOne(
+    { code: leagueCode },
+    {
+      $set: { player_snapshots: newSnapshots, standings: updateFields.standings || league.standings || {} },
+      $push: { activity_reports: report },
+    }
+  );
+
+  return report;
+}
+
+function resolveMatchups(weekSchedule, teamReportData) {
+  const results = [];
+
+  for (const matchup of weekSchedule.matchups) {
+    if (matchup.bye) {
+      results.push({ bye: matchup.bye });
+      continue;
+    }
+
+    const homeData = teamReportData.find(t => t.team_id === matchup.home);
+    const awayData = teamReportData.find(t => t.team_id === matchup.away);
+
+    if (!homeData || !awayData) continue;
+
+    const result = {
+      home: matchup.home,
+      away: matchup.away,
+      homeScore: homeData.total_points,
+      awayScore: awayData.total_points,
+    };
+
+    if (homeData.total_points > awayData.total_points) {
+      result.winner = matchup.home;
+      result.loser = matchup.away;
+    } else if (awayData.total_points > homeData.total_points) {
+      result.winner = matchup.away;
+      result.loser = matchup.home;
+    } else {
+      // Tie — both get a win
+      result.winner = null;
+      result.loser = null;
+      result.tie = true;
+    }
+
+    results.push(result);
+  }
+
+  return results;
+}
+
+module.exports = { generateReport, fetchPlayerSnapshot, resolveMatchups };
