@@ -374,6 +374,37 @@ function buildDemoLeague(dpsPlayers, healerPlayers, tankPlayers) {
     { week: 8, matchups: [{ home: 'team_alliance', away: 'team_neutral' }, { bye: 'team_horde' }] },
   ];
 
+  // Build player_pool from all Horde players (since demo is Horde faction)
+  const playerPool = [];
+  const allPlayers = [...dpsPlayers, ...healerPlayers, ...tankPlayers];
+  const demoGuilds = ['Grizzly', 'Fusion', 'Classic Guild', 'Spirit', 'BEEF',
+    'Warlords of Draenor', 'Vanguard', 'Bonk', 'Death and Taxes', 'Ascent'];
+  for (const p of allPlayers) {
+    if (p.faction === 1 && demoGuilds.includes(p.guild)) {
+      playerPool.push({
+        name: p.name,
+        class: p.class,
+        guild: p.guild,
+        tag: p.tag,
+        faction: p.faction,
+        drafted: [],
+        active: true,
+        avgParse: p.avgParse,
+        avgDps: p.avgDps,
+        avgSpeed: p.avgSpeed,
+        rankings: p.rankings,
+      });
+    }
+  }
+
+  // Mark drafted players in the pool
+  for (const team of teams) {
+    for (const dp of team.drafted_players) {
+      const poolPlayer = playerPool.find(p => p.name === dp.name);
+      if (poolPlayer) poolPlayer.drafted.push('demo');
+    }
+  }
+
   return {
     code: 'demo',
     name: 'Azeroth Championship',
@@ -393,12 +424,23 @@ function buildDemoLeague(dpsPlayers, healerPlayers, tankPlayers) {
     season_length: 8,
     admin: { name: 'Guest#1234' },
     requirements: { dps: 5, healers: 2, tanks: 2 },
+    guilds: [
+      { name: 'Grizzly' },
+      { name: 'Fusion' },
+      { name: 'Classic Guild' },
+    ],
+    raids: [
+      { id: 1000, name: 'Molten Core' },
+      { id: 1002, name: 'Blackwing Lair' },
+      { id: 1006, name: 'Naxxramas' },
+    ],
     teams,
     draft: { pick_order: [0], pick_index: 0, picks: [], status: 2 },
     schedule,
     standings,
     activity_reports: activityReports,
     player_snapshots: {},
+    player_pool: playerPool,
   };
 }
 
