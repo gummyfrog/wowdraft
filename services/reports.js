@@ -2,13 +2,13 @@ const { getClient } = require('./warcraftlogs');
 const { scorePlayer, getTitle } = require('./scoring');
 const db = require('../db');
 
-async function fetchPlayerSnapshot(playerName, serverSlug, serverRegion, gameVersion) {
+async function fetchPlayerSnapshot(playerName, serverSlug, serverRegion, gameVersion, options = {}) {
   const wcl = getClient();
   if (!wcl) return null;
 
   try {
     const character = await wcl.getCharacterRankings(
-      playerName, serverSlug, serverRegion, gameVersion
+      playerName, serverSlug, serverRegion, gameVersion, options
     );
 
     if (!character || !character.encounterRankings) return null;
@@ -58,11 +58,19 @@ async function generateReport(leagueCode) {
     }
   }
 
+  // Build WCL query options from league settings
+  const wclOptions = {};
+  if (league.raids && league.raids.length > 0) {
+    // Use the first selected zone ID for scoping
+    // WCL encounterRankings takes a single zoneID
+    wclOptions.zoneID = league.raids[0].id;
+  }
+
   // Fetch fresh snapshots from WCL for each player
   const newSnapshots = {};
   for (const player of allDraftedPlayers) {
     const snapshot = await fetchPlayerSnapshot(
-      player.name, serverSlug, serverRegion, gameVersion
+      player.name, serverSlug, serverRegion, gameVersion, wclOptions
     );
     if (snapshot) {
       newSnapshots[player.name] = snapshot;

@@ -57,14 +57,23 @@ class WarcraftLogsClient {
     return response.data.data;
   }
 
-  async getCharacterRankings(name, serverSlug, serverRegion, gameVersion = 'retail') {
+  async getCharacterRankings(name, serverSlug, serverRegion, gameVersion = 'retail', options = {}) {
+    const { zoneID, timeframe } = options;
+
+    // Build the encounterRankings arguments
+    let rankArgs = '';
+    const argParts = [];
+    if (zoneID) argParts.push(`zoneID: ${zoneID}`);
+    if (timeframe) argParts.push(`timeframe: ${timeframe}`);
+    if (argParts.length > 0) rankArgs = `(${argParts.join(', ')})`;
+
     const gql = `
       query ($name: String!, $server: String!, $region: String!) {
         characterData {
           character(name: $name, serverSlug: $server, serverRegion: $region) {
             name
             classID
-            encounterRankings
+            encounterRankings${rankArgs}
             zoneRankings
           }
         }
