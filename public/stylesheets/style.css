@@ -1020,3 +1020,82 @@ input, select {
   gap: 8px;
   margin-left: auto;
 }
+
+/*
+  League Event Cards
+*/
+
+.league-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+  padding: 15px 0;
+  list-style: none;
+}
+
+.league-card {
+  position: relative;
+  border: 2px solid #555;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  background-image: linear-gradient(#161616, #0a0a0a);
+}
+
+.league-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.league-card-banner {
+  height: 60px;
+  width: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.4;
+}
+
+.league-card-body {
+  padding: 12px 15px;
+}
+
+.league-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.league-card-top img {
+  height: 28px;
+  width: 28px;
+  clip-path: circle(50%);
+}
+
+.league-card-top h2 {
+  font-size: 1.15em;
+  flex-grow: 1;
+}
+
+.league-card-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.league-card-meta span {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.league-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 15px;
+  border-top: 1px solid #333;
+  font-size: 0.8em;
+  opacity: 0.6;
+}
