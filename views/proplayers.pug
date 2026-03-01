@@ -46,22 +46,23 @@ block content
 			 	<div id="info">
 				 	<h2> {{player.name}} </h2>
 				 	<h3> {{player.guild}} </h3>
+				 	<span v-if="player.active === false" class="inactive_badge">Inactive</span>
 				 	<h3> {{player.rankings[0].spec}} {{player.class}}</h3>
 			 	</div>
 
 			 	<div id="averages">
-				 	<div id="avg_parse_badge">
-				 		<span id="avg_parse" class="parse">{{player.avgParse}}</span>
+				 	<div v-if="player.avgParse != null" id="avg_parse_badge">
+				 		<span id="avg_parse" class="parse">{{Math.round(player.avgParse)}}</span>
 				 		<span>Average Parse</span>
 				 	</div>
 
-				 	<div id="avg_dps_badge">
-			 			<span id="avg_dps">{{player.avgDps}}</span>
+				 	<div v-if="player.avgDps != null" id="avg_dps_badge">
+			 			<span id="avg_dps">{{Math.round(player.avgDps)}}</span>
 			 			<span>Average DPS</span>
 			 		</div>
 
-			 		<div id="avg_speed_badge">
-			 			<span id="avg_speed" class="parse">{{player.avgSpeed}}</span>
+			 		<div v-if="player.avgSpeed != null" id="avg_speed_badge">
+			 			<span id="avg_speed" class="parse">{{Math.round(player.avgSpeed)}}</span>
 			 			<span>Average Speed</span>
 			 		</div>
 			 	</div>
@@ -74,8 +75,7 @@ block content
 			</div>
 
 		 	<form v-if="!{onClock}" action="/leagues/api/${leagueID}/draftPlayer" method='post'>
-		 		<input type="hidden" name="player_id" :value=player._id>
-		 		<input type="hidden" name="tag" :value=player.tag>
+		 		<input type="hidden" name="player_name" :value="player.name">
 		 		<button type="submit" class="draft_button"> <h3> <i class="fas fa-handshake"></i> draft this player </h3> </button>
 		 	</form>
 
