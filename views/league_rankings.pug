@@ -55,6 +55,30 @@ block content
 			div(v-else)
 				h1 Waiting on report to be generated.
 
+			div(v-if="activity_reports.length > 0").bracket-section
+				div.title-bar
+					h2.
+						<i class="fas fa-sitemap"></i>
+						Season Bracket
+				div.bracket-container
+					div.bracket-weeks
+						div(v-for="(report, weekIndex) in activity_reports" :key="weekIndex").bracket-week
+							div.bracket-week-label Week {{weekIndex + 1}}
+							div(v-if="report.matchups")
+								div(v-for="m in report.matchups" :key="m.home || m.bye")
+									div(v-if="m.bye").bracket-matchup
+										div.bracket-bye {{getTeamName(m.bye)}} — Bye
+									div(v-else).bracket-matchup
+										div.bracket-team-row(:class="{'bracket-winner': m.winner === m.home}")
+											span.bracket-team-name {{getTeamName(m.home)}}
+											span.bracket-team-score {{m.homeScore}}
+										div.bracket-team-row(:class="{'bracket-winner': m.winner === m.away}")
+											span.bracket-team-name {{getTeamName(m.away)}}
+											span.bracket-team-score {{m.awayScore}}
+							div(v-else)
+								div.bracket-matchup
+									div.bracket-bye Pending...
+
 	script.
 		var league = !{JSON.stringify(league)}
 		league = JSON.parse(league)

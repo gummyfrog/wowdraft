@@ -1222,3 +1222,96 @@ input, select {
 .week-selector h1 {
   font-size: 1.2em;
 }
+
+/*
+  Season Bracket
+*/
+
+.bracket-section {
+  margin-top: 30px;
+}
+
+.bracket-container {
+  overflow-x: auto;
+  padding: 15px;
+  border: 2px solid #555;
+  background-image: linear-gradient(#161616, #0a0a0a);
+}
+
+.bracket-weeks {
+  display: flex;
+  gap: 20px;
+  min-width: max-content;
+}
+
+.bracket-week {
+  min-width: 200px;
+}
+
+.bracket-week-label {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 8px;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.bracket-matchup {
+  border: 1px solid #444;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  animation: bracketFadeIn 0.4s ease-out both;
+}
+
+.bracket-matchup:nth-child(2) { animation-delay: 0.05s; }
+.bracket-matchup:nth-child(3) { animation-delay: 0.1s; }
+.bracket-matchup:nth-child(4) { animation-delay: 0.15s; }
+
+@keyframes bracketFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bracket-team-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 6px;
+  font-size: 0.85em;
+  border-bottom: 1px solid #333;
+}
+
+.bracket-team-row:last-child {
+  border-bottom: none;
+}
+
+.bracket-team-row.bracket-winner {
+  background: rgba(0, 183, 255, 0.1);
+}
+
+.bracket-team-row.bracket-winner .bracket-team-name {
+  color: #00B7FF;
+  font-weight: 600;
+}
+
+.bracket-team-name {
+  flex-grow: 1;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.bracket-team-score {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+  min-width: 30px;
+  text-align: right;
+}
+
+.bracket-bye {
+  padding: 4px 8px;
+  font-size: 0.8em;
+  opacity: 0.4;
+  font-style: italic;
+  text-align: center;
+}
