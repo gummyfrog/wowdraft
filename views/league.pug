@@ -172,7 +172,7 @@ block content
 			 			<ul class="requirements" v-html="reqs"> </ul>
 			 		</div>
 
-			 		<a class="view_players view_players_button" :href="'/leagues/' + league_info.code+'/proplayers'"> <i class="fas fa-long-arrow-alt-right"></i> View Players </a>
+			 		<a class="view_players view_players_button" :href="'/proplayers/' + league_info.code"> <i class="fas fa-long-arrow-alt-right"></i> View Players </a>
 		 		</div>
 		 		<h1 v-else>Draft is over! Great job!</h1>
 
@@ -268,7 +268,7 @@ block content
 		  },
 		  methods: {
 			fetchDraftData: function(event) {
-				fetch(`/api/leagues/${league.code}/draftInfo`)
+				fetch(`/leagues/api/${league.code}/draftInfo`)
 				.then(res => res.json())
 				.then((response) => {
 					app.draft_info = response
@@ -276,7 +276,7 @@ block content
 				})
 			},
 			fetchData:function(event) {
-				fetch(`/api/leagues/${league.code}`)
+				fetch(`/leagues/api/${league.code}`)
 				.then(res => res.json())
 				.then((response) => {
 					league = response;

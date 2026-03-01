@@ -5,7 +5,7 @@ block content
 		div.title-bar
 				h2 Please Enter...
 
-		form.makeLeague(action='/api/leagues/create' method='post')
+		form.makeLeague(action='/leagues/api/create' method='post')
 			h3 A name for your League:
 			input(v-model="name" type='text' placeholder="Lion's Pride Inn League" name='name' required)
 

@@ -5,7 +5,7 @@ block content
 		div.title-bar
 			h2 Please Enter...
 
-		form.makeTeam(action=`/api/leagues/${leagueID}/newTeam` method='post')
+		form.makeTeam(action=`/leagues/api/${leagueID}/newTeam` method='post')
 			h3 A name for your team:
 			input(type='text' placeholder='Lower City Sluggers' maxlength="25" name='name' v-model="name" required)
 
