@@ -231,7 +231,7 @@ const SAMPLE_LEAGUE = {
   code: 'demo',
   name: 'Azeroth Championship',
   description: 'A demo league for testing',
-  icon: 'horde1.png',
+  icon: 'banner_Orc.png',
   color1: '#8b0000',
   color2: '#1a1a2e',
   faction: 'Horde',
