@@ -172,7 +172,7 @@ class league_interpret {
 		if(this.league.draft.pick_index == this.league.draft.pick_order.length) {
 			// yes, draft is over!
 			this.league.draft.status = 2;
-			this.league.status = "Completed";
+			this.league.status = "Drafted";
 			return true;
 		} 
 
@@ -187,6 +187,70 @@ class league_interpret {
 
 	addRankingsReport() {
 
+	}
+
+	startSeason(options = {}) {
+		if (!this.loggedin || !this.sessionIsAdmin() || this.league.status !== 'Drafted') {
+			return false;
+		}
+
+		const seasonLength = options.season_length || 8;
+		const teams = this.league.teams;
+
+		// Generate round-robin schedule
+		this.league.schedule = this.generateRoundRobin(teams, seasonLength);
+		this.league.season_length = seasonLength;
+		this.league.status = 'Active';
+		this.league.standings = {};
+		this.league.player_snapshots = {};
+		this.league.activity_reports = [];
+
+		// Initialize standings for all teams
+		for (const team of teams) {
+			this.league.standings[team.id] = { wins: 0, losses: 0 };
+		}
+
+		return true;
+	}
+
+	generateRoundRobin(teams, weeks) {
+		const schedule = [];
+		const teamIds = teams.map(t => t.id);
+		const n = teamIds.length;
+
+		// If odd number of teams, add a "BYE" placeholder
+		const ids = [...teamIds];
+		if (n % 2 !== 0) ids.push('BYE');
+		const total = ids.length;
+		const half = total / 2;
+
+		for (let week = 0; week < weeks; week++) {
+			const round = week % (total - 1);
+			const matchups = [];
+
+			// Standard round-robin rotation
+			const rotated = [ids[0]];
+			for (let i = 1; i < total; i++) {
+				rotated.push(ids[((i - 1 + round) % (total - 1)) + 1]);
+			}
+
+			for (let i = 0; i < half; i++) {
+				const home = rotated[i];
+				const away = rotated[total - 1 - i];
+
+				if (home === 'BYE') {
+					matchups.push({ bye: away });
+				} else if (away === 'BYE') {
+					matchups.push({ bye: home });
+				} else {
+					matchups.push({ home, away });
+				}
+			}
+
+			schedule.push({ week: week + 1, matchups });
+		}
+
+		return schedule;
 	}
 
 	getTeams() {
