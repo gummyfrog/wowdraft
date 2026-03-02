@@ -339,9 +339,6 @@ block content
 			  		var reqs = this.league_info.requirements;
 			  		var msg = "";
 
-			  		console.log(roles_drafted);
-			  		console.log(reqs);
-
 			  		if(roles_drafted.tanks < reqs.tanks) {
 			  			msg += `<li> <i class="fas fa-exclamation-circle"></i> You need ${reqs.tanks-roles_drafted.tanks} more tank(s). </li>`
 			  		}
