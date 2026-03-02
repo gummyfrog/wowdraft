@@ -102,11 +102,22 @@ router.post('/api/:leagueID/draftPlayer', function (req, res) {
     });
 });
 
-// API: Generate report
+// API: Generate report (admin only)
 router.post('/api/:leagueID/generateReport', function (req, res) {
-  generateReport(req.params.leagueID)
-    .then((report) => res.json({ success: true, report }))
-    .catch((err) => res.status(500).json({ error: err.message }));
+  if (!req.session.loggedin) return res.status(403).json({ error: 'Not logged in' });
+
+  db.leagues().findOne({ code: req.params.leagueID })
+    .then((league) => {
+      var leaguelogic = new LeagueLogic(league, req.session);
+      if (!leaguelogic.sessionIsAdmin()) {
+        return res.status(403).json({ error: 'Admin only' });
+      }
+
+      generateReport(req.params.leagueID)
+        .then((report) => res.json({ success: true, report }))
+        .catch((err) => res.status(500).json({ error: err.message }));
+    })
+    .catch(() => res.status(404).json({ error: 'League not found' }));
 });
 
 module.exports = router;
