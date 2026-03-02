@@ -7,7 +7,7 @@ const { buildPlayerPool } = require('../services/playerpool');
 const router = express.Router();
 
 // List all leagues
-router.get('/', function (req, res) {
+router.get('/', function (req, res, next) {
   db.leagues().find().toArray()
     .then((leagues) => {
       res.render('leagues', {
@@ -16,7 +16,8 @@ router.get('/', function (req, res) {
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
       });
-    });
+    })
+    .catch((err) => next(err));
 });
 
 // Create league form
@@ -29,7 +30,7 @@ router.get('/create', function (req, res) {
 });
 
 // API: Search guilds (for league creation)
-router.get('/api/guilds/search', function (req, res) {
+router.get('/api/guilds/search', function (req, res, next) {
   const q = (req.query.q || '').toLowerCase();
   const serverSlug = (req.query.server || '').toLowerCase().replace(/\s/g, '-');
   const serverRegion = req.query.region || 'us';
@@ -49,7 +50,7 @@ router.get('/api/guilds/search', function (req, res) {
           faction: g.faction ? g.faction.name : null,
         })));
       })
-      .catch(() => res.json([]));
+      .catch((err) => next(err));
   } else {
     // Fallback: return distinct guild names from seed proplayers DB
     const tags = ['dps', 'healers', 'tanks'];
@@ -66,12 +67,12 @@ router.get('/api/guilds/search', function (req, res) {
         guilds = guilds.filter(g => g.toLowerCase().includes(q));
       }
       res.json(guilds.map(g => ({ name: g, faction: null })));
-    }).catch(() => res.json([]));
+    }).catch((err) => next(err));
   }
 });
 
 // League home page
-router.get('/:leagueID', function (req, res) {
+router.get('/:leagueID', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
@@ -84,11 +85,11 @@ router.get('/:leagueID', function (req, res) {
         user_session_name: req.session.username,
       });
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // League teams page
-router.get('/:leagueID/teams', function (req, res) {
+router.get('/:leagueID/teams', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
@@ -100,11 +101,11 @@ router.get('/:leagueID/teams', function (req, res) {
         user_session_name: req.session.username,
       });
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // New team form
-router.get('/:leagueID/newTeam', function (req, res) {
+router.get('/:leagueID/newTeam', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       res.render('create_team', {
@@ -114,11 +115,11 @@ router.get('/:leagueID/newTeam', function (req, res) {
         user_session_name: req.session.username,
       });
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // Rankings page
-router.get('/:leagueID/rankings', function (req, res) {
+router.get('/:leagueID/rankings', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
@@ -130,21 +131,21 @@ router.get('/:leagueID/rankings', function (req, res) {
         user_session_name: req.session.username,
       });
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // API: Get league JSON
-router.get('/api/:leagueID', function (req, res) {
+router.get('/api/:leagueID', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => res.json(league))
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // API: Get teams JSON
-router.get('/api/:leagueID/teams', function (req, res) {
+router.get('/api/:leagueID/teams', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => res.json(league.teams))
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // API: Create league
@@ -211,7 +212,7 @@ router.post('/api/create', function (req, res) {
 });
 
 // API: Create team
-router.post('/api/:leagueID/newTeam', function (req, res) {
+router.post('/api/:leagueID/newTeam', function (req, res, next) {
   if (!req.session.loggedin) return res.redirect('/403');
 
   db.leagues().findOne({ code: req.params.leagueID })
@@ -224,11 +225,11 @@ router.post('/api/:leagueID/newTeam', function (req, res) {
         { $set: leaguelogic.league }
       ).then(() => res.redirect(`/leagues/${req.params.leagueID}/`));
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // API: Activity report
-router.post('/api/:leagueID/activity_report', function (req, res) {
+router.post('/api/:leagueID/activity_report', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       if (!league.activity_reports) league.activity_reports = [];
@@ -239,11 +240,11 @@ router.post('/api/:leagueID/activity_report', function (req, res) {
         { $set: { activity_reports: league.activity_reports } }
       ).then(() => res.json({ msg: 'Accepted' }));
     })
-    .catch((err) => res.json({ err }));
+    .catch((err) => next(err));
 });
 
 // API: Start season (admin only, after draft completes)
-router.post('/api/:leagueID/startSeason', function (req, res) {
+router.post('/api/:leagueID/startSeason', function (req, res, next) {
   if (!req.session.loggedin) return res.redirect('/403');
 
   db.leagues().findOne({ code: req.params.leagueID })
@@ -258,11 +259,11 @@ router.post('/api/:leagueID/startSeason', function (req, res) {
         { $set: leaguelogic.league }
       ).then(() => res.redirect(`/leagues/${req.params.leagueID}/`));
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // API: Get standings
-router.get('/api/:leagueID/standings', function (req, res) {
+router.get('/api/:leagueID/standings', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       res.json({
@@ -271,11 +272,11 @@ router.get('/api/:leagueID/standings', function (req, res) {
         currentWeek: (league.activity_reports || []).length + 1,
       });
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // Settings page
-router.get('/:leagueID/settings', function (req, res) {
+router.get('/:leagueID/settings', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
@@ -287,7 +288,7 @@ router.get('/:leagueID/settings', function (req, res) {
         user_session_name: req.session.username,
       });
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // API: Update league settings (admin only)

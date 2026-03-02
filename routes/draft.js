@@ -5,7 +5,7 @@ const { generateReport } = require('../services/reports');
 const router = express.Router();
 
 // Start draft (admin only)
-router.get('/:leagueID/start', function (req, res) {
+router.get('/:leagueID/start', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
@@ -16,11 +16,11 @@ router.get('/:leagueID/start', function (req, res) {
         { $set: leaguelogic.league }
       ).then(() => res.redirect(`/leagues/${req.params.leagueID}/`));
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // Skip turn (admin only)
-router.get('/:leagueID/skip', function (req, res) {
+router.get('/:leagueID/skip', function (req, res, next) {
   var leagueID = req.params.leagueID;
 
   db.leagues().findOne({ code: leagueID })
@@ -33,21 +33,18 @@ router.get('/:leagueID/skip', function (req, res) {
         { $set: leaguelogic.league }
       ).then(() => res.redirect(`/leagues/${leagueID}/`));
     })
-    .catch((err) => {
-      console.log(err);
-      res.redirect('/403');
-    });
+    .catch((err) => next(err));
 });
 
 // API: Get draft info (polled by frontend)
-router.get('/api/:leagueID/draftInfo', function (req, res) {
+router.get('/api/:leagueID/draftInfo', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => res.json(league.draft))
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 // API: Draft a player
-router.post('/api/:leagueID/draftPlayer', function (req, res) {
+router.post('/api/:leagueID/draftPlayer', function (req, res, next) {
   var leagueID = req.params.leagueID;
   var playerName = req.body.player_name;
 
@@ -96,10 +93,7 @@ router.post('/api/:leagueID/draftPlayer', function (req, res) {
         { $set: leaguelogic.league }
       ).then(() => res.redirect(`/leagues/${leagueID}/`));
     })
-    .catch((err) => {
-      console.log('draft err', err);
-      res.redirect(`/leagues/${leagueID}/`);
-    });
+    .catch((err) => next(err));
 });
 
 // API: Generate report (admin only)

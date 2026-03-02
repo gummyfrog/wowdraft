@@ -4,7 +4,7 @@ const LeagueLogic = require('./league');
 const router = express.Router();
 
 // Player search page
-router.get('/:leagueID', function (req, res) {
+router.get('/:leagueID', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
@@ -27,7 +27,7 @@ router.get('/:leagueID', function (req, res) {
         user_session_name: req.session.username,
       });
     })
-    .catch(() => res.redirect('/404'));
+    .catch((err) => next(err));
 });
 
 /**
@@ -52,7 +52,7 @@ function filterPool(league, tag, page, extraFilter) {
 }
 
 // API: List players by role (paginated)
-router.get('/api/:leagueID/:tag/:page', function (req, res) {
+router.get('/api/:leagueID/:tag/:page', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       const page = parseInt(req.params.page) || 0;
@@ -60,11 +60,11 @@ router.get('/api/:leagueID/:tag/:page', function (req, res) {
       const players = filterPool(league, tag, page);
       res.json(players);
     })
-    .catch(() => res.json([]));
+    .catch((err) => next(err));
 });
 
 // API: Search players by name
-router.get('/api/:leagueID/:tag/search/:name', function (req, res) {
+router.get('/api/:leagueID/:tag/search/:name', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       const tag = req.params.tag.toLowerCase();
@@ -72,11 +72,11 @@ router.get('/api/:leagueID/:tag/search/:name', function (req, res) {
       const players = filterPool(league, tag, 0, p => nameRegex.test(p.name));
       res.json(players);
     })
-    .catch(() => res.json([]));
+    .catch((err) => next(err));
 });
 
 // API: Search players by guild (paginated)
-router.get('/api/:leagueID/:tag/guild/:guild/:page', function (req, res) {
+router.get('/api/:leagueID/:tag/guild/:guild/:page', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       const tag = req.params.tag.toLowerCase();
@@ -85,7 +85,7 @@ router.get('/api/:leagueID/:tag/guild/:guild/:page', function (req, res) {
       const players = filterPool(league, tag, page, p => guildRegex.test(p.guild));
       res.json(players);
     })
-    .catch(() => res.json([]));
+    .catch((err) => next(err));
 });
 
 module.exports = router;

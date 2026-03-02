@@ -69,9 +69,18 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
+  var status = err.status || 500;
+  console.error('[%s %s] %s', req.method, req.originalUrl, err.message);
+
+  // API routes return JSON errors
+  if (req.originalUrl.startsWith('/leagues/api/') || req.originalUrl.startsWith('/proplayers/api/')) {
+    return res.status(status).json({ error: err.message || 'Server error' });
+  }
+
+  // Page routes render error page
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-  res.status(err.status || 500);
+  res.status(status);
   res.render('error');
 });
 
