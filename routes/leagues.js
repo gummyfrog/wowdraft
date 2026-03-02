@@ -65,7 +65,7 @@ router.get('/api/guilds/search', function (req, res) {
       if (q) {
         guilds = guilds.filter(g => g.toLowerCase().includes(q));
       }
-      res.json(guilds.slice(0, 20).map(g => ({ name: g, faction: null })));
+      res.json(guilds.map(g => ({ name: g, faction: null })));
     }).catch(() => res.json([]));
   }
 });
@@ -91,9 +91,11 @@ router.get('/:leagueID', function (req, res) {
 router.get('/:leagueID/teams', function (req, res) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
+      var leaguelogic = new LeagueLogic(league, req.session);
       res.render('league_teams', {
         title: league.name,
         league: JSON.stringify(league),
+        organizer: leaguelogic.sessionIsAdmin(),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
       });
@@ -119,9 +121,11 @@ router.get('/:leagueID/newTeam', function (req, res) {
 router.get('/:leagueID/rankings', function (req, res) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
+      var leaguelogic = new LeagueLogic(league, req.session);
       res.render('league_rankings', {
         title: league.name,
         league: JSON.stringify(league),
+        organizer: leaguelogic.sessionIsAdmin(),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
       });
@@ -158,9 +162,17 @@ router.post('/api/create', function (req, res) {
     picks: [],
     status: 0,
   };
-  new_league.requirements = { dps: 5, healers: 2, tanks: 2 };
+  new_league.requirements = {
+    dps: parseInt(new_league.req_dps) || 5,
+    healers: parseInt(new_league.req_healers) || 3,
+    tanks: parseInt(new_league.req_tanks) || 2,
+  };
+  delete new_league.req_dps;
+  delete new_league.req_healers;
+  delete new_league.req_tanks;
   new_league.game_version = new_league.game_version || 'retail';
   new_league.region = new_league.region || 'us';
+  new_league.rounds = parseInt(new_league.rounds) || 10;
   new_league.season_length = parseInt(new_league.season_length) || 8;
 
   // Parse guilds from form (comma-separated or JSON array)
@@ -260,6 +272,51 @@ router.get('/api/:leagueID/standings', function (req, res) {
       });
     })
     .catch(() => res.redirect('/404'));
+});
+
+// Settings page
+router.get('/:leagueID/settings', function (req, res) {
+  db.leagues().findOne({ code: req.params.leagueID })
+    .then((league) => {
+      var leaguelogic = new LeagueLogic(league, req.session);
+      res.render('league_settings', {
+        title: league.name + ' - Settings',
+        league: JSON.stringify(league),
+        organizer: leaguelogic.sessionIsAdmin(),
+        user_session_auth: req.session.loggedin,
+        user_session_name: req.session.username,
+      });
+    })
+    .catch(() => res.redirect('/404'));
+});
+
+// API: Update league settings (admin only)
+router.post('/api/:leagueID/settings', function (req, res) {
+  if (!req.session.loggedin) return res.status(403).json({ error: 'Not logged in' });
+
+  db.leagues().findOne({ code: req.params.leagueID })
+    .then((league) => {
+      var leaguelogic = new LeagueLogic(league, req.session);
+      if (!leaguelogic.sessionIsAdmin()) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+
+      var updates = {};
+      var allowed = ['description', 'report_day', 'season_length', 'draft_notes'];
+      for (var field of allowed) {
+        if (req.body[field] !== undefined) {
+          updates[field] = field === 'season_length'
+            ? parseInt(req.body[field]) || league.season_length
+            : req.body[field];
+        }
+      }
+
+      db.leagues().updateOne(
+        { code: req.params.leagueID },
+        { $set: updates }
+      ).then(() => res.json({ success: true }));
+    })
+    .catch(() => res.status(500).json({ error: 'Server error' }));
 });
 
 module.exports = router;

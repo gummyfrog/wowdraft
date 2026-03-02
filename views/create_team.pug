@@ -1,64 +1,193 @@
 extends layout
 
 block content
-	div#content
-		div.title-bar
-			h2 Please Enter...
+	div#content.create-team-page
+		div.create-team-layout
 
-		form.makeTeam(action=`/leagues/api/${leagueID}/newTeam` method='post')
-			h3 A name for your team:
-			input(type='text' placeholder='Lower City Sluggers' maxlength="25" name='name' v-model="name" required)
+			//- Left Column: Form
+			div.create-league-form
+				h1.create-league-title
+					i.fas.fa-flag
+					|  Register Your Team
 
-			h3 A motto for your team:
-			input(type='text' placeholder='For the Alliance!' maxlength="15" name='motto' v-model="motto")
+				form.create-league-sections(action=`/leagues/api/${leagueID}/newTeam` method='post')
 
-			h3 Customization:
-			select(name="icon" v-model="icon" required)
-				option(value="icon1") Challenging Roar
-				option(value="icon2") Gauntlet
-				option(value="icon3") Helmet
-				option(value="icon4") Card
-				option(value="icon5") Skull
-				option(value="icon6") Hearthstone
-				option(value="icon7") Pants
-				option(value="icon8") Destro Pot		
-				option(value="icon9") Seal of Protection	
-				option(value="icon10") Shadow Soulgem
-				option(value="icon11") Milk
-				option(value="icon12") Goop
-				option(value="icon13") Ale
-				option(value="icon14") Coffee
-				option(value="icon15") Gnomish Bomb
-				option(value="icon16") Gold Coins
-				option(value="icon17") Silver Coins
-				option(value="icon18") Copper Coins
-				option(value="icon19") Dice
-				option(value="icon20" selected) Question Mark
+					//- Section: Identity
+					div.form-section
+						div.form-section-head
+							i.fas.fa-id-card
+							span  Identity
+						div.form-section-body
+							label.form-label Team Name
+							input.form-input(type='text' placeholder='Lower City Sluggers' maxlength="25" name='name' v-model="name" required)
 
-			input(type="color" v-model="color2" name="color2" required)
+							label.form-label Motto (optional)
+							input.form-input(type='text' placeholder='For the Alliance!' maxlength="15" name='motto' v-model="motto")
 
-			h3
-				button(type='submit').
-					<i class="fas fa-check"></i> 
-					Let's Rock!
+					//- Section: Customization
+					div.form-section
+						div.form-section-head
+							i.fas.fa-palette
+							span  Customization
+						div.form-section-body
+							label.form-label Team Icon
+							div.icon-grid
+								div.icon-grid-item(
+									v-for="ic in allIcons"
+									:class="{ active: icon === ic }"
+									@click="icon = ic"
+								)
+									img(:src="'/images/icons/' + ic + '.png'" :alt="ic")
+							input(type='hidden' name='icon' :value="icon")
 
+							label.form-label Team Color
+							div.color-picker-row
+								input.form-color(type="color" v-model="color2" name="color2" required)
+								span.color-hex {{color2}}
 
+					//- Section: War Banner
+					div.form-section
+						div.form-section-head
+							i.fas.fa-shield-alt
+							span  War Banner
+						div.form-section-body
 
-		h1 Preview:
-		div.team
-			img.team_logo(:src="'/images/icons/'+icon+'.png'")
-			div.team_text
-				h1(:style="'color:'+color2").team_name {{name}}
-				h2(:style="'color:'+color2").team_motto {{motto}}
+							label.form-label Banner Shape
+							div.pattern-grid
+								div.pattern-grid-item(
+									v-for="s in allShapes"
+									:class="{ active: banner_shape === s.id }"
+									@click="banner_shape = s.id"
+								)
+									| {{s.label}}
+							input(type='hidden' name='banner_shape' :value="banner_shape")
+
+							label.form-label Pattern
+							div.pattern-grid
+								div.pattern-grid-item(
+									v-for="p in allPatterns"
+									:class="{ active: banner_pattern === p.id }"
+									@click="banner_pattern = p.id"
+								)
+									| {{p.label}}
+							input(type='hidden' name='banner_pattern' :value="banner_pattern")
+
+							label.form-label Banner Colors
+							div.color-picker-row.color-picker-row--vertical
+								div.color-picker-pair
+									span.color-label Background
+									input.form-color(type="color" v-model="banner_bg" name="banner_bg")
+									span.color-hex {{banner_bg}}
+								div.color-picker-pair
+									span.color-label Accent
+									input.form-color(type="color" v-model="banner_accent" name="banner_accent")
+									span.color-hex {{banner_accent}}
+								div.color-picker-pair
+									span.color-label Emblem
+									input.form-color(type="color" v-model="banner_emblem_color" name="banner_emblem_color")
+									span.color-hex {{banner_emblem_color}}
+
+							label.form-label Emblem
+							div.emblem-grid
+								div.emblem-grid-item(
+									v-for="e in allEmblems"
+									:class="{ active: banner_emblem === e.icon }"
+									@click="banner_emblem = e.icon"
+									:title="e.label"
+								)
+									i(:class="'fas fa-' + e.icon")
+							input(type='hidden' name='banner_emblem' :value="banner_emblem")
+
+					//- Submit
+					button.btn-styled.btn-styled--primary.btn-large(type='submit')
+						i.fas.fa-check
+						|  Let's Rock!
+
+			//- Right Column: Live Preview
+			div.create-league-preview
+				div.preview-sticky
+					h3.preview-label Live Preview
+
+					div.preview-banner-area
+						div.team-banner.team-banner--lg(:class="'team-banner--' + banner_shape" :style="'--ban-bg:' + banner_bg + '; --ban-accent:' + banner_accent")
+							div.team-banner-bg(:class="'pat-' + banner_pattern" :style="'background-color:' + banner_bg")
+							div.team-banner-emblem(:style="'color:' + banner_emblem_color")
+								i(:class="'fas fa-' + banner_emblem")
+
+					div.team-card(:style="'border-color:' + color2")
+						div.team-card-head
+							img(:src="'/images/icons/' + icon + '.png'")
+							h2(:style="'color:' + color2") {{name}}
+						div.team-card-manager You
+						div.team-card-motto(v-if="motto" :style="'color:' + color2") {{motto}}
+						div.team-card-roster
+							div.roster-empty No players drafted yet
 
 	script.
 		var app = new Vue({
 			el: '#content',
 			data: {
-				name:"Lower City Sluggers",
-				motto:"Aldori Little League",
+				name: "Lower City Sluggers",
+				motto: "Aldori Little League",
 				color1: "black",
 				color2: "#C41E3A",
 				icon: "icon20",
-				}
-			})
+				allIcons: [
+					"icon1", "icon2", "icon3", "icon4", "icon5",
+					"icon6", "icon7", "icon8", "icon9", "icon10",
+					"icon11", "icon12", "icon13", "icon14", "icon15",
+					"icon16", "icon17", "icon18", "icon19", "icon20",
+				],
+				banner_shape: "pointed",
+				banner_pattern: "solid",
+				banner_bg: "#C41E3A",
+				banner_accent: "#FFD100",
+				banner_emblem: "skull-crossbones",
+			banner_emblem_color: "#ffffff",
+				allShapes: [
+					{ id: "pointed", label: "Pointed" },
+					{ id: "swallowtail", label: "Swallowtail" },
+					{ id: "pennant", label: "Pennant" },
+				],
+				allPatterns: [
+					{ id: "solid", label: "Solid" },
+					{ id: "halved", label: "Halved" },
+					{ id: "striped", label: "Striped" },
+					{ id: "chevron", label: "Chevron" },
+					{ id: "diagonal", label: "Diagonal" },
+					{ id: "cross", label: "Cross" },
+				],
+				allEmblems: [
+					{ icon: "skull-crossbones", label: "Skull & Crossbones" },
+					{ icon: "skull", label: "Skull" },
+					{ icon: "dragon", label: "Dragon" },
+					{ icon: "shield-alt", label: "Shield" },
+					{ icon: "crown", label: "Crown" },
+					{ icon: "hat-wizard", label: "Wizard Hat" },
+					{ icon: "fire", label: "Fire" },
+					{ icon: "bolt", label: "Lightning" },
+					{ icon: "fist-raised", label: "Fist" },
+					{ icon: "hammer", label: "Hammer" },
+					{ icon: "khanda", label: "Crossed Swords" },
+					{ icon: "chess-rook", label: "Tower" },
+					{ icon: "star", label: "Star" },
+					{ icon: "moon", label: "Moon" },
+					{ icon: "sun", label: "Sun" },
+					{ icon: "snowflake", label: "Snowflake" },
+					{ icon: "leaf", label: "Leaf" },
+					{ icon: "feather-alt", label: "Feather" },
+					{ icon: "spider", label: "Spider" },
+					{ icon: "paw", label: "Paw" },
+					{ icon: "horse-head", label: "Horse" },
+					{ icon: "dove", label: "Bird" },
+					{ icon: "eye", label: "Eye" },
+					{ icon: "gem", label: "Gem" },
+					{ icon: "flask", label: "Flask" },
+					{ icon: "mug-hot", label: "Mug" },
+					{ icon: "dice-d20", label: "D20" },
+					{ icon: "ankh", label: "Ankh" },
+					{ icon: "cross", label: "Cross" },
+					{ icon: "yin-yang", label: "Yin Yang" },
+				],
+			}
+		})

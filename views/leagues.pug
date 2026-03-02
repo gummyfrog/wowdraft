@@ -10,12 +10,17 @@ block content
       h3 Get started by logging in with Discord and making a league for you and your friends, or joining one that hasn't drafted yet!
 
     div#leagues
-      div.league-cards-grid
+      div.league-cards-grid(v-if="leagues.length > 0")
         league-item(
           v-for="(league, index) in leagues"
           v-bind:league_info="league"
           v-bind:index="index"
         )
+
+      div.empty-state(v-else)
+        i.fas.fa-trophy.empty-state-icon
+        p.empty-state-message No leagues yet
+        p.empty-state-subtext Create the first league and start drafting with your friends!
 
   script.
     var leagues = !{leagues}
@@ -37,7 +42,7 @@ block content
       },
       template: `
       <div class="league-card" @click="goToLeague">
-        <img class="league-card-banner" :src="'/images/league_icons/' + league_info.icon">
+        <div class="league-card-banner" :style="'background: linear-gradient(135deg, ' + (league_info.color1 || '#0070FF') + '44, ' + (league_info.color1 || '#0070FF') + '11)'"></div>
         <div class="league-card-body">
           <div class="league-card-top">
             <img :src="'/images/league_icons/' + league_info.icon">

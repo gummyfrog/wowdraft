@@ -53,10 +53,6 @@ async function buildPoolFromSeed(guilds, faction) {
     const query = {
       guild: { $in: guildNames },
     };
-    // Only filter by faction if specified (0 or 1)
-    if (faction === 0 || faction === 1) {
-      query.faction = faction;
-    }
 
     const players = await db.players(tag).find(query).toArray();
     for (const p of players) {

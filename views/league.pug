@@ -12,21 +12,28 @@ block content
 			draft_info(
 				v-bind:league_info="league_info",
 				v-bind:status_slug="statusSlug",
+				v-bind:is_admin="organizer",
 				current_page="home"
 			)
 
-			p(v-if="league_info.description") "{{league_info.description}}"
+			div.league-description-card(v-if="league_info.description")
+				p.league-description-text {{league_info.description}}
 
-			a.startbutton(v-if="!{organizer} && league_info.status == 'Setting Up' && league_info.teams && league_info.teams.length >= 2" :href="'/leagues/' + league_info.code + '/start'")
-				h2
-					i.fas.fa-hand-point-right
-					|  Ready to go? Start Drafting!
+			a.cta-card.cta-card--primary(v-if="organizer && league_info.status == 'Setting Up' && league_info.teams && league_info.teams.length >= 2" :href="'/leagues/' + league_info.code + '/start'")
+				div.cta-card-body
+					h2.cta-card-heading
+						i.fas.fa-hand-point-right
+						|  Ready to go? Start Drafting!
+					p.cta-card-subtext Your league has enough teams. Click to begin the draft.
+					span.cta-card-action Start Draft →
 
-			div.create_team_box(v-if="!{canMakeTeam}")
-				a(:href="'/leagues/' + league_info.code + '/newTeam'")
-					h2
-						i.fas.fa-long-arrow-alt-right
+			a.cta-card.cta-card--primary(v-if="canMakeTeam" :href="'/leagues/' + league_info.code + '/newTeam'")
+				div.cta-card-body
+					h2.cta-card-heading
+						i.fas.fa-flag
 						|  Register Your Team!
+					p.cta-card-subtext Join this league by creating a team.
+					span.cta-card-action Register →
 
 			draft_progress(
 				v-bind:draft_info="draft_info",
@@ -36,44 +43,58 @@ block content
 				v-bind:reqs="requirements"
 			)
 
-			div(v-if="league_info.status == 'Drafted'").start_season_box
-				h2
-					i.fas.fa-play
-					|  Draft Complete! Ready to start the season?
-				form(:action="'/leagues/api/' + league_info.code + '/startSeason'" method="post")
-					button(type="submit")
-						i.fas.fa-check
-						|  Start Season
+			div.cta-card.cta-card--warning(v-if="league_info.status == 'Drafted'")
+				div.cta-card-body
+					h2.cta-card-heading
+						i.fas.fa-play
+						|  Draft Complete! Ready to start the season?
+					p.cta-card-subtext All teams have drafted their rosters. Start the season to begin matchups.
+					form(:action="'/leagues/api/' + league_info.code + '/startSeason'" method="post")
+						button.btn-styled.btn-styled--warning(type="submit")
+							i.fas.fa-check
+							|  Start Season
 
-			div(v-if="league_info.status == 'Active'").season_info
-				h2
+			div.season-info-card(v-if="league_info.status == 'Active'")
+				div.season-info-card-head
 					i.fas.fa-trophy
-					|  Season Active — Week {{currentWeek}}
-				p Report Day: {{league_info.report_day || 'Wednesday'}}
-				button(@click="generateReport" :disabled="generating").update-scores-btn
-					i.fas.fa-sync
-					|  {{generating ? 'Generating...' : 'Update Scores'}}
+					span  Season Active
+					span.season-info-week Week {{currentWeek}}
+				div.season-info-card-details
+					div.season-info-detail
+						i.fas.fa-calendar-day
+						span  Report Day: {{league_info.report_day || 'Wednesday'}}
+				div.season-info-card-actions
+					button.btn-styled.btn-styled--primary(@click="generateReport" :disabled="generating")
+						i.fas.fa-sync
+						|  {{generating ? 'Generating...' : 'Update Scores'}}
 
-			div(v-if="league_info.standings").standings
-				h2
+			div.standings-card(v-if="league_info.standings")
+				div.standings-card-head
 					i.fas.fa-list-ol
-					|  Standings
-				div(v-for="team in sortedTeams").standing_row
-					span.standing_name {{team.name}}
-					span.standing_record {{getRecord(team.id)}}
+					span  Standings
+				div.standings-card-body
+					div.standings-row(v-for="(team, index) in sortedTeams")
+						span.standings-rank \#{{index + 1}}
+						span.standings-name {{team.name}}
+						span.standings-record {{getRecord(team.id)}}
 
 			div.title-bar
 				h2.
 					<i class="fas fa-flag"></i>
 					Registered Teams
 
-			div.teams-grid
+			div.teams-grid(v-if="teams.length > 0")
 				team-item(
 					v-for="(team, index) in teams"
 					v-bind:team="team"
 					v-bind:index="index"
 					v-bind:record="getRecord(team.id)"
 				)
+
+			div.empty-state(v-else)
+				i.fas.fa-users.empty-state-icon
+				p.empty-state-message No teams registered yet
+				p.empty-state-subtext Be the first to join — register your team above!
 
 
 	script.
@@ -83,29 +104,35 @@ block content
 		Vue.component('team-item', {
 			props: ['team', 'index', 'record'],
 			template: `
-			<div class="team-card" :style="'border-color:' + (team.color2 || '#555')">
-				<div class="team-card-head">
-					<img :src="'/images/icons/'+team.icon+'.png'">
-					<h2 :style="'color:'+team.color2">{{team.name}}</h2>
-					<span v-if="record" class="team-record">{{record}}</span>
+			<div class="team-card-wrap">
+				<div class="team-banner team-banner--sm" :class="'team-banner--' + (team.banner_shape || 'pointed')" :style="'--ban-bg:' + (team.banner_bg || team.color2 || '#555') + '; --ban-accent:' + (team.banner_accent || '#FFD100')" v-if="team.banner_shape">
+					<div class="team-banner-bg" :class="'pat-' + (team.banner_pattern || 'solid')" :style="'background-color:' + (team.banner_bg || team.color2 || '#555')"></div>
+					<div class="team-banner-emblem" :style="'color:' + (team.banner_emblem_color || '#fff')"><i :class="'fas fa-' + (team.banner_emblem || 'shield-alt')"></i></div>
 				</div>
-				<div class="team-card-manager">{{team.manager}}</div>
-				<div v-if="team.motto" class="team-card-motto" :style="'color:'+team.color2">{{team.motto}}</div>
-				<div class="team-card-roster">
-					<div v-for="player in team.drafted_players" class="roster-player">
-						<img :src="'/images/classes/'+player.class+'.png'">
-						<img :src="'/images/roles/'+player.role+'.png'">
-						<span class="player-name" :class="player.class">{{player.name}}</span>
-						<span class="player-guild">{{player.guild}}</span>
+				<div class="team-card" :style="'border-color:' + (team.color2 || '#555')">
+					<div class="team-card-head">
+						<img :src="'/images/icons/'+team.icon+'.png'">
+						<h2 :style="'color:'+team.color2">{{team.name}}</h2>
+						<span v-if="record" class="team-record">{{record}}</span>
 					</div>
-					<div v-if="team.drafted_players.length === 0" class="roster-empty">No players drafted yet</div>
+					<div class="team-card-manager">{{team.manager}}</div>
+					<div v-if="team.motto" class="team-card-motto" :style="'color:'+team.color2">{{team.motto}}</div>
+					<div class="team-card-roster">
+						<div v-for="player in team.drafted_players" class="roster-player">
+							<img :src="'/images/classes/'+player.class+'.png'">
+							<img :src="'/images/roles/'+player.role+'.png'">
+							<span class="player-name" :class="player.class">{{player.name}}</span>
+							<span class="player-guild">{{player.guild}}</span>
+						</div>
+						<div v-if="team.drafted_players.length === 0" class="roster-empty">No players drafted yet</div>
+					</div>
 				</div>
 			</div>
 			`
 		})
 
 		Vue.component('draft_info', {
-			props: ['league_info', 'status_slug', 'current_page'],
+			props: ['league_info', 'status_slug', 'current_page', 'is_admin'],
 			template: `
 			<div class="league-header">
 				<div class="league-header-top">
@@ -114,9 +141,9 @@ block content
 					<span class="status-badge" :class="status_slug">{{league_info.status}}</span>
 				</div>
 				<div class="league-header-meta">
-					<span class="meta-chip">{{league_info.server || 'Any Server'}}</span>
+					<span class="meta-chip">{{league_info.game_version === 'classic' ? 'Classic' : 'Retail'}}</span>
 					<span class="meta-sep">&middot;</span>
-					<span class="meta-chip">{{league_info.faction || 'Any'}}</span>
+					<span class="meta-chip">{{(league_info.region || 'us').toUpperCase()}}</span>
 					<span class="meta-sep">&middot;</span>
 					<span class="meta-chip">{{league_info.style || 'Snake'}} Draft</span>
 					<span class="meta-sep">&middot;</span>
@@ -129,6 +156,7 @@ block content
 					<a :href="'/leagues/' + league_info.code + '/teams'" :class="{active: current_page === 'teams'}"><i class="fas fa-flag"></i> Teams</a>
 					<a :href="'/leagues/' + league_info.code + '/rankings'" :class="{active: current_page === 'rankings'}"><i class="fas fa-calendar-alt"></i> Rankings</a>
 					<a :href="'/proplayers/' + league_info.code" :class="{active: current_page === 'players'}"><i class="fas fa-list"></i> Players</a>
+					<a :href="'/leagues/' + league_info.code + '/settings'" :class="{active: current_page === 'settings'}"><i class="fas fa-cog"></i> {{is_admin ? 'Settings' : 'Info'}}</a>
 				</div>
 			</div>
 			`
@@ -249,6 +277,8 @@ block content
 		  data: {
 		  	teams: league.teams,
 		  	league_info: league,
+		  	organizer: !{organizer},
+		  	canMakeTeam: !{canMakeTeam},
 		  	has_real_draft_info: false,
 		  	draft_info: {pick_order:[0], pick_index:0, started: false, inProgress:false},
 		  	generating: false,

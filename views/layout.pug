@@ -30,27 +30,21 @@ html
 
 	body
 		header
-			div#logged-in
-				span
-					p#username
-
-				a(href="/logout").
-					logout
-					<i class="fas fa-sign-out-alt"></i>
-
-			div#logged-out
-				a(href="/login").
-					login
-					<i class="fas fa-sign-in-alt"></i>
-
 			div#navigation
 				a(href="/leagues").
-					<i class="fas fa-book"></i>
-					all leagues
-				br
+					<i class="fas fa-book"></i> All Leagues
 				a(href="/leagues/create").
-					<i class="fas fa-book-open"></i>
-					 new league
+					<i class="fas fa-plus"></i> New League
+
+			div.user-controls
+				div#logged-in
+					span
+						p#username
+					a(href="/logout").
+						logout <i class="fas fa-sign-out-alt"></i>
+				div#logged-out
+					a(href="/login").
+						login <i class="fas fa-sign-in-alt"></i>
 		block content
 
 	footer

@@ -42,17 +42,28 @@ class league_interpret {
 	addTeam(team_body) {
 		if(!this.canMakeTeam()) { return false; }
 
-		// db is taintable, fix later w/ struct
-		team_body.id = short.generate();
-		team_body.drafted_players = [];
-		team_body.roles_drafted = {
-			dps: 0,
-			healers: 0,
-			tanks: 0,
+		var team = {
+			id: short.generate(),
+			name: team_body.name || 'Unnamed Team',
+			motto: team_body.motto || '',
+			icon: team_body.icon || 'icon1',
+			color2: team_body.color2 || '#555',
+			banner_shape: team_body.banner_shape || 'pointed',
+			banner_pattern: team_body.banner_pattern || 'solid',
+			banner_bg: team_body.banner_bg || team_body.color2 || '#555',
+			banner_accent: team_body.banner_accent || '#FFD100',
+			banner_emblem: team_body.banner_emblem || 'shield-alt',
+		banner_emblem_color: team_body.banner_emblem_color || '#ffffff',
+			drafted_players: [],
+			roles_drafted: {
+				dps: 0,
+				healers: 0,
+				tanks: 0,
+			},
+			manager: this.whoami,
 		};
-		team_body.manager = this.whoami;
 
-		this.league.teams.push(team_body);
+		this.league.teams.push(team);
 	}
 
 	startDraft() {
@@ -85,18 +96,25 @@ class league_interpret {
 	}
 
 	isCurrentTeamManager() {
-		if(this.league.teams[this.currentTeamIndex()].manager == this.whoami) {
+		var teamIndex = this.currentTeamIndex();
+		if(teamIndex == null || !this.league.teams[teamIndex]) {
+			return false;
+		}
+		if(this.league.teams[teamIndex].manager == this.whoami) {
 			return true;
 		}
 		return false;
 	}
 
 	currentTeamIndex() {
-		return this.league.draft.pick_order[this.league.draft.pick_index];
+		if(!this.league.draft || !this.league.draft.pick_order) return null;
+		var index = this.league.draft.pick_order[this.league.draft.pick_index];
+		return index !== undefined ? index : null;
 	}
 
 	currentTeamInfo() {
-		return this.league.teams[this.currentTeamIndex()];
+		var index = this.currentTeamIndex();
+		return index != null ? this.league.teams[index] : null;
 	}
 
 	skip() {

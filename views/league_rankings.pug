@@ -7,6 +7,7 @@ block content
 			draft_info(
 				v-bind:league_info="league_info",
 				v-bind:status_slug="statusSlug",
+				v-bind:is_admin="organizer",
 				current_page="rankings"
 			)
 
@@ -41,6 +42,11 @@ block content
 							| {{getTeamName(m.bye)}} — Bye Week
 						div(v-else).matchup-card
 							div.matchup-team.home(:class="{winner: m.winner === m.home}")
+								div.matchup-winner-banner(v-if="m.winner === m.home && getTeamData(m.home)")
+									div.team-banner.team-banner--sm(:class="'team-banner--' + (getTeamData(m.home).banner_shape || 'pointed')" :style="'--ban-bg:' + (getTeamData(m.home).banner_bg || getTeamData(m.home).color2 || '#555') + '; --ban-accent:' + (getTeamData(m.home).banner_accent || '#FFD100')")
+										div.team-banner-bg(:class="'pat-' + (getTeamData(m.home).banner_pattern || 'solid')" :style="'background-color:' + (getTeamData(m.home).banner_bg || getTeamData(m.home).color2 || '#555')")
+										div.team-banner-emblem(:style="'color:' + (getTeamData(m.home).banner_emblem_color || '#fff')")
+											i(:class="'fas fa-' + (getTeamData(m.home).banner_emblem || 'shield-alt')")
 								span.matchup-team-name {{getTeamName(m.home)}}
 								img(:src="getTeamIcon(m.home)")
 							div.matchup-score
@@ -49,11 +55,18 @@ block content
 								div(v-if="m.winner").matchup-result {{getTeamName(m.winner)}} wins!
 								div(v-if="m.tie").matchup-result Tie!
 							div.matchup-team.away(:class="{winner: m.winner === m.away}")
+								div.matchup-winner-banner(v-if="m.winner === m.away && getTeamData(m.away)")
+									div.team-banner.team-banner--sm(:class="'team-banner--' + (getTeamData(m.away).banner_shape || 'pointed')" :style="'--ban-bg:' + (getTeamData(m.away).banner_bg || getTeamData(m.away).color2 || '#555') + '; --ban-accent:' + (getTeamData(m.away).banner_accent || '#FFD100')")
+										div.team-banner-bg(:class="'pat-' + (getTeamData(m.away).banner_pattern || 'solid')" :style="'background-color:' + (getTeamData(m.away).banner_bg || getTeamData(m.away).color2 || '#555')")
+										div.team-banner-emblem(:style="'color:' + (getTeamData(m.away).banner_emblem_color || '#fff')")
+											i(:class="'fas fa-' + (getTeamData(m.away).banner_emblem || 'shield-alt')")
 								img(:src="getTeamIcon(m.away)")
 								span.matchup-team-name {{getTeamName(m.away)}}
 
-			div(v-else)
-				h1 Waiting on report to be generated.
+			div.empty-state(v-else)
+				i.fas.fa-chart-bar.empty-state-icon
+				p.empty-state-message Waiting on report to be generated
+				p.empty-state-subtext Rankings will appear here after the first activity report is generated.
 
 			div(v-if="activity_reports.length > 0").bracket-section
 				div.title-bar
@@ -70,9 +83,15 @@ block content
 										div.bracket-bye {{getTeamName(m.bye)}} — Bye
 									div(v-else).bracket-matchup
 										div.bracket-team-row(:class="{'bracket-winner': m.winner === m.home}")
+											div.bracket-banner-mini(v-if="m.winner === m.home && getTeamData(m.home)")
+												div.team-banner(:class="'team-banner--' + (getTeamData(m.home).banner_shape || 'pointed')" :style="'width:16px; height:20px; --ban-bg:' + (getTeamData(m.home).banner_bg || '#555') + '; --ban-accent:' + (getTeamData(m.home).banner_accent || '#FFD100')")
+													div.team-banner-bg(:class="'pat-' + (getTeamData(m.home).banner_pattern || 'solid')" :style="'background-color:' + (getTeamData(m.home).banner_bg || '#555')")
 											span.bracket-team-name {{getTeamName(m.home)}}
 											span.bracket-team-score {{m.homeScore}}
 										div.bracket-team-row(:class="{'bracket-winner': m.winner === m.away}")
+											div.bracket-banner-mini(v-if="m.winner === m.away && getTeamData(m.away)")
+												div.team-banner(:class="'team-banner--' + (getTeamData(m.away).banner_shape || 'pointed')" :style="'width:16px; height:20px; --ban-bg:' + (getTeamData(m.away).banner_bg || '#555') + '; --ban-accent:' + (getTeamData(m.away).banner_accent || '#FFD100')")
+													div.team-banner-bg(:class="'pat-' + (getTeamData(m.away).banner_pattern || 'solid')" :style="'background-color:' + (getTeamData(m.away).banner_bg || '#555')")
 											span.bracket-team-name {{getTeamName(m.away)}}
 											span.bracket-team-score {{m.awayScore}}
 							div(v-else)
@@ -111,7 +130,7 @@ block content
 		})
 
 		Vue.component('draft_info', {
-			props: ['league_info', 'status_slug', 'current_page'],
+			props: ['league_info', 'status_slug', 'current_page', 'is_admin'],
 			template: `
 			<div class="league-header">
 				<div class="league-header-top">
@@ -120,9 +139,9 @@ block content
 					<span class="status-badge" :class="status_slug">{{league_info.status}}</span>
 				</div>
 				<div class="league-header-meta">
-					<span class="meta-chip">{{league_info.server || 'Any Server'}}</span>
+					<span class="meta-chip">{{league_info.game_version === 'classic' ? 'Classic' : 'Retail'}}</span>
 					<span class="meta-sep">&middot;</span>
-					<span class="meta-chip">{{league_info.faction || 'Any'}}</span>
+					<span class="meta-chip">{{(league_info.region || 'us').toUpperCase()}}</span>
 					<span class="meta-sep">&middot;</span>
 					<span class="meta-chip">{{league_info.style || 'Snake'}} Draft</span>
 					<span class="meta-sep">&middot;</span>
@@ -135,6 +154,7 @@ block content
 					<a :href="'/leagues/' + league_info.code + '/teams'" :class="{active: current_page === 'teams'}"><i class="fas fa-flag"></i> Teams</a>
 					<a :href="'/leagues/' + league_info.code + '/rankings'" :class="{active: current_page === 'rankings'}"><i class="fas fa-calendar-alt"></i> Rankings</a>
 					<a :href="'/proplayers/' + league_info.code" :class="{active: current_page === 'players'}"><i class="fas fa-list"></i> Players</a>
+					<a :href="'/leagues/' + league_info.code + '/settings'" :class="{active: current_page === 'settings'}"><i class="fas fa-cog"></i> {{is_admin ? 'Settings' : 'Info'}}</a>
 				</div>
 			</div>
 			`
@@ -172,6 +192,7 @@ block content
 		  	teams: league.teams,
 		  	activity_reports: league.activity_reports,
 		  	league_info: league,
+		  	organizer: !{organizer},
 		  	selectedWeek: league.activity_reports.length > 0 ? league.activity_reports.length - 1 : 0,
 		  },
 		  computed: {
@@ -265,6 +286,12 @@ block content
 		  			if(this.teams[x].id == teamId) return '/images/icons/' + this.teams[x].icon + '.png';
 		  		}
 		  		return '';
+		  	},
+		  	getTeamData:function(teamId) {
+		  		for(var x=0;x<this.teams.length;x++) {
+		  			if(this.teams[x].id == teamId) return this.teams[x];
+		  		}
+		  		return null;
 		  	},
 		  	highestPoints:function(dist) {
 		  		var fakeDist = Object.assign({}, dist);

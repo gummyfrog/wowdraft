@@ -1,0 +1,191 @@
+extends layout
+
+block content
+	div#league_settings
+		div#content
+
+			draft_info(
+				v-bind:league_info="league_info",
+				v-bind:status_slug="statusSlug",
+				v-bind:is_admin="organizer",
+				current_page="settings"
+			)
+
+			h2.settings-title {{organizer ? 'League Settings' : 'League Info'}}
+
+			div.settings-section
+				h3.settings-section-title League Configuration
+				div.settings-grid
+					div.settings-item
+						span.settings-label Game Version
+						span.settings-value {{league_info.game_version === 'classic' ? 'Classic' : 'Retail'}}
+					div.settings-item
+						span.settings-label Region
+						span.settings-value {{(league_info.region || 'us').toUpperCase()}}
+					div.settings-item
+						span.settings-label Rounds
+						span.settings-value {{league_info.rounds}}
+					div.settings-item
+						span.settings-label Draft Style
+						span.settings-value {{league_info.style || 'Snake'}}
+
+			div.settings-section
+				h3.settings-section-title Roster Requirements
+				div.settings-grid
+					div.settings-item
+						span.settings-label Tanks
+						span.settings-value {{reqs.tanks}}
+					div.settings-item
+						span.settings-label Healers
+						span.settings-value {{reqs.healers}}
+					div.settings-item
+						span.settings-label DPS
+						span.settings-value {{reqs.dps}}
+					div.settings-item
+						span.settings-label Total Required
+						span.settings-value {{reqs.tanks + reqs.healers + reqs.dps}}
+
+			div.settings-section(v-if="guilds.length > 0")
+				h3.settings-section-title Guilds
+				div.guild-chips
+					span.guild-chip(v-for="g in guilds") {{g.name || g}}
+
+			div.settings-section(v-if="raids.length > 0")
+				h3.settings-section-title Tracked Raids
+				div.raid-pills.raid-pills--readonly
+					span.raid-pill.active(v-for="r in raids") {{r.name}}
+
+			div.settings-section(v-if="organizer")
+				h3.settings-section-title Edit Settings
+				div.settings-edit-form
+					label.form-label Description
+					input.form-input(v-model="edit.description" type="text" maxlength="200")
+
+					label.form-label Report Day
+					select.form-input(v-model="edit.report_day")
+						option(value="Sunday") Sunday
+						option(value="Monday") Monday
+						option(value="Tuesday") Tuesday
+						option(value="Wednesday") Wednesday
+						option(value="Thursday") Thursday
+						option(value="Friday") Friday
+						option(value="Saturday") Saturday
+
+					label.form-label Season Length (weeks)
+					input.form-input(v-model.number="edit.season_length" type="number" min="2" max="20")
+
+					label.form-label Draft Notes
+					input.form-input(v-model="edit.draft_notes" type="text" maxlength="200")
+
+					button.btn-styled.btn-styled--primary(@click="saveSettings" :disabled="saving")
+						i.fas.fa-save
+						|  {{saving ? 'Saving...' : 'Save Changes'}}
+					span.save-success(v-if="saved") Saved!
+
+			div.settings-section(v-if="!organizer")
+				h3.settings-section-title League Details
+				div.settings-grid
+					div.settings-item
+						span.settings-label Description
+						span.settings-value {{league_info.description || 'No description'}}
+					div.settings-item
+						span.settings-label Report Day
+						span.settings-value {{league_info.report_day || 'Tuesday'}}
+					div.settings-item
+						span.settings-label Season Length
+						span.settings-value {{league_info.season_length || 8}} weeks
+					div.settings-item
+						span.settings-label Draft Notes
+						span.settings-value {{league_info.draft_notes || league_info.start_date || 'None'}}
+
+	script.
+		var league = !{JSON.stringify(league)}
+		league = JSON.parse(league)
+
+		Vue.component('draft_info', {
+			props: ['league_info', 'status_slug', 'current_page', 'is_admin'],
+			template: `
+			<div class="league-header">
+				<div class="league-header-top">
+					<img class="league-header-icon" :src="'/images/league_icons/' + league_info.icon">
+					<h1 class="league-header-name" :style="'color:'+league_info.color1">{{league_info.name}}</h1>
+					<span class="status-badge" :class="status_slug">{{league_info.status}}</span>
+				</div>
+				<div class="league-header-meta">
+					<span class="meta-chip">{{league_info.game_version === 'classic' ? 'Classic' : 'Retail'}}</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{(league_info.region || 'us').toUpperCase()}}</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.style || 'Snake'}} Draft</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">{{league_info.report_day || 'Monday'}} reports</span>
+					<span class="meta-sep">&middot;</span>
+					<span class="meta-chip">Org: {{league_info.admin.name}}</span>
+				</div>
+				<div class="league-header-nav">
+					<a :href="'/leagues/' + league_info.code" :class="{active: current_page === 'home'}"><i class="fas fa-home"></i> Home</a>
+					<a :href="'/leagues/' + league_info.code + '/teams'" :class="{active: current_page === 'teams'}"><i class="fas fa-flag"></i> Teams</a>
+					<a :href="'/leagues/' + league_info.code + '/rankings'" :class="{active: current_page === 'rankings'}"><i class="fas fa-calendar-alt"></i> Rankings</a>
+					<a :href="'/proplayers/' + league_info.code" :class="{active: current_page === 'players'}"><i class="fas fa-list"></i> Players</a>
+					<a :href="'/leagues/' + league_info.code + '/settings'" :class="{active: current_page === 'settings'}"><i class="fas fa-cog"></i> {{is_admin ? 'Settings' : 'Info'}}</a>
+				</div>
+			</div>
+			`
+		})
+
+		var app = new Vue({
+			el: '#league_settings',
+			data: {
+				league_info: league,
+				organizer: !{organizer},
+				saving: false,
+				saved: false,
+				edit: {
+					description: league.description || '',
+					report_day: league.report_day || 'Tuesday',
+					season_length: league.season_length || 8,
+					draft_notes: league.draft_notes || league.start_date || '',
+				},
+			},
+			computed: {
+				statusSlug() {
+					return this.league_info.status.toLowerCase().replace(" ", '-');
+				},
+				reqs() {
+					return this.league_info.requirements || { dps: 5, healers: 2, tanks: 2 };
+				},
+				guilds() {
+					return this.league_info.guilds || [];
+				},
+				raids() {
+					return this.league_info.raids || [];
+				},
+			},
+			methods: {
+				saveSettings: function() {
+					var self = this;
+					this.saving = true;
+					this.saved = false;
+					fetch('/leagues/api/' + this.league_info.code + '/settings', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(this.edit),
+					})
+					.then(function(res) { return res.json(); })
+					.then(function(data) {
+						self.saving = false;
+						if (data.success) {
+							self.saved = true;
+							self.league_info.description = self.edit.description;
+							self.league_info.report_day = self.edit.report_day;
+							self.league_info.season_length = self.edit.season_length;
+							self.league_info.draft_notes = self.edit.draft_notes;
+							setTimeout(function() { self.saved = false; }, 3000);
+						}
+					})
+					.catch(function() {
+						self.saving = false;
+					});
+				},
+			},
+		})

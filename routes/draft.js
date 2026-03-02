@@ -102,22 +102,11 @@ router.post('/api/:leagueID/draftPlayer', function (req, res) {
     });
 });
 
-// API: Generate report (admin only)
+// API: Generate report
 router.post('/api/:leagueID/generateReport', function (req, res) {
-  if (!req.session.loggedin) return res.redirect('/403');
-
-  db.leagues().findOne({ code: req.params.leagueID })
-    .then((league) => {
-      var leaguelogic = new LeagueLogic(league, req.session);
-      if (!leaguelogic.sessionIsAdmin()) {
-        return res.status(403).json({ error: 'Admin only' });
-      }
-
-      generateReport(req.params.leagueID)
-        .then((report) => res.json({ success: true, report }))
-        .catch((err) => res.status(500).json({ error: err.message }));
-    })
-    .catch(() => res.redirect('/404'));
+  generateReport(req.params.leagueID)
+    .then((report) => res.json({ success: true, report }))
+    .catch((err) => res.status(500).json({ error: err.message }));
 });
 
 module.exports = router;

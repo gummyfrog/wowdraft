@@ -1,115 +1,160 @@
 extends layout
 
 block content
-	div#content
-		div.title-bar
-				h2 Please Enter...
+	div#content.create-league-page
+		div.create-league-layout
 
-		form.makeLeague(action='/leagues/api/create' method='post')
-			h3 A name for your League:
-			input(v-model="name" type='text' placeholder="Lion's Pride Inn League" name='name' required)
+			//- Left Column: Form
+			div.create-league-form
+				h1.create-league-title
+					i.fas.fa-plus-circle
+					|  Create a League
 
-			h3 A short blurb for your League:
-			input(v-model="description" type='text' placeholder='Describe your League here!' name='description' required)
+				form.create-league-sections(action='/leagues/api/create' method='post')
 
-			h3 Customization:
-			select(name="icon" v-model="icon" required)
-				option(value="banner_Bloodelf.png") Bloodelf Banner
-				option(value="banner_Draenei.png") Draenei Banner
-				option(value="banner_Dwarf.png") Dwarf Banner
-				option(value="banner_Gnome.png") Gnome Banner
-				option(value="banner_Human.png") Human Banner
-				option(value="banner_Nightelf.png") Night Elf Banner
-				option(value="banner_Orc.png") Orc Banner
-				option(value="banner_Scourge.png") Scourge Banner
-				option(value="banner_Tauren.png") Tauren Banner
-				option(value="banner_Troll.png") Troll Banner
-				option(value="Symbol_Brewfest.png") Brewfest
+					//- Section: Identity
+					div.form-section
+						div.form-section-head
+							i.fas.fa-id-card
+							span  Identity
+						div.form-section-body
+							label.form-label League Name
+							input.form-input(v-model="name" type='text' placeholder="Lion's Pride Inn League" name='name' required)
 
-			img.preview_logo( :src="'/images/league_icons/' + icon")
+							label.form-label Description
+							input.form-input(v-model="description" type='text' placeholder='Describe your League here!' name='description' required)
 
-			input(type="color" v-model="color1" name="color1" required)
+							label.form-label Icon
+							div.icon-grid
+								div.icon-grid-item(
+									v-for="ic in allIcons"
+									:class="{ active: icon === ic }"
+									@click="icon = ic"
+								)
+									img(:src="'/images/league_icons/' + ic" :alt="ic")
+							input(type='hidden' name='icon' :value="icon")
 
-			h3 # of Rounds (picks) per player:
-			input(v-model="rounds" type='number' placeholder='10' name='rounds' min="1" max="10" required)
+							label.form-label Primary Color
+							div.color-picker-row
+								input.form-color(type="color" v-model="color1" name="color1" required)
+								span.color-hex {{color1}}
 
-			h3 Game Version:
-			select(v-model="game_version" name="game_version" required)
-				option(value="retail") Retail (The War Within)
-				option(value="classic") Classic
+							label.form-label Game Version
+							select.form-input(v-model="game_version" name="game_version" required)
+								option(value="retail") Retail (The War Within)
+								option(value="classic") Classic
 
-			h3 Server:
-			input(v-model="server" type='text' placeholder='Faerlina' name='server' required)
+							label.form-label Region
+							select.form-input(v-model="region" name="region" required)
+								option(value="us") US
+								option(value="eu") EU
+								option(value="kr") KR
+								option(value="tw") TW
 
-			h3 Region:
-			select(v-model="region" name="region" required)
-				option(value="us") US
-				option(value="eu") EU
-				option(value="kr") KR
-				option(value="tw") TW
+					//- Section: Draft Settings
+					div.form-section
+						div.form-section-head
+							i.fas.fa-cogs
+							span  Draft Settings
+						div.form-section-body
 
-			h3 Faction:
-			select(v-model="faction" name="faction" required)
-				option(value="Alliance") Alliance
-				option(value="Horde") Horde
+							label.form-label Roster Requirements
+							div.roster-req-row
+								div.roster-req-field
+									label.roster-req-label Tanks
+									input.form-input.form-input--small(v-model.number="req_tanks" type='number' name='req_tanks' min="0" max="10")
+								div.roster-req-field
+									label.roster-req-label Healers
+									input.form-input.form-input--small(v-model.number="req_healers" type='number' name='req_healers' min="0" max="10")
+								div.roster-req-field
+									label.roster-req-label DPS
+									input.form-input.form-input--small(v-model.number="req_dps" type='number' name='req_dps' min="0" max="10")
+							div.roster-req-total {{totalRequired}} required · {{rounds - totalRequired > 0 ? (rounds - totalRequired) + ' flex picks' : 'no flex picks'}}
+							div.roster-req-total.roster-req-warning(v-if="rounds < totalRequired") Rounds can't be less than {{totalRequired}} — auto-adjusting.
 
-			h3 Season Length (weeks):
-			input(v-model="season_length" type='number' placeholder='8' name='season_length' min="2" max="20" required)
+							label.form-label Rounds (picks per team)
+							input.form-input(v-model.number="rounds" type='number' placeholder='10' name='rounds' :min="totalRequired" max="15" required)
 
-			h3 Guilds:
-			div.guild_search
-				input(v-model="guildSearch" type='text' placeholder='Search for a guild...' @keyup.enter="searchGuilds")
-				button(type='button' @click="searchGuilds") Search
-			div.guild_results(v-if="guildResults.length > 0")
-				div.guild_result(v-for="g in guildResults" @click="addGuild(g.name)")
-					span {{g.name}}
-					span.guild_faction(v-if="g.faction")  ({{g.faction}})
-			div.selected_guilds
-				div.selected_guild(v-for="(g, i) in selectedGuilds")
-					span {{g}}
-					button(type='button' @click="removeGuild(i)") x
-			input(type='hidden' name='guilds' :value="selectedGuilds.join(',')")
+							label.form-label Season Length (weeks)
+							input.form-input(v-model="season_length" type='number' placeholder='8' name='season_length' min="2" max="20" required)
 
-			h3 Raids:
-			div.raid_selection
-				label(v-for="zone in availableZones")
-					input(type='checkbox' :value="zone.id" v-model="selectedRaidIds")
-					span  {{zone.name}}
-			input(type='hidden' name='raids' :value="JSON.stringify(selectedRaids)")
+							label.form-label Draft Notes (optional)
+							input.form-input(v-model="draft_notes" type="text" name="draft_notes" placeholder="e.g. Next Monday at 4pm, Discord voice channel #draft")
 
-			h3 Activity Report Day
-			select(v-model="report_day" name="report_day")
-				option(value="Sunday") Sunday
-				option(value="Monday") Monday
-				option(value="Tuesday") Tuesday
-				option(value="Wednesday") Wednesday
-				option(value="Thursday") Thursday
-				option(value="Friday") Friday
-				option(value="Saturday") Saturday
+							div.reminder-box
+								h4.reminder-box-title
+									i.fas.fa-exclamation-circle
+									|  Remember!
+								p.reminder-box-text You, as the organizer, need to start the draft manually. Draft notes are just for communicating plans to your league.
 
-			h3 Proposed Draft Start Date/Time
+					//- Section: Guilds
+					div.form-section
+						div.form-section-head
+							i.fas.fa-users
+							span  Guilds
+						div.form-section-body
+							div.guild-chips(v-if="selectedGuilds.length > 0")
+								span.guild-chip(v-for="(g, i) in selectedGuilds")
+									| {{g}}
+									button.guild-chip-x(type='button' @click="removeGuild(i)") ×
+							label.form-label Search Guilds
+							input.form-input(v-model="guildFilter" type='text' placeholder='Filter guilds...')
+							div.guild-results(v-if="filteredGuilds.length > 0")
+								div.guild-result-item(v-for="g in filteredGuilds" @click="addGuild(g.name)" :class="{ disabled: selectedGuilds.includes(g.name) }")
+									span {{g.name}}
+									span.guild-result-check(v-if="selectedGuilds.includes(g.name)")  ✓
+							div.guild-results(v-else-if="allGuilds.length === 0")
+								span.guild-loading Loading guilds...
+							input(type='hidden' name='guilds' :value="selectedGuilds.join(',')")
 
+					//- Section: Schedule
+					div.form-section
+						div.form-section-head
+							i.fas.fa-calendar-alt
+							span  Schedule
+						div.form-section-body
+							label.form-label Raids
+							div.raid-pills
+								label.raid-pill(v-for="zone in availableZones" :class="{ active: selectedRaidIds.includes(zone.id) }")
+									input(type='checkbox' :value="zone.id" v-model="selectedRaidIds")
+									span {{zone.name}}
+							input(type='hidden' name='raids' :value="JSON.stringify(selectedRaids)")
 
-			input(v-model="start_date" type="text" name="start_date" placeholder="Next Monday at 4pm!")
+							label.form-label Activity Report Day
+							select.form-input(v-model="report_day" name="report_day")
+								option(value="Sunday") Sunday
+								option(value="Monday") Monday
+								option(value="Tuesday") Tuesday
+								option(value="Wednesday") Wednesday
+								option(value="Thursday") Thursday
+								option(value="Friday") Friday
+								option(value="Saturday") Saturday
 
-			div.reminder
-				h4. 
-					<i class="fas fa-exclamation-circle"></i> Remember!
-					You, as the organizer, need to start the draft manually.
-				h4 This is just for scheduling, so be informative (and on time!)
+					//- Submit
+					button.btn-styled.btn-styled--primary.btn-large(type='submit')
+						i.fas.fa-check
+						|  Create League
 
-
-			h3
-				button(type='submit').
-					<i class="fas fa-check"></i> 
-					All Done!
-
-		h1 Preview:
-
-		div(:style="'color:'+color1").league_wrapper
-			img.league_logo( :src="'/images/league_icons/' + icon")
-			h1.league_name {{name}}
-			h4.flavor {{description}}
+			//- Right Column: Live Preview
+			div.create-league-preview
+				div.preview-sticky
+					h3.preview-label Live Preview
+					div.league-card
+						div.league-card-banner(:style="'background: linear-gradient(135deg, ' + color1 + '44, ' + color1 + '11)'")
+						div.league-card-body
+							div.league-card-top
+								img(:src="'/images/league_icons/' + icon")
+								h2(:style="'color:'+color1") {{name}}
+								span.status-badge.setting-up Setting Up
+							div.league-card-meta
+								span {{game_version === 'classic' ? 'Classic' : 'Retail'}}
+								span ·
+								span {{region.toUpperCase()}}
+								span ·
+								span Snake Draft
+							div.league-card-footer
+								span {{rounds}} rounds · {{season_length}} weeks
+								span {{region.toUpperCase()}}
 
 	script.
 		var app = new Vue({
@@ -119,40 +164,82 @@ block content
 				description: "Light be with you.",
 				rounds: 10,
 				game_version: "retail",
-				server: "",
 				region: "us",
-				faction: "Alliance",
 				season_length: 8,
 				style:"Standard",
 				color1: "#0070FF",
 				icon: "banner_Human.png",
 				report_day: "Tuesday",
-				start_date: "next monday at 3pm",
-				guildSearch: "",
-				guildResults: [],
+				draft_notes: "",
+				req_tanks: 2,
+				req_healers: 3,
+				req_dps: 5,
+				guildFilter: "",
+				allGuilds: [],
 				selectedGuilds: [],
 				selectedRaidIds: [],
+				allIcons: [
+					"banner_Bloodelf.png",
+					"banner_Draenei.png",
+					"banner_Dwarf.png",
+					"banner_Gnome.png",
+					"banner_Human.png",
+					"banner_Nightelf.png",
+					"banner_Orc.png",
+					"banner_Scourge.png",
+					"banner_Tauren.png",
+					"banner_Troll.png",
+					"Symbol_BloodElf.png",
+					"Symbol_Brewfest.png",
+					"Symbol_Draenei.png",
+					"Symbol_Dwarf.png",
+					"Symbol_Gnome.png",
+					"Symbol_Human.png",
+					"Symbol_NightElf.png",
+					"Symbol_Orc.png",
+					"Symbol_Scourge.png",
+					"Symbol_Tauren.png",
+					"Symbol_Troll.png",
+					"Tabard_BloodElf.png",
+					"Tabard_Draenei.png",
+					"Tabard_Dwarf.png",
+					"Tabard_gnome.png",
+					"Tabard_Human.png",
+					"Tabard_NightElf.png",
+					"Tabard_Orc.png",
+					"Tabard_scourge.png",
+					"Tabard_Tauren.png",
+					"Tabard_Troll.png",
+				],
 			},
 			methods: {
-				searchGuilds: function() {
-					if (!this.guildSearch) return;
-					fetch('/leagues/api/guilds/search?q=' + encodeURIComponent(this.guildSearch) + '&server=' + encodeURIComponent(this.server) + '&region=' + this.region + '&game_version=' + this.game_version)
+				fetchGuilds: function() {
+					var self = this;
+					fetch('/leagues/api/guilds/search?region=' + this.region + '&game_version=' + this.game_version)
 						.then(function(res) { return res.json(); })
-						.then(function(guilds) { app.guildResults = guilds; });
+						.then(function(guilds) { self.allGuilds = guilds; });
 				},
 				addGuild: function(name) {
 					if (this.selectedGuilds.length >= 5) return;
 					if (!this.selectedGuilds.includes(name)) {
 						this.selectedGuilds.push(name);
 					}
-					this.guildResults = [];
-					this.guildSearch = "";
 				},
 				removeGuild: function(index) {
 					this.selectedGuilds.splice(index, 1);
 				},
 			},
 			computed: {
+				totalRequired: function() {
+					return (this.req_tanks || 0) + (this.req_healers || 0) + (this.req_dps || 0);
+				},
+				filteredGuilds: function() {
+					var filter = this.guildFilter.toLowerCase();
+					if (!filter) return this.allGuilds;
+					return this.allGuilds.filter(function(g) {
+						return g.name.toLowerCase().indexOf(filter) !== -1;
+					});
+				},
 				availableZones: function() {
 					var zones = {
 						classic: [
@@ -178,9 +265,15 @@ block content
 			watch: {
 				game_version: function() {
 					this.selectedRaidIds = this.availableZones.map(z => z.id);
+					this.fetchGuilds();
+				},
+				region: function() { this.fetchGuilds(); },
+				totalRequired: function(val) {
+					if (this.rounds < val) this.rounds = val;
 				},
 			},
 			mounted: function() {
 				this.selectedRaidIds = this.availableZones.map(z => z.id);
+				this.fetchGuilds();
 			},
 		})

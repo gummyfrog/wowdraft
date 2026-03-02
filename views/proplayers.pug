@@ -6,6 +6,7 @@ block content
 			draft_info(
 				v-bind:league_info="league_info",
 				v-bind:status_slug="statusSlug",
+				v-bind:is_admin="organizer",
 				current_page="players"
 			)
 
@@ -37,46 +38,70 @@ block content
 					button(@click="pageDown" :disabled="page === 0").pageButton
 						i.fas.fa-chevron-left
 					span Page {{page + 1}}
-					button(@click="pageUp").pageButton
+					button(@click="pageUp" :disabled="!hasMore").pageButton
 						i.fas.fa-chevron-right
 
 			div#player-display
 				table.player-table(v-if="found")
 					thead
 						tr
-							th Class
-							th(@click="sortBy('name')") Name
-							th(@click="sortBy('guild')") Guild
+							th
+							th.sortable-th(@click="sortBy('name')")
+								| Player
+								i.fas.fa-sort-up.sort-icon(v-if="sortKey === 'name' && sortAsc")
+								i.fas.fa-sort-down.sort-icon(v-if="sortKey === 'name' && !sortAsc")
 							th Role
-							th(@click="sortBy('avgParse')") Parse
+							th.sortable-th(@click="sortBy('avgParse')")
+								| Parse
+								i.fas.fa-sort-up.sort-icon(v-if="sortKey === 'avgParse' && sortAsc")
+								i.fas.fa-sort-down.sort-icon(v-if="sortKey === 'avgParse' && !sortAsc")
+							th.sortable-th(v-if="tag === 'dps'" @click="sortBy('avgDps')")
+								| DPS
+								i.fas.fa-sort-up.sort-icon(v-if="sortKey === 'avgDps' && sortAsc")
+								i.fas.fa-sort-down.sort-icon(v-if="sortKey === 'avgDps' && !sortAsc")
 							th(v-if="onClock")
 					tbody
-						tr(v-for="player in sortedPlayers" :class="['player-row', {inactive: player.active === false}]")
-							td
-								img(:src="'/images/classes/'+player.class+'.png'" style="height:22px;width:22px")
-							td
-								span.player-name-text(:class="player.class") {{player.name}}
-							td {{player.guild}}
+						tr(v-for="player in sortedPlayers" :class="['player-row', {inactive: player.active === false}]" :style="'border-left: 3px solid var(--' + player.class.toLowerCase() + ', #555)'")
+							td.player-class-cell
+								div.class-icon-ring(:style="'background: var(--' + player.class.toLowerCase() + ', #555)'")
+									img(:src="'/images/classes/'+player.class+'.png'")
+							td.player-identity-cell
+								div.player-name-text(:class="'class-' + player.class") {{player.name}}
+								div.player-guild-sub
+									i.fas.fa-shield-alt.guild-icon
+									| {{player.guild}}
 							td
 								span.role-pill(:class="player.tag") {{player.tag === 'dps' ? 'DPS' : player.tag === 'tanks' ? 'Tank' : 'Healer'}}
 							td
-								span(v-if="player.avgParse != null" :style="'color:' + parseColor(player.avgParse)").parse-value {{Math.round(player.avgParse)}}
-								span(v-else).parse-value --
+								div.parse-cell(v-if="player.avgParse != null")
+									div.parse-bar(:style="'width:' + Math.round(player.avgParse) + '%; background:' + parseColor(player.avgParse)")
+									span.parse-value(:style="'color:' + parseColor(player.avgParse)") {{Math.round(player.avgParse)}}
+									span.parse-tier(:style="'color:' + parseColor(player.avgParse)") {{parseTier(player.avgParse)}}
+								span.parse-value.parse-none(v-else) --
+							td(v-if="tag === 'dps'")
+								span.dps-value(v-if="player.avgDps != null") {{formatDps(player.avgDps)}}
+								span.dps-value.parse-none(v-else) --
 							td(v-if="onClock")
 								form(v-if="player.active !== false" :action="'/leagues/api/' + leagueID + '/draftPlayer'" method="post" style="display:inline")
 									input(type="hidden" name="player_name" :value="player.name")
 									button(type="submit").draft-btn Draft
 								span(v-else style="opacity:0.4; font-size:0.8em") Inactive
-				h2(v-else) Player(s) not found.
+				div.empty-state(v-else)
+					i.fas.fa-search.empty-state-icon
+					p.empty-state-message No players found
+					p.empty-state-subtext Try a different search, guild filter, or role tab.
 
 	script.
 		var leagueID = "!{leagueID}";
-		var league = JSON.parse('!{league}');
-		var yourTeam = !{yourTeam};
+		var league = !{JSON.stringify(league)};
+		league = JSON.parse(league);
+		var yourTeam = !{JSON.stringify(yourTeam)};
+		yourTeam = yourTeam ? JSON.parse(yourTeam) : null;
 		var onClock = !{onClock};
+		var PAGE_SIZE = 10;
 
 		Vue.component('draft_info', {
-			props: ['league_info', 'status_slug', 'current_page'],
+			props: ['league_info', 'status_slug', 'current_page', 'is_admin'],
 			template: `
 			<div class="league-header">
 				<div class="league-header-top">
@@ -85,9 +110,9 @@ block content
 					<span class="status-badge" :class="status_slug">{{league_info.status}}</span>
 				</div>
 				<div class="league-header-meta">
-					<span class="meta-chip">{{league_info.server || 'Any Server'}}</span>
+					<span class="meta-chip">{{league_info.game_version === 'classic' ? 'Classic' : 'Retail'}}</span>
 					<span class="meta-sep">&middot;</span>
-					<span class="meta-chip">{{league_info.faction || 'Any'}}</span>
+					<span class="meta-chip">{{(league_info.region || 'us').toUpperCase()}}</span>
 					<span class="meta-sep">&middot;</span>
 					<span class="meta-chip">{{league_info.style || 'Snake'}} Draft</span>
 					<span class="meta-sep">&middot;</span>
@@ -100,6 +125,7 @@ block content
 					<a :href="'/leagues/' + league_info.code + '/teams'" :class="{active: current_page === 'teams'}"><i class="fas fa-flag"></i> Teams</a>
 					<a :href="'/leagues/' + league_info.code + '/rankings'" :class="{active: current_page === 'rankings'}"><i class="fas fa-calendar-alt"></i> Rankings</a>
 					<a :href="'/proplayers/' + league_info.code" :class="{active: current_page === 'players'}"><i class="fas fa-list"></i> Players</a>
+					<a :href="'/leagues/' + league_info.code + '/settings'" :class="{active: current_page === 'settings'}"><i class="fas fa-cog"></i> {{is_admin ? 'Settings' : 'Info'}}</a>
 				</div>
 			</div>
 			`
@@ -110,10 +136,12 @@ block content
 			data: {
 				players: [],
 				found: true,
+				hasMore: true,
 				page: 0,
 				tag: "dps",
 				leagueID: leagueID,
 				league_info: league,
+				organizer: !{organizer},
 				yourTeam: yourTeam,
 				onClock: onClock,
 				playername: "",
@@ -163,6 +191,20 @@ block content
 					if (parse < 99) return '#ff8000';
 					return '#e5cc80';
 				},
+				parseTier(parse) {
+					parse = parseInt(parse);
+					if (parse < 25) return 'Common';
+					if (parse < 50) return 'Uncommon';
+					if (parse < 75) return 'Rare';
+					if (parse < 95) return 'Epic';
+					if (parse < 99) return 'Legendary';
+					return 'Artifact';
+				},
+				formatDps(dps) {
+					if (dps >= 1000000) return (dps / 1000000).toFixed(1) + 'M';
+					if (dps >= 1000) return (dps / 1000).toFixed(1) + 'K';
+					return Math.round(dps);
+				},
 				sortBy(key) {
 					if (this.sortKey === key) {
 						this.sortAsc = !this.sortAsc;
@@ -179,7 +221,7 @@ block content
 				debouncedFetch() {
 					clearTimeout(this.debounceTimer);
 					var self = this;
-					this.debounceTimer = setTimeout(function() { self.fetchSource(); }, 300);
+					this.debounceTimer = setTimeout(function() { self.page = 0; self.fetchSource(); }, 300);
 				},
 				fetchSource: function() {
 					if (this.playername != "") {
@@ -190,14 +232,16 @@ block content
 						this.fetchData();
 					}
 				},
+				handleResponse: function(response) {
+					this.players = response;
+					this.found = response.length > 0;
+					this.hasMore = response.length >= PAGE_SIZE;
+				},
 				fetchData: function() {
 					var self = this;
 					fetch('/proplayers/api/' + this.leagueID + '/' + this.tag + '/' + this.page)
 						.then(function(res) { return res.json(); })
-						.then(function(response) {
-							self.players = response;
-							self.found = response.length > 0;
-						})
+						.then(function(response) { self.handleResponse(response); })
 						.catch(function(err) { console.log(err); });
 				},
 				fetchPlayer: function() {
@@ -206,11 +250,11 @@ block content
 						.then(function(res) { return res.json(); })
 						.then(function(response) {
 							if (response != null) {
-								self.players = response;
-								self.found = true;
+								self.handleResponse(response);
 							} else {
 								self.players = [];
 								self.found = false;
+								self.hasMore = false;
 							}
 						})
 						.catch(function(err) { console.log(err); });
@@ -221,11 +265,11 @@ block content
 						.then(function(res) { return res.json(); })
 						.then(function(response) {
 							if (response != null) {
-								self.players = response;
-								self.found = true;
+								self.handleResponse(response);
 							} else {
 								self.players = [];
 								self.found = false;
+								self.hasMore = false;
 							}
 						})
 						.catch(function(err) { console.log(err); });
@@ -237,8 +281,10 @@ block content
 					}
 				},
 				pageUp: function() {
-					this.page++;
-					this.fetchSource();
+					if (this.hasMore) {
+						this.page++;
+						this.fetchSource();
+					}
 				},
 			}
 		})

@@ -22,6 +22,7 @@ router.get('/:leagueID', function (req, res) {
         league: JSON.stringify(league),
         yourTeam: JSON.stringify(yourTeam),
         onClock: onClock,
+        organizer: leaguelogic.sessionIsAdmin(),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
       });
