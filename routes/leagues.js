@@ -152,6 +152,19 @@ router.get('/api/:leagueID/teams', function (req, res, next) {
 router.post('/api/create', function (req, res) {
   if (!req.session.loggedin) return res.redirect('/403');
 
+  // Validate numeric inputs
+  var season_length = parseInt(req.body.season_length);
+  var rounds = parseInt(req.body.rounds);
+  var req_dps = parseInt(req.body.req_dps);
+  var req_healers = parseInt(req.body.req_healers);
+  var req_tanks = parseInt(req.body.req_tanks);
+
+  if (isNaN(season_length) || season_length < 1 || season_length > 52) return res.status(400).json({ error: 'Season length must be 1-52 weeks' });
+  if (isNaN(rounds) || rounds < 1 || rounds > 20) return res.status(400).json({ error: 'Rounds must be 1-20' });
+  if (isNaN(req_dps) || req_dps < 0 || req_dps > 20) return res.status(400).json({ error: 'DPS requirement must be 0-20' });
+  if (isNaN(req_healers) || req_healers < 0 || req_healers > 20) return res.status(400).json({ error: 'Healer requirement must be 0-20' });
+  if (isNaN(req_tanks) || req_tanks < 0 || req_tanks > 20) return res.status(400).json({ error: 'Tank requirement must be 0-20' });
+
   var new_league = req.body;
   new_league.code = short.generate();
   new_league.admin = { name: req.session.username };
@@ -306,9 +319,12 @@ router.post('/api/:leagueID/settings', function (req, res) {
       var allowed = ['description', 'report_day', 'season_length', 'draft_notes'];
       for (var field of allowed) {
         if (req.body[field] !== undefined) {
-          updates[field] = field === 'season_length'
-            ? parseInt(req.body[field]) || league.season_length
-            : req.body[field];
+          if (field === 'season_length') {
+            var val = parseInt(req.body[field]);
+            updates[field] = (isNaN(val) || val < 1 || val > 52) ? league.season_length : val;
+          } else {
+            updates[field] = req.body[field];
+          }
         }
       }
 
