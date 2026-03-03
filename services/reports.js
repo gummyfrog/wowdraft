@@ -81,8 +81,16 @@ async function generateReport(leagueCode) {
     wclOptions.zoneID = league.raids[0].id;
   }
 
+  // Mark progress on the league document so clients can poll
+  const totalPlayers = allDraftedPlayers.length;
+  await db.leagues().updateOne(
+    { code: leagueCode },
+    { $set: { report_status: { state: 'generating', progress: 0, total: totalPlayers } } }
+  );
+
   // Fetch fresh snapshots from WCL for each player
   const newSnapshots = {};
+  let fetched = 0;
   for (const player of allDraftedPlayers) {
     const snapshot = await fetchPlayerSnapshot(
       player.name, serverSlug, serverRegion, gameVersion, wclOptions
@@ -93,6 +101,11 @@ async function generateReport(leagueCode) {
       // Player has no new data — use old snapshot or empty
       newSnapshots[player.name] = oldSnapshots[player.name] || { encounters: {}, zoneAllStars: null };
     }
+    fetched++;
+    await db.leagues().updateOne(
+      { code: leagueCode },
+      { $set: { 'report_status.progress': fetched } }
+    );
     // Rate limit: 1 request per second
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
@@ -173,7 +186,7 @@ async function generateReport(leagueCode) {
   await db.leagues().updateOne(
     { code: leagueCode },
     {
-      $set: { player_snapshots: newSnapshots, standings: updateFields.standings || league.standings || {} },
+      $set: { player_snapshots: newSnapshots, standings: updateFields.standings || league.standings || {}, report_status: null },
       $push: { activity_reports: report },
     }
   );

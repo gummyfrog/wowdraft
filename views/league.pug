@@ -65,8 +65,12 @@ block content
 						span  Report Day: {{league_info.report_day || 'Wednesday'}}
 				div.season-info-card-actions
 					button.btn-styled.btn-styled--primary(@click="generateReport" :disabled="generating")
-						i.fas.fa-sync
-						|  {{generating ? 'Generating...' : 'Update Scores'}}
+						i.fas.fa-sync(:class="{'fa-spin': generating}")
+						|  {{reportLabel}}
+					div.report-progress(v-if="generating && reportTotal > 0")
+						div.report-progress-bar
+							div.report-progress-fill(:style="'width:' + reportPercent + '%'")
+						span.report-progress-text {{reportProgress}} / {{reportTotal}} players
 
 			div.standings-card(v-if="league_info.standings")
 				div.standings-card-head
@@ -251,6 +255,9 @@ block content
 		  	has_real_draft_info: false,
 		  	draft_info: {pick_order:[0], pick_index:0, started: false, inProgress:false},
 		  	generating: false,
+		  	reportProgress: 0,
+		  	reportTotal: 0,
+		  	_pollTimer: null,
 		  },
 		  methods: {
 			fetchDraftData: function(event) {
@@ -272,15 +279,38 @@ block content
 			},
 			generateReport: function() {
 				this.generating = true;
+				this.reportProgress = 0;
+				this.reportTotal = 0;
 				fetch(`/leagues/api/${league.code}/generateReport`, { method: 'POST' })
 					.then(res => res.json())
-					.then(() => {
-						this.generating = false;
-						this.fetchData();
-					})
-					.catch(() => {
-						this.generating = false;
-					});
+					.then(() => { this.pollReportStatus(); })
+					.catch(() => { this.generating = false; });
+			},
+			pollReportStatus: function() {
+				var self = this;
+				if (self._pollTimer) clearInterval(self._pollTimer);
+				self._pollTimer = setInterval(function() {
+					fetch(`/leagues/api/${league.code}/reportStatus`)
+						.then(res => res.json())
+						.then(function(status) {
+							if (status.state === 'generating') {
+								self.reportProgress = status.progress || 0;
+								self.reportTotal = status.total || 0;
+							} else {
+								clearInterval(self._pollTimer);
+								self._pollTimer = null;
+								self.generating = false;
+								self.reportProgress = 0;
+								self.reportTotal = 0;
+								self.fetchData();
+							}
+						})
+						.catch(function() {
+							clearInterval(self._pollTimer);
+							self._pollTimer = null;
+							self.generating = false;
+						});
+				}, 2000);
 			},
 			getRecord: function(teamId) {
 				var s = this.league_info.standings && this.league_info.standings[teamId];
@@ -288,6 +318,15 @@ block content
 			}
 		  },
 		  computed: {
+		  	reportLabel: function() {
+		  		if (!this.generating) return 'Update Scores';
+		  		if (this.reportTotal > 0) return 'Fetching data...';
+		  		return 'Starting...';
+		  	},
+		  	reportPercent: function() {
+		  		if (this.reportTotal <= 0) return 0;
+		  		return Math.round((this.reportProgress / this.reportTotal) * 100);
+		  	},
 		  	statusSlug() {
 		  		return this.league_info.status.toLowerCase().replace(" ", '-');
 		  	},

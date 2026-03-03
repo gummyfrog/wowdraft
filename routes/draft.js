@@ -96,7 +96,7 @@ router.post('/api/:leagueID/draftPlayer', function (req, res, next) {
     .catch((err) => next(err));
 });
 
-// API: Generate report (admin only)
+// API: Generate report (admin only) — kicks off async, returns immediately
 router.post('/api/:leagueID/generateReport', function (req, res) {
   if (!req.session.loggedin) return res.status(403).json({ error: 'Not logged in' });
 
@@ -107,11 +107,23 @@ router.post('/api/:leagueID/generateReport', function (req, res) {
         return res.status(403).json({ error: 'Admin only' });
       }
 
+      // Fire and forget — client polls /reportStatus for progress
       generateReport(req.params.leagueID)
-        .then((report) => res.json({ success: true, report }))
-        .catch((err) => res.status(500).json({ error: err.message }));
+        .catch((err) => console.error(`Report generation failed for ${req.params.leagueID}:`, err.message));
+
+      res.json({ started: true });
     })
     .catch(() => res.status(404).json({ error: 'League not found' }));
+});
+
+// API: Report generation status
+router.get('/api/:leagueID/reportStatus', function (req, res, next) {
+  db.leagues().findOne({ code: req.params.leagueID }, { projection: { report_status: 1 } })
+    .then((league) => {
+      if (!league) return res.status(404).json({ error: 'League not found' });
+      res.json(league.report_status || { state: 'idle' });
+    })
+    .catch((err) => next(err));
 });
 
 module.exports = router;
