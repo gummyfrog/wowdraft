@@ -42,7 +42,9 @@ block content
 						i.fas.fa-chevron-right
 
 			div#player-display
-				table.player-table(v-if="found")
+				div.loading-overlay(v-if="loading")
+					div.loading-spinner
+				table.player-table(v-if="!loading && found")
 					thead
 						tr
 							th
@@ -86,7 +88,7 @@ block content
 									input(type="hidden" name="player_name" :value="player.name")
 									button(type="submit").draft-btn Draft
 								span(v-else style="opacity:0.4; font-size:0.8em") Inactive
-				div.empty-state(v-else)
+				div.empty-state(v-if="!loading && !found")
 					i.fas.fa-search.empty-state-icon
 					p.empty-state-message No players found
 					p.empty-state-subtext Try a different search, guild filter, or role tab.
@@ -119,6 +121,7 @@ block content
 				sortAsc: true,
 				lastSource: "generic",
 				debounceTimer: null,
+				loading: true,
 			},
 			computed: {
 				statusSlug() {
@@ -193,6 +196,7 @@ block content
 					this.debounceTimer = setTimeout(function() { self.page = 0; self.fetchSource(); }, 300);
 				},
 				fetchSource: function() {
+					this.loading = true;
 					if (this.playername != "") {
 						this.fetchPlayer();
 					} else if (this.guild != "") {
@@ -205,6 +209,7 @@ block content
 					this.players = response;
 					this.found = response.length > 0;
 					this.hasMore = response.length >= PAGE_SIZE;
+					this.loading = false;
 				},
 				fetchData: function() {
 					var self = this;
