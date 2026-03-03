@@ -92,6 +92,65 @@ describe('Scoring Engine', function () {
       const spikeyPts = scorePlayer(spikey, {}, [spikey]);
       expect(spikeyPts.consistency).to.equal(1);
     });
+
+    it('should give consistency 0 when encounters have no medianPercent', function () {
+      const noMedian = makeSnapshot({ encounters: {
+        'Boss1': { rankPercent: 90, medianPercent: 0, bestAmount: 1500, totalKills: 5, fastestKill: 100000 },
+      }});
+      const points = scorePlayer(noMedian, {}, [noMedian]);
+      expect(points.consistency).to.equal(0);
+    });
+
+    it('should give all_stars 0 when possiblePoints is zero', function () {
+      const snap = makeSnapshot({ zoneAllStars: { points: 50, possiblePoints: 0, rankPercent: 50, spec: 'Fire' } });
+      const points = scorePlayer(snap, {}, [snap]);
+      expect(points.all_stars).to.equal(0);
+    });
+
+    it('should give speedy_clear points when player has fastest kill', function () {
+      const fast = makeSnapshot({ encounters: {
+        'Boss1': { rankPercent: 80, medianPercent: 75, bestAmount: 1500, totalKills: 5, fastestKill: 90000 },
+      }});
+      const slow = makeSnapshot({ encounters: {
+        'Boss1': { rankPercent: 70, medianPercent: 65, bestAmount: 1200, totalKills: 5, fastestKill: 150000 },
+      }});
+      const points = scorePlayer(fast, {}, [fast, slow]);
+      expect(points.speedy_clear).to.equal(2);
+    });
+
+    it('should give speedy_clear 0 when player is not fastest', function () {
+      const slow = makeSnapshot({ encounters: {
+        'Boss1': { rankPercent: 70, medianPercent: 65, bestAmount: 1200, totalKills: 5, fastestKill: 150000 },
+      }});
+      const fast = makeSnapshot({ encounters: {
+        'Boss1': { rankPercent: 80, medianPercent: 75, bestAmount: 1500, totalKills: 5, fastestKill: 90000 },
+      }});
+      const points = scorePlayer(slow, {}, [slow, fast]);
+      expect(points.speedy_clear).to.equal(0);
+    });
+
+    it('should give dps points relative to other players', function () {
+      const top = makeSnapshot({ encounters: {
+        'Boss1': { rankPercent: 99, medianPercent: 98, bestAmount: 5000, totalKills: 5, fastestKill: 100000 },
+      }});
+      const bottom = makeSnapshot({ encounters: {
+        'Boss1': { rankPercent: 30, medianPercent: 25, bestAmount: 500, totalKills: 5, fastestKill: 200000 },
+      }});
+      const topPoints = scorePlayer(top, {}, [top, bottom]);
+      const bottomPoints = scorePlayer(bottom, {}, [top, bottom]);
+      expect(topPoints.dps).to.be.greaterThan(bottomPoints.dps);
+    });
+
+    it('should give parse tier points at each threshold', function () {
+      const make = (pct) => makeSnapshot({ encounters: { 'Boss': { rankPercent: pct, medianPercent: pct, bestAmount: 1000, totalKills: 1, fastestKill: 100000 } } });
+
+      expect(scorePlayer(make(99), {}, [make(99)]).parse).to.equal(10);
+      expect(scorePlayer(make(95), {}, [make(95)]).parse).to.equal(8);
+      expect(scorePlayer(make(90), {}, [make(90)]).parse).to.equal(6);
+      expect(scorePlayer(make(75), {}, [make(75)]).parse).to.equal(4);
+      expect(scorePlayer(make(50), {}, [make(50)]).parse).to.equal(2);
+      expect(scorePlayer(make(30), {}, [make(30)]).parse).to.equal(1);
+    });
   });
 
   describe('getTitle', function () {
@@ -102,6 +161,11 @@ describe('Scoring Engine', function () {
 
     it('should return empty string for no categories', function () {
       expect(getTitle({ total: 0 })).to.equal('');
+    });
+
+    it('should return All-Star title when all_stars is highest', function () {
+      const points = { total: 20, parse: 1, dps: 1, bosses_down: 1, speedy_clear: 1, new_best: 1, consistency: 1, all_stars: 6 };
+      expect(getTitle(points)).to.equal('All-Star');
     });
   });
 

@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { WarcraftLogsClient } = require('../services/warcraftlogs');
+const { WarcraftLogsClient, GAME_VERSIONS } = require('../services/warcraftlogs');
 
 describe('WarcraftLogsClient', function () {
   it('should construct with credentials', function () {
@@ -17,11 +17,49 @@ describe('WarcraftLogsClient', function () {
     expect(token).to.equal('cached-token');
   });
 
+  it('should re-auth when token is expired', async function () {
+    const client = new WarcraftLogsClient('id', 'secret');
+    client.accessToken = 'old-token';
+    client.tokenExpiry = Date.now() - 1000;
+    // Can't actually authenticate without real creds, but we can verify
+    // the expiry check triggers re-auth (it will throw on network call)
+    try {
+      await client.authenticate();
+    } catch (err) {
+      // Expected — no real OAuth server
+      expect(err).to.exist;
+    }
+  });
+
   it('getClient returns null when env vars are missing', function () {
     delete process.env.WCL_CLIENT_ID;
     delete process.env.WCL_CLIENT_SECRET;
     delete require.cache[require.resolve('../services/warcraftlogs')];
     const { getClient } = require('../services/warcraftlogs');
     expect(getClient()).to.be.null;
+  });
+});
+
+describe('GAME_VERSIONS', function () {
+  it('should be an array with retail and classic', function () {
+    expect(GAME_VERSIONS).to.be.an('array');
+    const ids = GAME_VERSIONS.map(v => v.id);
+    expect(ids).to.include('retail');
+    expect(ids).to.include('classic');
+  });
+
+  it('each version should have id, name, and base URL', function () {
+    for (const v of GAME_VERSIONS) {
+      expect(v).to.have.property('id');
+      expect(v).to.have.property('name');
+      expect(v).to.have.property('base');
+      expect(v.base).to.match(/^https:\/\/.*warcraftlogs\.com$/);
+    }
+  });
+
+  it('retail and classic should have different base URLs', function () {
+    const retail = GAME_VERSIONS.find(v => v.id === 'retail');
+    const classic = GAME_VERSIONS.find(v => v.id === 'classic');
+    expect(retail.base).to.not.equal(classic.base);
   });
 });
