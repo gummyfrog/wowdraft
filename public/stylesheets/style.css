@@ -2640,3 +2640,86 @@ header {
   padding: 40px;
   opacity: 0.6;
 }
+
+/* ============================================
+   Mobile Responsiveness
+   ============================================ */
+
+@media (max-width: 768px) {
+  .league-header-top {
+    flex-wrap: wrap;
+  }
+
+  .league-header-meta {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .league-header-nav {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .league-header-nav a {
+    font-size: 0.8em;
+    padding: 6px 8px;
+  }
+
+  .teams-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .league-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .create-league-layout,
+  .create-team-layout {
+    flex-direction: column;
+  }
+
+  .create-league-preview {
+    order: -1;
+  }
+
+  .preview-sticky {
+    position: static;
+  }
+
+  .bracket-weeks {
+    min-width: 600px;
+  }
+
+  .matchup-card {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  #content {
+    padding: 8px;
+  }
+
+  header {
+    padding: 10px 15px;
+  }
+
+  .league-header-name {
+    font-size: 1.1em;
+  }
+
+  .form-section {
+    padding: 10px;
+  }
+
+  .player-table th,
+  .player-table td {
+    padding: 4px 6px;
+    font-size: 0.85em;
+  }
+}
