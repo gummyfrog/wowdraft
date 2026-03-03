@@ -1,3 +1,7 @@
+/* ============================================
+   CSS Custom Properties (WoW Class Colors)
+   ============================================ */
+
 :root {
   --druid: #A34C00;
   --hunter: #6F9B31;
@@ -9,6 +13,10 @@
   --warlock: #4C4FE6;
   --warrior: #936739;
 }
+
+/* ============================================
+   Global Reset, Body & Typography
+   ============================================ */
 
 *,
 *::before,
@@ -76,9 +84,9 @@ footer {
 	opacity: 0.8;
 }
 
-/*
-	Top-Level Layout Syling
-*/
+/* ============================================
+   Top-Level Layout & Authentication
+   ============================================ */
 
 /* Old float layout replaced by flexbox in Updated Global Header section below
 #logged-in, #logged-out {
@@ -98,9 +106,9 @@ footer {
 
 
 
-/*
-	Player Search Styling
-*/
+/* ============================================
+   Legacy Player Cards & Search
+   ============================================ */
 
 
 #player-filtering {
@@ -210,9 +218,9 @@ footer {
 	transform: scale(0.95);
 }
 
-
-
-
+/* ============================================
+   WoW Class Background Colors
+   ============================================ */
 
 .druid {
 	background-color: var(--druid);
@@ -254,9 +262,9 @@ footer {
 
 
 
-/*
-	League Teams Styling
-*/
+/* ============================================
+   Legacy Team Cards
+   ============================================ */
 
 
 .team {
@@ -308,9 +316,9 @@ footer {
 	text-indent: 10px;
 }
 
-/*
-	League Info Styling
-*/
+/* ============================================
+   League Info & Draft UI
+   ============================================ */
 
 .league_status {
 	margin: 0;
@@ -377,9 +385,9 @@ footer {
 	margin-bottom: 0;
 }
 
-/*
-	Minis
-*/
+/* ============================================
+   Mini Player & Team Components
+   ============================================ */
 
 .mini_team_name, .mini_team_manager, .mini_player, .mini_role {
 	display: inline-block;
@@ -489,6 +497,9 @@ footer {
 	margin-bottom: 10px;
 }
 
+/* ============================================
+   Page Containers & Wrappers
+   ============================================ */
 
 #leagues, #about, .teams_wrapper, .progress, .pick_order, .pick_history, .makeLeague, .makeTeam {
 	border: 2px solid #555555;
@@ -602,7 +613,9 @@ footer {
 	margin-bottom: 30px;
 }
 
-
+/* ============================================
+   Legacy Form Inputs & Controls
+   ============================================ */
 
 input[type=text], input[type=number], select {
 	width: 25%;
@@ -648,9 +661,9 @@ input, select {
 	margin: 8px 0;
 }
 
-/*
-  Compact League Header
-*/
+/* ============================================
+   Compact League Header
+   ============================================ */
 
 .league-header {
   border: 2px solid #555555;
@@ -738,9 +751,9 @@ input, select {
   border-bottom: 2px solid #00B7FF;
 }
 
-/*
-  Team Cards Grid
-*/
+/* ============================================
+   Team Cards Grid
+   ============================================ */
 
 .teams-grid {
   display: grid;
@@ -832,9 +845,9 @@ input, select {
   font-style: italic;
 }
 
-/*
-  Dense Player Table
-*/
+/* ============================================
+   Dense Player Table
+   ============================================ */
 
 .player-table {
   width: 100%;
@@ -896,9 +909,9 @@ input, select {
 .role-pill.tanks { background: #00B7FF; color: #000; }
 .role-pill.healers { background: #40BC40; color: #000; }
 
-/*
-  Player Class Text Colors
-*/
+/* ============================================
+   Player Class Text Colors
+   ============================================ */
 
 .class-Warrior { color: var(--warrior); }
 .class-Paladin { color: var(--paladin); }
@@ -919,9 +932,9 @@ input, select {
   font-size: 1.05em;
 }
 
-/*
-  Player Table Enhancements
-*/
+/* ============================================
+   Player Table Enhancements
+   ============================================ */
 
 .player-class-cell {
   width: 44px;
@@ -969,9 +982,9 @@ input, select {
   opacity: 0.8;
 }
 
-/*
-  Parse Bar
-*/
+/* ============================================
+   Parse Bar
+   ============================================ */
 
 .parse-cell {
   position: relative;
@@ -1035,9 +1048,9 @@ input, select {
   transform: scale(0.97);
 }
 
-/*
-  Requirements Tracker
-*/
+/* ============================================
+   Requirements Tracker
+   ============================================ */
 
 .requirements-tracker {
   display: flex;
@@ -1072,9 +1085,9 @@ input, select {
   opacity: 0.7;
 }
 
-/*
-  Player Filters (updated)
-*/
+/* ============================================
+   Player Filters
+   ============================================ */
 
 .player-filters {
   display: flex;
@@ -1131,9 +1144,9 @@ input, select {
   margin-left: auto;
 }
 
-/*
-  League Event Cards
-*/
+/* ============================================
+   League Event Cards
+   ============================================ */
 
 .league-cards-grid {
   display: grid;
@@ -1208,9 +1221,9 @@ input, select {
   opacity: 0.6;
 }
 
-/*
-  Head-to-Head Matchup Cards
-*/
+/* ============================================
+   Head-to-Head Matchup Cards
+   ============================================ */
 
 .matchups-container {
   display: flex;
@@ -1331,9 +1344,9 @@ input, select {
   font-size: 1.2em;
 }
 
-/*
-  Season Bracket
-*/
+/* ============================================
+   Season Bracket
+   ============================================ */
 
 .bracket-section {
   margin-top: 30px;
@@ -1424,9 +1437,9 @@ input, select {
   text-align: center;
 }
 
-/*
-  Rankings Team Cards
-*/
+/* ============================================
+   Rankings Team Cards
+   ============================================ */
 
 .rankings-teams {
   display: flex;
@@ -1515,9 +1528,9 @@ input, select {
   opacity: 0.25;
 }
 
-/*
-  Updated Global Header
-*/
+/* ============================================
+   Updated Global Header
+   ============================================ */
 
 header {
   display: flex;
@@ -1553,9 +1566,9 @@ header {
   font-size: 0.85em;
 }
 
-/*
-  League Description Card
-*/
+/* ============================================
+   League Description Card
+   ============================================ */
 
 .league-description-card {
   border: 2px solid #555;
@@ -1573,9 +1586,9 @@ header {
   margin: 0;
 }
 
-/*
-  CTA Cards
-*/
+/* ============================================
+   CTA Cards
+   ============================================ */
 
 .cta-card {
   display: block;
@@ -1644,9 +1657,9 @@ header {
 .cta-card--primary .cta-card-action { color: #00B7FF; }
 .cta-card--warning .cta-card-action { color: #FF8000; }
 
-/*
-  Styled Buttons
-*/
+/* ============================================
+   Styled Buttons
+   ============================================ */
 
 .btn-styled {
   border: none;
@@ -1686,9 +1699,9 @@ header {
   font-size: 1em;
 }
 
-/*
-  Season Info Card
-*/
+/* ============================================
+   Season Info Card
+   ============================================ */
 
 .season-info-card {
   border: 2px solid #555;
@@ -1739,9 +1752,9 @@ header {
   padding: 10px 15px;
 }
 
-/*
-  Standings Card
-*/
+/* ============================================
+   Standings Card
+   ============================================ */
 
 .standings-card {
   border: 2px solid #555;
@@ -1800,9 +1813,9 @@ header {
   flex-shrink: 0;
 }
 
-/*
-  Create League Page
-*/
+/* ============================================
+   Create League Page
+   ============================================ */
 
 .create-league-page {
   max-width: 1200px;
@@ -1837,9 +1850,9 @@ header {
   gap: 20px;
 }
 
-/*
-  Create League: Form Sections
-*/
+/* ============================================
+   Create League: Form Sections
+   ============================================ */
 
 .form-section {
   border: 2px solid #555;
@@ -1862,9 +1875,9 @@ header {
   padding: 15px;
 }
 
-/*
-  Create League: Form Inputs (scoped)
-*/
+/* ============================================
+   Create League: Form Inputs (scoped)
+   ============================================ */
 
 .create-league-form .form-label {
   display: block;
@@ -1904,9 +1917,9 @@ header {
   cursor: pointer;
 }
 
-/*
-  Create League: Icon Grid
-*/
+/* ============================================
+   Create League: Icon Grid
+   ============================================ */
 
 .icon-grid {
   display: grid;
@@ -1945,9 +1958,9 @@ header {
   box-shadow: 0 0 8px rgba(0, 183, 255, 0.4);
 }
 
-/*
-  Create League: Color Picker
-*/
+/* ============================================
+   Create League: Color Picker
+   ============================================ */
 
 .color-picker-row {
   display: flex;
@@ -1972,9 +1985,9 @@ header {
   opacity: 0.7;
 }
 
-/*
-  Create League: Raid Toggle Pills
-*/
+/* ============================================
+   Create League: Raid Toggle Pills
+   ============================================ */
 
 .raid-pills {
   display: flex;
@@ -2016,9 +2029,9 @@ header {
   font-weight: 600;
 }
 
-/*
-  Create League: Guild Chips
-*/
+/* ============================================
+   Create League: Guild Chips
+   ============================================ */
 
 .guild-chips {
   display: flex;
@@ -2056,9 +2069,9 @@ header {
   opacity: 1;
 }
 
-/*
-  Create League: Guild Search Results
-*/
+/* ============================================
+   Create League: Guild Search Results
+   ============================================ */
 
 .guild-results {
   border: 1px solid #444;
@@ -2103,9 +2116,9 @@ header {
   font-size: 0.85em;
 }
 
-/*
-  Create League: Reminder Box
-*/
+/* ============================================
+   Create League: Reminder Box
+   ============================================ */
 
 .reminder-box {
   border: 1px solid #C41E3A;
@@ -2128,9 +2141,9 @@ header {
   margin: 0;
 }
 
-/*
-  Create League: Preview Panel
-*/
+/* ============================================
+   Create League: Preview Panel
+   ============================================ */
 
 .create-league-preview {
   position: relative;
@@ -2159,9 +2172,9 @@ header {
   box-shadow: none;
 }
 
-/*
-  Create Team Page (reuses .create-league-form classes)
-*/
+/* ============================================
+   Create Team Page
+   ============================================ */
 
 .create-team-page {
   max-width: 1000px;
@@ -2185,9 +2198,9 @@ header {
   pointer-events: none;
 }
 
-/*
-  Empty States
-*/
+/* ============================================
+   Empty States
+   ============================================ */
 
 .empty-state {
   display: flex;
@@ -2222,9 +2235,9 @@ header {
   max-width: 350px;
 }
 
-/*
-  Team War Banner
-*/
+/* ============================================
+   Team War Banner
+   ============================================ */
 
 .team-banner {
   position: relative;
@@ -2325,9 +2338,9 @@ header {
   padding-bottom: 12px;
 }
 
-/*
-  Banner Builder (in create team form)
-*/
+/* ============================================
+   Banner Builder (Create Team Form)
+   ============================================ */
 
 .banner-preview-area {
   display: flex;
@@ -2399,9 +2412,9 @@ header {
   box-shadow: 0 0 8px rgba(0, 183, 255, 0.4);
 }
 
-/*
-  Banner on Team Cards
-*/
+/* ============================================
+   Banner on Team Cards
+   ============================================ */
 
 .team-card-wrap {
   display: flex;
@@ -2421,9 +2434,9 @@ header {
   border-right: 1px solid #333;
 }
 
-/*
-  Banner on Matchup Results
-*/
+/* ============================================
+   Banner on Matchup Results
+   ============================================ */
 
 .matchup-winner-banner {
   position: absolute;
@@ -2445,9 +2458,9 @@ header {
   vertical-align: middle;
 }
 
-/*
-  Banner Builder Extras
-*/
+/* ============================================
+   Banner Builder Extras
+   ============================================ */
 
 .preview-banner-area {
   display: flex;
@@ -2479,9 +2492,9 @@ header {
   gap: 4px;
 }
 
-/*
-  Roster Requirements
-*/
+/* ============================================
+   Roster Requirements
+   ============================================ */
 
 .roster-req-row {
   display: flex;
@@ -2522,9 +2535,9 @@ header {
   opacity: 1;
 }
 
-/*
-  Settings / Info Page
-*/
+/* ============================================
+   Settings / Info Page
+   ============================================ */
 
 .settings-title {
   font-family: 'Montserrat', sans-serif;
