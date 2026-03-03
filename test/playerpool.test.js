@@ -62,6 +62,7 @@ describe('Player Pool Service', function () {
       expect(result.class).to.equal('Shaman');
       expect(result.guild).to.equal('Grizzly');
       expect(result.tag).to.equal('healers');
+      expect(result.tags).to.deep.equal(['healers', 'dps']);
       expect(result.faction).to.equal('Horde');
       expect(result.drafted).to.deep.equal([]);
       expect(result.active).to.equal(true);
@@ -75,6 +76,7 @@ describe('Player Pool Service', function () {
       const result = normalizeWCLPlayer(member, 'Guild', null);
       expect(result.class).to.equal('Unknown');
       expect(result.tag).to.equal('dps');
+      expect(result.tags).to.deep.equal(['dps']);
     });
 
     it('should carry guild faction to player', function () {
@@ -87,6 +89,15 @@ describe('Player Pool Service', function () {
       const member = { name: 'Neutral', classID: 1 };
       const result = normalizeWCLPlayer(member, 'Guild', null);
       expect(result.faction).to.be.null;
+    });
+
+    it('should include tanks in tags for tank-capable classes', function () {
+      // Warrior (1), DK (6), Demon Hunter (12) should all have 'tanks' in tags
+      expect(normalizeWCLPlayer({ name: 'W', classID: 1 }, 'G', null).tags).to.include('tanks');
+      expect(normalizeWCLPlayer({ name: 'D', classID: 6 }, 'G', null).tags).to.include('tanks');
+      expect(normalizeWCLPlayer({ name: 'DH', classID: 12 }, 'G', null).tags).to.include('tanks');
+      // Mage (8) should NOT have tanks
+      expect(normalizeWCLPlayer({ name: 'M', classID: 8 }, 'G', null).tags).to.not.include('tanks');
     });
   });
 

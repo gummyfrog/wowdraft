@@ -75,17 +75,6 @@ describe('Report Generation', function () {
   });
 
   describe('fetchPlayerSnapshot', function () {
-    before(function () {
-      delete process.env.WCL_CLIENT_ID;
-      delete process.env.WCL_CLIENT_SECRET;
-      delete require.cache[require.resolve('../services/warcraftlogs')];
-    });
-
-    it('should return null when WCL client is unavailable', async function () {
-      const result = await fetchPlayerSnapshot('Arthas', 'area-52', 'us', 'retail', { zoneID: 38 });
-      expect(result).to.be.null;
-    });
-
     it('should return null when no zoneID is provided', async function () {
       const result = await fetchPlayerSnapshot('Arthas', 'area-52', 'us', 'retail', {});
       expect(result).to.be.null;

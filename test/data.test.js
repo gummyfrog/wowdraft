@@ -29,7 +29,9 @@ describe('Class Data', function () {
     for (let i = 1; i <= 13; i++) {
       expect(WCL_CLASSES[i]).to.have.property('name');
       expect(WCL_CLASSES[i]).to.have.property('defaultTag');
+      expect(WCL_CLASSES[i]).to.have.property('tags').that.is.an('array');
       expect(WCL_CLASSES[i]).to.have.property('specs');
+      expect(WCL_CLASSES[i].tags).to.include(WCL_CLASSES[i].defaultTag);
     }
   });
 

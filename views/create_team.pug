@@ -52,6 +52,12 @@ block content
 							span  War Banner
 						div.form-section-body
 
+							div.banner-preview-inline
+								div.team-banner.team-banner--lg(:class="'team-banner--' + banner_shape" :style="'--ban-bg:' + banner_bg + '; --ban-accent:' + banner_accent")
+									div.team-banner-bg(:class="'pat-' + banner_pattern" :style="'background-color:' + banner_bg")
+									div.team-banner-emblem(:style="'color:' + banner_emblem_color")
+										i(:class="'fas fa-' + banner_emblem")
+
 							label.form-label Banner Shape
 							div.pattern-grid
 								div.pattern-grid-item(
@@ -75,10 +81,6 @@ block content
 							label.form-label Banner Colors
 							div.color-picker-row.color-picker-row--vertical
 								div.color-picker-pair
-									span.color-label Background
-									input.form-color(type="color" v-model="banner_bg" name="banner_bg")
-									span.color-hex {{banner_bg}}
-								div.color-picker-pair
 									span.color-label Accent
 									input.form-color(type="color" v-model="banner_accent" name="banner_accent")
 									span.color-hex {{banner_accent}}
@@ -86,6 +88,7 @@ block content
 									span.color-label Emblem
 									input.form-color(type="color" v-model="banner_emblem_color" name="banner_emblem_color")
 									span.color-hex {{banner_emblem_color}}
+							input(type='hidden' name='banner_bg' :value="color2")
 
 							label.form-label Emblem
 							div.emblem-grid
@@ -140,7 +143,6 @@ block content
 				],
 				banner_shape: "pointed",
 				banner_pattern: "solid",
-				banner_bg: "#C41E3A",
 				banner_accent: "#FFD100",
 				banner_emblem: "skull-crossbones",
 			banner_emblem_color: "#ffffff",
@@ -189,5 +191,8 @@ block content
 					{ icon: "cross", label: "Cross" },
 					{ icon: "yin-yang", label: "Yin Yang" },
 				],
+			},
+			computed: {
+				banner_bg: function() { return this.color2; },
 			}
 		})

@@ -31,6 +31,7 @@ function normalizeWCLPlayer(member, guildName, faction) {
     class: classInfo.name,
     guild: guildName,
     tag: classInfo.defaultTag,
+    tags: classInfo.tags,
     faction: faction,
     drafted: [],
     active: true,

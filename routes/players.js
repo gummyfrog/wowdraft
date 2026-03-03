@@ -39,7 +39,7 @@ function filterPool(league, tag, page, extraFilter) {
   const PAGE_SIZE = 10;
 
   let filtered = pool.filter(p =>
-    p.tag === tag &&
+    (p.tags ? p.tags.includes(tag) : p.tag === tag) &&
     !p.drafted.includes(leagueCode)
   );
 
