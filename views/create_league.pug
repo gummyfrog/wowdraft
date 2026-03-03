@@ -40,16 +40,28 @@ block content
 								span.color-hex {{color1}}
 
 							label.form-label Game Version
-							select.form-input(v-model="game_version" name="game_version" required)
-								option(value="retail") Retail (The War Within)
-								option(value="classic") Classic
+							div.form-field-row
+								select.form-input(v-model="game_version" name="game_version" required)
+									option(v-for="gv in gameVersions" :value="gv.id") {{gv.name}}
 
 							label.form-label Region
-							select.form-input(v-model="region" name="region" required)
-								option(value="us") US
-								option(value="eu") EU
-								option(value="kr") KR
-								option(value="tw") TW
+							div.form-field-row
+								select.form-input(v-model="region" name="region" :disabled="loadingRegions || regions.length === 0" required)
+									option(v-if="loadingRegions" value="" disabled) Loading...
+									option(v-for="r in regions" :value="r.slug") {{r.name}}
+								span.field-spinner(v-if="loadingRegions")
+									span.loading-spinner.loading-spinner--inline
+							input(type='hidden' name='region_id' :value="region_id")
+
+							label.form-label Server / Realm
+							div.form-field-row
+								select.form-input(v-model="server" name="server" :disabled="loadingServers || servers.length === 0" required)
+									option(v-if="loadingServers" value="" disabled) Loading...
+									option(v-if="!loadingServers && servers.length === 0" value="" disabled) Select a region first
+									option(v-for="s in servers" :value="s.slug") {{s.name}}
+								span.field-spinner(v-if="loadingServers")
+									span.loading-spinner.loading-spinner--inline
+							input(type='hidden' name='server_id' :value="server_id")
 
 					//- Section: Draft Settings
 					div.form-section
@@ -95,17 +107,23 @@ block content
 						div.form-section-body
 							div.guild-chips(v-if="selectedGuilds.length > 0")
 								span.guild-chip(v-for="(g, i) in selectedGuilds")
-									| {{g}}
+									| {{g.name}}
+									span.guild-chip-faction(v-if="g.faction")  ({{g.faction}})
 									button.guild-chip-x(type='button' @click="removeGuild(i)") ×
 							label.form-label Search Guilds
-							input.form-input(v-model="guildFilter" type='text' placeholder='Filter guilds...')
+							input.form-input(v-model="guildFilter" type='text' placeholder='Filter guilds...' :disabled="!server && servers.length > 0")
 							div.guild-results(v-if="filteredGuilds.length > 0")
-								div.guild-result-item(v-for="g in filteredGuilds" @click="addGuild(g.name)" :class="{ disabled: selectedGuilds.includes(g.name) }")
+								div.guild-result-item(v-for="g in filteredGuilds" @click="addGuild(g)" :class="{ disabled: isGuildSelected(g.name) }")
 									span {{g.name}}
-									span.guild-result-check(v-if="selectedGuilds.includes(g.name)")  ✓
-							div.guild-results(v-else-if="allGuilds.length === 0")
-								span.guild-loading Loading guilds...
-							input(type='hidden' name='guilds' :value="selectedGuilds.join(',')")
+									span.guild-result-faction(v-if="g.faction")  · {{g.faction}}
+									span.guild-result-check(v-if="isGuildSelected(g.name)")  ✓
+							div.guild-results(v-else-if="loadingGuilds")
+								span.guild-loading
+									span.loading-spinner.loading-spinner--inline
+									|  Loading guilds...
+							div.guild-results(v-else-if="server && allGuilds.length === 0 && !loadingGuilds")
+								span.guild-loading No guilds found for this server.
+							input(type='hidden' name='guilds' :value="JSON.stringify(selectedGuilds)")
 
 					//- Section: Schedule
 					div.form-section
@@ -114,10 +132,14 @@ block content
 							span  Schedule
 						div.form-section-body
 							label.form-label Raids
-							div.raid-pills
+							div.raid-pills(v-if="!loadingZones && availableZones.length > 0")
 								label.raid-pill(v-for="zone in availableZones" :class="{ active: selectedRaidIds.includes(zone.id) }")
 									input(type='checkbox' :value="zone.id" v-model="selectedRaidIds")
 									span {{zone.name}}
+							div.raid-pills(v-else-if="loadingZones")
+								span.field-spinner
+									span.loading-spinner.loading-spinner--inline
+									|  Loading raids...
 							input(type='hidden' name='raids' :value="JSON.stringify(selectedRaids)")
 
 							label.form-label Activity Report Day
@@ -147,26 +169,28 @@ block content
 								h2(:style="'color:'+color1") {{name}}
 								span.status-badge.setting-up Setting Up
 							div.league-card-meta
-								span {{game_version === 'classic' ? 'Classic' : 'Retail'}}
+								span {{gameVersionName}}
 								span ·
-								span {{region.toUpperCase()}}
+								span {{regionName}}
 								span ·
 								span Snake Draft
 							div.league-card-footer
 								span {{rounds}} rounds · {{season_length}} weeks
-								span {{region.toUpperCase()}}
+								span(v-if="serverName") {{serverName}}
 
 	script.
 		var app = new Vue({
 			el: '#content',
 			data: {
-				name:"Stormwind League",
+				name: "Stormwind League",
 				description: "Light be with you.",
 				rounds: 10,
 				game_version: "retail",
-				region: "us",
+				region: "",
+				region_id: null,
+				server: "",
+				server_id: null,
 				season_length: 8,
-				style:"Standard",
 				color1: "#0070FF",
 				icon: "banner_Human.png",
 				report_day: "Tuesday",
@@ -178,6 +202,14 @@ block content
 				allGuilds: [],
 				selectedGuilds: [],
 				selectedRaidIds: [],
+				gameVersions: [],
+				regions: [],
+				servers: [],
+				availableZones: [],
+				loadingRegions: false,
+				loadingServers: false,
+				loadingZones: false,
+				loadingGuilds: false,
 				allIcons: [
 					"banner_Bloodelf.png",
 					"banner_Draenei.png",
@@ -213,17 +245,77 @@ block content
 				],
 			},
 			methods: {
+				fetchGameVersions: function() {
+					var self = this;
+					fetch('/leagues/api/game-versions')
+						.then(function(res) { return res.json(); })
+						.then(function(versions) { self.gameVersions = versions; });
+				},
+				fetchRegions: function() {
+					var self = this;
+					self.loadingRegions = true;
+					fetch('/leagues/api/regions?game_version=' + this.game_version)
+						.then(function(res) { return res.json(); })
+						.then(function(regions) {
+							self.regions = regions;
+							self.loadingRegions = false;
+							// Auto-select first region if none selected
+							if (!self.region && regions.length > 0) {
+								self.region = regions[0].slug;
+								self.region_id = regions[0].id;
+							}
+						})
+						.catch(function() { self.loadingRegions = false; });
+				},
+				fetchServers: function() {
+					var self = this;
+					if (!self.region_id) {
+						self.servers = [];
+						return;
+					}
+					self.loadingServers = true;
+					fetch('/leagues/api/servers?region_id=' + this.region_id + '&game_version=' + this.game_version)
+						.then(function(res) { return res.json(); })
+						.then(function(servers) {
+							self.servers = servers;
+							self.loadingServers = false;
+						})
+						.catch(function() { self.loadingServers = false; });
+				},
+				fetchZones: function() {
+					var self = this;
+					self.loadingZones = true;
+					fetch('/leagues/api/zones?game_version=' + this.game_version)
+						.then(function(res) { return res.json(); })
+						.then(function(zones) {
+							self.availableZones = zones;
+							self.selectedRaidIds = zones.map(function(z) { return z.id; });
+							self.loadingZones = false;
+						})
+						.catch(function() { self.loadingZones = false; });
+				},
 				fetchGuilds: function() {
 					var self = this;
-					fetch('/leagues/api/guilds/search?region=' + this.region + '&game_version=' + this.game_version)
+					var serverSlug = this.server;
+					self.loadingGuilds = true;
+					var url = '/leagues/api/guilds/search?region=' + this.region + '&game_version=' + this.game_version;
+					if (serverSlug) url += '&server=' + encodeURIComponent(serverSlug);
+					fetch(url)
 						.then(function(res) { return res.json(); })
-						.then(function(guilds) { self.allGuilds = guilds; });
+						.then(function(guilds) {
+							self.allGuilds = guilds;
+							self.loadingGuilds = false;
+						})
+						.catch(function() { self.loadingGuilds = false; });
 				},
-				addGuild: function(name) {
+				addGuild: function(guild) {
 					if (this.selectedGuilds.length >= 5) return;
-					if (!this.selectedGuilds.includes(name)) {
-						this.selectedGuilds.push(name);
+					if (!this.isGuildSelected(guild.name)) {
+						this.selectedGuilds.push({ name: guild.name, faction: guild.faction || null });
 					}
+				},
+				isGuildSelected: function(name) {
+					return this.selectedGuilds.some(function(g) { return g.name === name; });
 				},
 				removeGuild: function(index) {
 					this.selectedGuilds.splice(index, 1);
@@ -240,40 +332,78 @@ block content
 						return g.name.toLowerCase().indexOf(filter) !== -1;
 					});
 				},
-				availableZones: function() {
-					var zones = {
-						classic: [
-							{ id: 1000, name: 'Molten Core' },
-							{ id: 1001, name: "Onyxia's Lair" },
-							{ id: 1002, name: 'Blackwing Lair' },
-							{ id: 1003, name: "Zul'Gurub" },
-							{ id: 1004, name: "Temple of Ahn'Qiraj" },
-							{ id: 1005, name: "Ruins of Ahn'Qiraj" },
-							{ id: 1006, name: 'Naxxramas' },
-						],
-						retail: [
-							{ id: 38, name: "Nerub'ar Palace" },
-							{ id: 37, name: 'Amirdrassil' },
-						],
-					};
-					return zones[this.game_version] || zones.retail;
-				},
 				selectedRaids: function() {
-					return this.availableZones.filter(z => this.selectedRaidIds.includes(z.id));
+					var self = this;
+					return this.availableZones.filter(function(z) {
+						return self.selectedRaidIds.includes(z.id);
+					});
+				},
+				gameVersionName: function() {
+					var self = this;
+					var gv = this.gameVersions.find(function(v) { return v.id === self.game_version; });
+					return gv ? gv.name : this.game_version;
+				},
+				regionName: function() {
+					var self = this;
+					var r = this.regions.find(function(reg) { return reg.slug === self.region; });
+					return r ? r.name : this.region.toUpperCase();
+				},
+				serverName: function() {
+					var self = this;
+					var s = this.servers.find(function(srv) { return srv.slug === self.server; });
+					return s ? s.name : '';
 				},
 			},
 			watch: {
 				game_version: function() {
-					this.selectedRaidIds = this.availableZones.map(z => z.id);
-					this.fetchGuilds();
+					// Reset all downstream selections
+					this.region = "";
+					this.region_id = null;
+					this.server = "";
+					this.server_id = null;
+					this.servers = [];
+					this.selectedGuilds = [];
+					this.allGuilds = [];
+					this.selectedRaidIds = [];
+					this.availableZones = [];
+					this.fetchRegions();
+					this.fetchZones();
 				},
-				region: function() { this.fetchGuilds(); },
+				region: function(val) {
+					// Find region_id from the regions list
+					var self = this;
+					var r = this.regions.find(function(reg) { return reg.slug === val; });
+					this.region_id = r ? r.id : null;
+					// Reset downstream
+					this.server = "";
+					this.server_id = null;
+					this.selectedGuilds = [];
+					this.allGuilds = [];
+					if (this.region_id) {
+						this.fetchServers();
+					} else {
+						this.servers = [];
+					}
+				},
+				server: function(val) {
+					// Find server_id from the servers list
+					var self = this;
+					var s = this.servers.find(function(srv) { return srv.slug === val; });
+					this.server_id = s ? s.id : null;
+					// Reset guilds and re-fetch
+					this.selectedGuilds = [];
+					this.allGuilds = [];
+					if (val) {
+						this.fetchGuilds();
+					}
+				},
 				totalRequired: function(val) {
 					if (this.rounds < val) this.rounds = val;
 				},
 			},
 			mounted: function() {
-				this.selectedRaidIds = this.availableZones.map(z => z.id);
-				this.fetchGuilds();
+				this.fetchGameVersions();
+				this.fetchRegions();
+				this.fetchZones();
 			},
 		})

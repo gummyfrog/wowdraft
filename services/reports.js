@@ -5,32 +5,47 @@ const db = require('../db');
 async function fetchPlayerSnapshot(playerName, serverSlug, serverRegion, gameVersion, options = {}) {
   const wcl = getClient();
   if (!wcl) return null;
+  if (!options.zoneID) return null;
 
   try {
     const character = await wcl.getCharacterRankings(
       playerName, serverSlug, serverRegion, gameVersion, options
     );
 
-    if (!character || !character.encounterRankings) return null;
+    if (!character || !character.zoneRankings) return null;
 
-    // Transform WCL encounterRankings into our snapshot format
+    const zoneData = character.zoneRankings;
+
+    // Transform WCL zoneRankings.rankings into our snapshot format
     const encounters = {};
-    const rankings = character.encounterRankings;
+    const rankings = zoneData.rankings;
 
     if (Array.isArray(rankings)) {
       for (const ranking of rankings) {
         const bossName = ranking.encounter ? ranking.encounter.name : `Boss_${ranking.encounterID}`;
         encounters[bossName] = {
           rankPercent: ranking.rankPercent || 0,
+          medianPercent: ranking.medianPercent || 0,
           bestAmount: ranking.bestAmount || 0,
           totalKills: ranking.totalKills || 0,
           fastestKill: ranking.fastestKill || 0,
-          medianPerformance: ranking.medianPerformance || 0,
         };
       }
     }
 
-    return { encounters };
+    // Extract zone-level All-Star data
+    let zoneAllStars = null;
+    if (Array.isArray(zoneData.allStars) && zoneData.allStars.length > 0) {
+      const as = zoneData.allStars[0];
+      zoneAllStars = {
+        points: as.points || 0,
+        possiblePoints: as.possiblePoints || 0,
+        rankPercent: as.rankPercent || 0,
+        spec: as.spec || '',
+      };
+    }
+
+    return { encounters, zoneAllStars };
   } catch (err) {
     console.error(`Failed to fetch WCL data for ${playerName}:`, err.message);
     return null;
@@ -62,7 +77,7 @@ async function generateReport(leagueCode) {
   const wclOptions = {};
   if (league.raids && league.raids.length > 0) {
     // Use the first selected zone ID for scoping
-    // WCL encounterRankings takes a single zoneID
+    // WCL zoneRankings takes a single zoneID
     wclOptions.zoneID = league.raids[0].id;
   }
 
@@ -76,7 +91,7 @@ async function generateReport(leagueCode) {
       newSnapshots[player.name] = snapshot;
     } else {
       // Player has no new data — use old snapshot or empty
-      newSnapshots[player.name] = oldSnapshots[player.name] || { encounters: {} };
+      newSnapshots[player.name] = oldSnapshots[player.name] || { encounters: {}, zoneAllStars: null };
     }
     // Rate limit: 1 request per second
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -92,7 +107,7 @@ async function generateReport(leagueCode) {
 
     for (const player of team.drafted_players) {
       if (player.name === 'No Pick') {
-        playerScores[player.name] = { points: { total: 0, parse: 0, dps: 0, bosses_down: 0, speedy_clear: 0, new_best: 0, consistency: 0 } };
+        playerScores[player.name] = { points: { total: 0, parse: 0, dps: 0, bosses_down: 0, speedy_clear: 0, new_best: 0, consistency: 0, all_stars: 0 } };
         continue;
       }
 

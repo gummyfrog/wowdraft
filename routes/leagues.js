@@ -4,6 +4,8 @@ const db = require('../db');
 const LeagueLogic = require('./league');
 const { getClient } = require('../services/warcraftlogs');
 const { buildPlayerPool } = require('../services/playerpool');
+const wclCache = require('../services/wcl-cache');
+const { getZonesForVersion } = require('../data/zones');
 const router = express.Router();
 
 // List all leagues
@@ -69,6 +71,77 @@ router.get('/api/guilds/search', function (req, res, next) {
       res.json(guilds.map(g => ({ name: g, faction: null })));
     }).catch((err) => next(err));
   }
+});
+
+// API: Game versions (static list)
+router.get('/api/game-versions', function (req, res) {
+  res.json(wclCache.getGameVersions());
+});
+
+// API: Regions for a game version
+router.get('/api/regions', function (req, res, next) {
+  const gameVersion = req.query.game_version || 'retail';
+  wclCache.getRegions(gameVersion)
+    .then((regions) => {
+      if (regions) {
+        // Normalize slugs to lowercase for consistency with existing code
+        return res.json(regions.map(r => ({
+          id: r.id, name: r.name, slug: r.slug.toLowerCase(),
+        })));
+      }
+      // Fallback when WCL is not configured. IDs are placeholder-only —
+      // without WCL the /api/servers call also returns [] so these IDs
+      // are never used as GraphQL variables.
+      res.json([
+        { id: 1, name: 'US', slug: 'us' },
+        { id: 2, name: 'EU', slug: 'eu' },
+        { id: 3, name: 'KR', slug: 'kr' },
+        { id: 4, name: 'TW', slug: 'tw' },
+      ]);
+    })
+    .catch((err) => next(err));
+});
+
+// API: Servers for a region
+router.get('/api/servers', function (req, res, next) {
+  const regionId = parseInt(req.query.region_id);
+  const gameVersion = req.query.game_version || 'retail';
+  if (isNaN(regionId)) return res.status(400).json({ error: 'region_id required' });
+
+  wclCache.getServers(regionId, gameVersion)
+    .then((servers) => {
+      if (servers) {
+        servers.sort((a, b) => a.name.localeCompare(b.name));
+        return res.json(servers);
+      }
+      // Fallback: no servers available without WCL
+      res.json([]);
+    })
+    .catch((err) => next(err));
+});
+
+// API: Zones for a game version (latest expansion)
+router.get('/api/zones', function (req, res, next) {
+  const gameVersion = req.query.game_version || 'retail';
+
+  // Try WCL: get the latest expansion, then its zones
+  wclCache.getExpansions(gameVersion)
+    .then((expansions) => {
+      if (!expansions || expansions.length === 0) {
+        return res.json(getZonesForVersion(gameVersion));
+      }
+      // Latest expansion = highest ID
+      const latest = expansions.reduce((a, b) => a.id > b.id ? a : b);
+      return wclCache.getZones(latest.id, gameVersion)
+        .then((zones) => {
+          if (zones && zones.length > 0) return res.json(zones);
+          return res.json(getZonesForVersion(gameVersion));
+        });
+    })
+    .catch(() => {
+      // Fallback to static zones on any WCL error
+      res.json(getZonesForVersion(gameVersion));
+    });
 });
 
 // League home page
@@ -186,19 +259,22 @@ router.post('/api/create', function (req, res) {
   delete new_league.req_tanks;
   new_league.game_version = new_league.game_version || 'retail';
   new_league.region = new_league.region || 'us';
+  new_league.region_id = parseInt(new_league.region_id) || null;
+  new_league.server = new_league.server || null;
+  new_league.server_id = parseInt(new_league.server_id) || null;
   new_league.rounds = parseInt(new_league.rounds) || 10;
   new_league.season_length = parseInt(new_league.season_length) || 8;
 
-  // Parse guilds from form (comma-separated or JSON array)
-  var guildNames = [];
+  // Parse guilds from form (JSON array of {name, faction} objects)
   if (new_league.guilds) {
     if (typeof new_league.guilds === 'string') {
-      guildNames = new_league.guilds.split(',').map(g => g.trim()).filter(Boolean);
-    } else if (Array.isArray(new_league.guilds)) {
-      guildNames = new_league.guilds;
+      try { new_league.guilds = JSON.parse(new_league.guilds); } catch (e) { new_league.guilds = []; }
     }
+    if (!Array.isArray(new_league.guilds)) new_league.guilds = [];
+    new_league.guilds = new_league.guilds.map(g => ({ name: g.name, faction: g.faction || null }));
+  } else {
+    new_league.guilds = [];
   }
-  new_league.guilds = guildNames.map(name => ({ name }));
 
   // Parse raids from form (array of zone IDs)
   if (new_league.raids) {
@@ -207,7 +283,6 @@ router.post('/api/create', function (req, res) {
     }
   } else {
     // Default: all zones for this game version
-    const { getZonesForVersion } = require('../data/zones');
     new_league.raids = getZonesForVersion(new_league.game_version);
   }
 
@@ -248,7 +323,7 @@ router.post('/api/:leagueID/activity_report', function (req, res, next) {
       if (!league.activity_reports) league.activity_reports = [];
       league.activity_reports.push({ time: new Date(), data: req.body.data });
 
-      db.leagues().updateOne(
+      return db.leagues().updateOne(
         { code: req.params.leagueID },
         { $set: { activity_reports: league.activity_reports } }
       ).then(() => res.json({ msg: 'Accepted' }));

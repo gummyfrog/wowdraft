@@ -45,7 +45,7 @@ function normalizeWCLPlayer(member, guildName, faction) {
  * Build player pool from seed proplayers DB.
  * Fetches players whose guild matches one of the selected guilds.
  */
-async function buildPoolFromSeed(guilds, faction) {
+async function buildPoolFromSeed(guilds) {
   const guildNames = guilds.map(g => g.name);
   const pool = [];
 
@@ -67,7 +67,7 @@ async function buildPoolFromSeed(guilds, faction) {
  * Build player pool from WCL guild rosters.
  * Fetches member lists from WCL API for each guild.
  */
-async function buildPoolFromWCL(guilds, serverSlug, serverRegion, gameVersion, faction) {
+async function buildPoolFromWCL(guilds, serverSlug, serverRegion, gameVersion) {
   const wcl = getClient();
   if (!wcl) return [];
 
@@ -87,7 +87,7 @@ async function buildPoolFromWCL(guilds, serverSlug, serverRegion, gameVersion, f
         for (const member of guildData.members.data) {
           if (seen.has(member.name)) continue;
           seen.add(member.name);
-          pool.push(normalizeWCLPlayer(member, guild.name, faction));
+          pool.push(normalizeWCLPlayer(member, guild.name, guild.faction));
         }
       }
     } catch (err) {
@@ -107,16 +107,15 @@ async function buildPlayerPool(league) {
   const serverSlug = (league.server || '').toLowerCase().replace(/\s/g, '-');
   const serverRegion = league.region || 'us';
   const gameVersion = league.game_version || 'retail';
-  const faction = league.faction === 'Alliance' ? 0 : league.faction === 'Horde' ? 1 : null;
 
   const wcl = getClient();
   if (wcl && guilds.length > 0) {
-    return buildPoolFromWCL(guilds, serverSlug, serverRegion, gameVersion, faction);
+    return buildPoolFromWCL(guilds, serverSlug, serverRegion, gameVersion);
   }
 
   // Fallback: build from seed data
   if (guilds.length > 0) {
-    return buildPoolFromSeed(guilds, faction);
+    return buildPoolFromSeed(guilds);
   }
 
   return [];

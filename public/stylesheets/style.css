@@ -1917,6 +1917,39 @@ header {
   cursor: pointer;
 }
 
+.create-league-form select.form-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.create-league-form input.form-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Create League: Field Row with Inline Spinner
+   ============================================ */
+
+.form-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-field-row .form-input {
+  flex: 1;
+}
+
+.field-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8em;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
 /* ============================================
    Create League: Icon Grid
    ============================================ */
@@ -2631,6 +2664,12 @@ header {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.loading-spinner--inline {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
 }
 
 .loading-overlay {

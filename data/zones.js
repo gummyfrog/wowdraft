@@ -10,8 +10,10 @@ const ZONES = {
     { id: 1006, name: 'Naxxramas' },
   ],
   retail: [
+    { id: 44, name: 'Manaforge Omega' },
+    { id: 42, name: 'Liberation of Undermine' },
+    { id: 40, name: 'Blackrock Depths' },
     { id: 38, name: "Nerub'ar Palace" },
-    { id: 37, name: 'Amirdrassil' },
   ],
 };
 

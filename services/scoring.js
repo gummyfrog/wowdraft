@@ -98,16 +98,30 @@ const CATEGORIES = [
       if (encounters.length === 0) return 0;
 
       const ratios = encounters
-        .filter(e => e.bestAmount && e.medianPerformance && e.bestAmount > 0)
-        .map(e => e.medianPerformance / e.bestAmount);
+        .filter(e => e.rankPercent && e.medianPercent && e.rankPercent > 0)
+        .map(e => e.medianPercent / e.rankPercent);
 
       if (ratios.length === 0) return 0;
       const avgRatio = ratios.reduce((a, b) => a + b, 0) / ratios.length;
 
       if (avgRatio >= 0.95) return 6;
-      if (avgRatio >= 0.90) return 4;
-      if (avgRatio >= 0.80) return 2;
+      if (avgRatio >= 0.85) return 4;
+      if (avgRatio >= 0.70) return 2;
       return 1;
+    },
+  },
+  {
+    name: 'all_stars',
+    title: 'All-Star',
+    compute(player, _old, _all) {
+      const as = player.zoneAllStars;
+      if (!as || !as.possiblePoints || as.possiblePoints <= 0) return 0;
+      const ratio = as.points / as.possiblePoints;
+      if (ratio >= 0.80) return 6;
+      if (ratio >= 0.60) return 4;
+      if (ratio >= 0.40) return 2;
+      if (ratio > 0) return 1;
+      return 0;
     },
   },
 ];

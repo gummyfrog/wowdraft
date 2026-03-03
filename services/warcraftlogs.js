@@ -5,6 +5,11 @@ const API_BASES = {
   retail: 'https://www.warcraftlogs.com',
 };
 
+const GAME_VERSIONS = [
+  { id: 'retail', name: 'Retail', base: 'https://www.warcraftlogs.com' },
+  { id: 'classic', name: 'Classic', base: 'https://classic.warcraftlogs.com' },
+];
+
 class WarcraftLogsClient {
   constructor(clientId, clientSecret) {
     this.clientId = clientId;
@@ -58,14 +63,9 @@ class WarcraftLogsClient {
   }
 
   async getCharacterRankings(name, serverSlug, serverRegion, gameVersion = 'retail', options = {}) {
-    const { zoneID, timeframe } = options;
+    const { zoneID } = options;
 
-    // Build the encounterRankings arguments
-    let rankArgs = '';
-    const argParts = [];
-    if (zoneID) argParts.push(`zoneID: ${zoneID}`);
-    if (timeframe) argParts.push(`timeframe: ${timeframe}`);
-    if (argParts.length > 0) rankArgs = `(${argParts.join(', ')})`;
+    const rankArgs = zoneID ? `(zoneID: ${zoneID})` : '';
 
     const gql = `
       query ($name: String!, $server: String!, $region: String!) {
@@ -73,8 +73,7 @@ class WarcraftLogsClient {
           character(name: $name, serverSlug: $server, serverRegion: $region) {
             name
             classID
-            encounterRankings${rankArgs}
-            zoneRankings
+            zoneRankings${rankArgs}
           }
         }
       }
@@ -136,6 +135,65 @@ class WarcraftLogsClient {
 
     return data.guildData.guilds;
   }
+
+  async getRegions(gameVersion = 'retail') {
+    const gql = `{
+      worldData {
+        regions { id name slug }
+      }
+    }`;
+    const data = await this.query(gql, {}, gameVersion);
+    return data.worldData.regions;
+  }
+
+  async getServers(regionId, gameVersion = 'retail') {
+    const gql = `query ($id: Int!) {
+      worldData {
+        region(id: $id) {
+          servers(limit: 500) {
+            data { id name slug }
+          }
+        }
+      }
+    }`;
+    const data = await this.query(gql, { id: regionId }, gameVersion);
+    return data.worldData.region.servers.data;
+  }
+
+  async getExpansions(gameVersion = 'retail') {
+    const gql = `{
+      worldData {
+        expansions { id name }
+      }
+    }`;
+    const data = await this.query(gql, {}, gameVersion);
+    return data.worldData.expansions;
+  }
+
+  async getZones(expansionId, gameVersion = 'retail') {
+    const gql = `query ($id: Int!) {
+      worldData {
+        expansion(id: $id) {
+          zones {
+            id name
+            difficulties { id name }
+            encounters { id }
+          }
+        }
+      }
+    }`;
+    const data = await this.query(gql, { id: expansionId }, gameVersion);
+    // Filter to actual raids: must have a Normal or Heroic difficulty + more than 1 encounter
+    // Excludes M+ (Dungeon difficulty), Delves (no raid difficulties), and
+    // "Complete Raids" composites (1 encounter)
+    return data.worldData.expansion.zones
+      .filter(z => {
+        const diffs = (z.difficulties || []).map(d => d.name);
+        const hasRaidDiff = diffs.includes('Normal') || diffs.includes('Heroic');
+        return hasRaidDiff && z.encounters && z.encounters.length > 1;
+      })
+      .map(z => ({ id: z.id, name: z.name }));
+  }
 }
 
 let client = null;
@@ -152,4 +210,4 @@ function getClient() {
   return client;
 }
 
-module.exports = { WarcraftLogsClient, getClient };
+module.exports = { WarcraftLogsClient, getClient, GAME_VERSIONS };
