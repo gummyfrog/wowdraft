@@ -77,6 +77,10 @@ block content
 					label.form-label Draft Notes
 					input.form-input(v-model="edit.draft_notes" type="text" maxlength="200")
 
+					label.form-label Discord Webhook URL
+					input.form-input(v-model="edit.discord_webhook_url" type="url" placeholder="https://discord.com/api/webhooks/...")
+					span.settings-label(style="display:block; margin-top:6px; text-transform:none;") Posts weekly results to that channel. Leave blank to disable.
+
 					button.btn-styled.btn-styled--primary(@click="saveSettings" :disabled="saving")
 						i.fas.fa-save
 						|  {{saving ? 'Saving...' : 'Save Changes'}}
@@ -97,6 +101,9 @@ block content
 					div.settings-item
 						span.settings-label Draft Notes
 						span.settings-value {{league_info.draft_notes || league_info.start_date || 'None'}}
+					div.settings-item
+						span.settings-label Discord notifications
+						span.settings-value {{webhookConfigured ? 'Configured' : 'Not configured'}}
 
 	script.
 		var league = !{JSON.stringify(league)}
@@ -114,6 +121,7 @@ block content
 					report_day: league.report_day || 'Tuesday',
 					season_length: league.season_length || 8,
 					draft_notes: league.draft_notes || league.start_date || '',
+					discord_webhook_url: league.discord_webhook_url || '',
 				},
 			},
 			computed: {
@@ -128,6 +136,10 @@ block content
 				},
 				raids() {
 					return this.league_info.raids || [];
+				},
+				// Non-admins never receive the URL itself — the route sends a boolean flag instead.
+				webhookConfigured() {
+					return !!(this.league_info.discord_webhook_configured || this.league_info.discord_webhook_url);
 				},
 			},
 			methods: {
@@ -149,6 +161,7 @@ block content
 							self.league_info.report_day = self.edit.report_day;
 							self.league_info.season_length = self.edit.season_length;
 							self.league_info.draft_notes = self.edit.draft_notes;
+							self.league_info.discord_webhook_url = self.edit.discord_webhook_url;
 							setTimeout(function() { self.saved = false; }, 3000);
 						}
 					})

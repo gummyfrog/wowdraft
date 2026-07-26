@@ -381,8 +381,11 @@ block content
 		  		return this.teams.length == 0;
 		  	},
 		  	yourTeamIndex() {
+		  		var myName = `!{user_session_name}`;
+		  		var myId = `!{user_session_id}`;
 		  		for(var x=0; x<this.teams.length;x++) {
-		  			if(this.teams[x].manager == `!{user_session_name}`) {
+		  			var t = this.teams[x];
+		  			if(t.manager_id && myId ? t.manager_id === myId : (myName && t.manager === myName)) {
 		  				return x
 			  		}
 		  		}

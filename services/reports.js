@@ -1,6 +1,7 @@
 const { getClient } = require('./warcraftlogs');
 const { scorePlayer, getTitle } = require('./scoring');
 const db = require('../db');
+const { postReport } = require('./discord');
 
 async function fetchPlayerSnapshot(playerName, serverSlug, serverRegion, gameVersion, options = {}) {
   const wcl = getClient();
@@ -198,6 +199,9 @@ async function generateReport(leagueCode) {
       $push: { activity_reports: report },
     }
   );
+
+  // Fire-and-forget: webhook delivery must never delay or fail report generation.
+  postReport(league, report).catch(() => {});
 
   return report;
 }

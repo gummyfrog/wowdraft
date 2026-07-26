@@ -11,7 +11,7 @@ router.get('/:leagueID', function (req, res, next) {
       var onClock = leaguelogic.isCurrentTeamManager();
 
       var yourTeam = null;
-      var teamIndex = league.teams.findIndex(function(t) { return t.manager === req.session.username; });
+      var teamIndex = league.teams.findIndex(function (t) { return leaguelogic.isMe(t.manager_id, t.manager); });
       if (teamIndex !== -1) {
         yourTeam = league.teams[teamIndex];
       }
@@ -25,6 +25,7 @@ router.get('/:leagueID', function (req, res, next) {
         organizer: leaguelogic.sessionIsAdmin(),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));

@@ -1,5 +1,7 @@
 const express = require('express');
 const axios = require('axios');
+const crypto = require('crypto');
+const db = require('../db');
 const router = express.Router();
 
 const clientId = process.env.DISCORD_CLIENT_ID;
@@ -21,13 +23,43 @@ function consumeReturnTo(req) {
   return dest;
 }
 
+// Guest identities are ephemeral but need a stable key for the life of the session.
+function loginAsGuest(req) {
+  req.session.loggedin = true;
+  req.session.username = 'Guest#' + Math.floor(1000 + Math.random() * 9000);
+  req.session.user_id = 'guest:' + crypto.randomBytes(9).toString('hex');
+}
+
+function discordDisplayName(user) {
+  return user.discriminator && user.discriminator !== '0'
+    ? user.username + '#' + user.discriminator
+    : user.username;
+}
+
+// Best-effort user record; a write failure must not block login.
+function recordUser(user_id, discord_id, username, avatar) {
+  return db.users().updateOne(
+    { user_id: user_id },
+    {
+      $set: {
+        user_id: user_id,
+        discord_id: discord_id,
+        username: username,
+        avatar: avatar || null,
+        last_login: new Date(),
+      },
+      $setOnInsert: { first_login: new Date() },
+    },
+    { upsert: true }
+  ).catch((err) => console.error('user upsert failed:', err.message));
+}
+
 router.get('/login', function (req, res) {
   const next = safeNext(req.query.next);
   if (next) req.session.returnTo = next;
 
   if (guestMode) {
-    req.session.loggedin = true;
-    req.session.username = 'Guest#' + Math.floor(1000 + Math.random() * 9000);
+    loginAsGuest(req);
     return res.redirect(consumeReturnTo(req));
   }
   res.render('login', {
@@ -40,13 +72,13 @@ router.get('/login', function (req, res) {
 router.get('/logout', function (req, res) {
   req.session.loggedin = false;
   req.session.username = null;
+  req.session.user_id = null;
   res.redirect('/');
 });
 
 router.get('/auth', function (req, res) {
   if (guestMode) {
-    req.session.loggedin = true;
-    req.session.username = 'Guest#' + Math.floor(1000 + Math.random() * 9000);
+    loginAsGuest(req);
     return res.redirect(consumeReturnTo(req));
   }
 
@@ -79,9 +111,13 @@ router.get('/auth', function (req, res) {
         })
         .then((userResult) => {
           const user = userResult.data;
+          const user_id = 'discord:' + user.id;
+          const username = discordDisplayName(user);
           req.session.loggedin = true;
-          req.session.username = user.username + '#' + user.discriminator;
-          res.redirect(consumeReturnTo(req));
+          req.session.username = username;
+          req.session.user_id = user_id;
+          recordUser(user_id, user.id, username, user.avatar)
+            .then(() => res.redirect(consumeReturnTo(req)));
         })
         .catch(() => res.redirect('/404'));
     })

@@ -23,4 +23,8 @@ function players(tag) {
   return playersDB.collection(tag);
 }
 
-module.exports = { connect, leagues, players };
+function users() {
+  return leaguesDB.collection('users');
+}
+
+module.exports = { connect, leagues, players, users };

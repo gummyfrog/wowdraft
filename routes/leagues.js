@@ -17,6 +17,7 @@ router.get('/', function (req, res, next) {
         leagues: JSON.stringify(leagues),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));
@@ -28,6 +29,7 @@ router.get('/create', function (req, res) {
     title: 'League Creation',
     user_session_auth: req.session.loggedin,
     user_session_name: req.session.username,
+    user_session_id: req.session.user_id || '',
   });
 });
 
@@ -157,6 +159,7 @@ router.get('/:leagueID', function (req, res, next) {
         canMakeTeam: leaguelogic.canMakeTeam(),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));
@@ -173,6 +176,7 @@ router.get('/:leagueID/teams', function (req, res, next) {
         organizer: leaguelogic.sessionIsAdmin(),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));
@@ -202,6 +206,7 @@ router.get('/:leagueID/join', function (req, res, next) {
         join_reason: eligibility.reason,
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));
@@ -224,6 +229,7 @@ router.get('/:leagueID/newTeam', function (req, res, next) {
         error: req.query.error || '',
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));
@@ -240,6 +246,7 @@ router.get('/:leagueID/rankings', function (req, res, next) {
         organizer: leaguelogic.sessionIsAdmin(),
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));
@@ -305,7 +312,7 @@ router.post('/api/create', function (req, res) {
 
   var new_league = req.body;
   new_league.code = short.generate();
-  new_league.admin = { name: req.session.username };
+  new_league.admin = { id: req.session.user_id, name: req.session.username };
   new_league.teams = [];
   new_league.status = 'Setting Up';
   new_league.draft = {
@@ -430,12 +437,19 @@ router.get('/:leagueID/settings', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
       var leaguelogic = new LeagueLogic(league, req.session);
+      var organizer = leaguelogic.sessionIsAdmin();
+      // The webhook URL is a bearer secret — non-admins get only the boolean.
+      league = Object.assign({}, league, {
+        discord_webhook_configured: !!league.discord_webhook_url,
+        discord_webhook_url: organizer ? league.discord_webhook_url || '' : '',
+      });
       res.render('league_settings', {
         title: league.name + ' - Settings',
         league: JSON.stringify(league),
-        organizer: leaguelogic.sessionIsAdmin(),
+        organizer: organizer,
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
+        user_session_id: req.session.user_id || '',
       });
     })
     .catch((err) => next(err));
@@ -453,12 +467,16 @@ router.post('/api/:leagueID/settings', function (req, res) {
       }
 
       var updates = {};
-      var allowed = ['description', 'report_day', 'season_length', 'draft_notes'];
+      var allowed = ['description', 'report_day', 'season_length', 'draft_notes', 'discord_webhook_url'];
       for (var field of allowed) {
         if (req.body[field] !== undefined) {
           if (field === 'season_length') {
             var val = parseInt(req.body[field]);
             updates[field] = (isNaN(val) || val < 1 || val > 52) ? league.season_length : val;
+          } else if (field === 'discord_webhook_url') {
+            var url = String(req.body[field]).trim();
+            var valid = url === '' || /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//.test(url);
+            updates[field] = valid ? url : (league.discord_webhook_url || '');
           } else {
             updates[field] = req.body[field];
           }

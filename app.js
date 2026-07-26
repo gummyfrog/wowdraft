@@ -5,6 +5,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
+var MongoStore = require('connect-mongo');
 const { v4: uuidv4 } = require('uuid');
 var db = require('./db');
 var { startScheduler } = require('./services/scheduler');
@@ -31,18 +32,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 // session middleware (moved from routes/index.js)
 app.use(session({
   genid: function () { return uuidv4(); },
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   secret: process.env.SESSION_SECRET || 'wowdraft-dev-secret',
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017',
+    dbName: 'wowdraft',
+    collectionName: 'sessions',
+    ttl: 30 * 24 * 60 * 60,
+  }),
 }));
-
-// default session values
-app.use(function (req, res, next) {
-  if (!req.session.loggedin) {
-    req.session.loggedin = false;
-  }
-  next();
-});
 
 // force https in production
 app.use(function (req, res, next) {

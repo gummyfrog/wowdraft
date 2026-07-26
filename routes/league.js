@@ -4,6 +4,7 @@ class league_interpret {
 	constructor(league_info, session) {
 		this.league = league_info;
 		this.whoami = "";
+		this.whoid = "";
 		this.loggedin = false;
 		this.identify(session);
 	}
@@ -14,9 +15,17 @@ class league_interpret {
 
 	identify(session) {
 		if(session.loggedin) {
-			this.whoami = session.username;
+			this.whoami = session.username || "";
+			this.whoid = session.user_id || "";
 			this.loggedin = true;
 		}
+	}
+
+	// Ownership match: prefer stable ids when both sides carry one, otherwise
+	// fall back to display-name matching for legacy documents/sessions.
+	isMe(owner_id, owner_name) {
+		if(owner_id && this.whoid) { return owner_id === this.whoid; }
+		return !!this.whoami && owner_name === this.whoami;
 	}
 
 	joinEligibility() {
@@ -25,7 +34,7 @@ class league_interpret {
 		if(this.league.status != "Setting Up") { return { canJoin: false, reason: 'wrong_status' }; }
 
 		for(var x=0; x< this.league.teams.length; x++) {
-			if(this.league.teams[x].manager == this.whoami) {
+			if(this.isMe(this.league.teams[x].manager_id, this.league.teams[x].manager)) {
 				return { canJoin: false, reason: 'already_manager' };
 			}
 		}
@@ -38,10 +47,8 @@ class league_interpret {
 	}
 
 	sessionIsAdmin() {
-		if(this.league.admin.name == this.whoami) {
-			return true;
-		}
-		return false;
+		if(!this.league || !this.league.admin) { return false; }
+		return this.isMe(this.league.admin.id, this.league.admin.name);
 	}
 
 	addTeam(team_body) {
@@ -66,6 +73,7 @@ class league_interpret {
 				tanks: 0,
 			},
 			manager: this.whoami,
+			manager_id: this.whoid,
 		};
 
 		this.league.teams.push(team);
@@ -109,7 +117,7 @@ class league_interpret {
 		if(teamIndex == null || !this.league.teams[teamIndex]) {
 			return false;
 		}
-		if(this.league.teams[teamIndex].manager == this.whoami) {
+		if(this.isMe(this.league.teams[teamIndex].manager_id, this.league.teams[teamIndex].manager)) {
 			return true;
 		}
 		return false;
