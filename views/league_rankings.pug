@@ -107,6 +107,10 @@ block content
 			template: `
 			<div class="ranking-card" :style="'border-color:' + (team.color2 || '#555')">
 				<div class="ranking-card-head">
+					<div v-if="team.banner_shape" class="team-banner team-banner--sm" :class="'team-banner--' + (team.banner_shape || 'pointed')" :style="'--ban-bg:' + (team.banner_bg || team.color2 || '#555') + '; --ban-accent:' + (team.banner_accent || '#FFD100')">
+						<div class="team-banner-bg" :class="'pat-' + (team.banner_pattern || 'solid')" :style="'background-color:' + (team.banner_bg || team.color2 || '#555')"></div>
+						<div class="team-banner-emblem" :style="'color:' + (team.banner_emblem_color || '#fff')"><i :class="'fas fa-' + (team.banner_emblem || 'shield-alt')"></i></div>
+					</div>
 					<img :src="'/images/icons/'+team.icon+'.png'">
 					<h2 :style="'color:'+team.color2">{{team.name}}</h2>
 					<div class="ranking-points">

@@ -119,5 +119,130 @@ describe('Player Pool Service', function () {
       const pool = await buildPlayerPool(league);
       expect(pool).to.deep.equal([]);
     });
+
+    describe('pool_status writes (seed fallback, no WCL client)', function () {
+      const db = require('../db');
+      let build;
+      let origLeagues;
+      let origPlayers;
+      let updates;
+      let seedPlayers;
+
+      before(function () {
+        // No WCL credentials -> getClient() returns null -> seed fallback
+        delete process.env.WCL_CLIENT_ID;
+        delete process.env.WCL_CLIENT_SECRET;
+        delete require.cache[require.resolve('../services/warcraftlogs')];
+        delete require.cache[require.resolve('../services/playerpool')];
+        build = require('../services/playerpool').buildPlayerPool;
+
+        origLeagues = db.leagues;
+        origPlayers = db.players;
+        db.leagues = function () {
+          return {
+            updateOne: async function (filter, update) {
+              updates.push({ filter, update });
+              return { matchedCount: 1 };
+            },
+          };
+        };
+        db.players = function (tag) {
+          return { find: function () { return { toArray: async function () { return seedPlayers[tag] || []; } }; } };
+        };
+      });
+
+      after(function () {
+        db.leagues = origLeagues;
+        db.players = origPlayers;
+      });
+
+      beforeEach(function () {
+        updates = [];
+        seedPlayers = { dps: [], healers: [], tanks: [] };
+      });
+
+      function lastStatus() {
+        const withStatus = updates.filter(u => u.update.$set.pool_status);
+        return withStatus[withStatus.length - 1].update.$set.pool_status;
+      }
+
+      it('falls back to seed data when no WCL client is configured', async function () {
+        seedPlayers.dps = [
+          { name: 'Arthas', class: 'Warrior', guild: 'APES', tag: 'dps', avgParse: 90 },
+        ];
+        const pool = await build({ guilds: [{ name: 'APES' }], server: 'Area 52', region: 'us', rounds: 0 });
+        expect(pool).to.have.length(1);
+        expect(pool[0].name).to.equal('Arthas');
+        expect(pool[0].guild).to.equal('APES');
+      });
+
+      it('writes an error pool_status when no players have logs', async function () {
+        seedPlayers.dps = [
+          { name: 'Arthas', class: 'Warrior', guild: 'APES', tag: 'dps' },
+          { name: 'Jaina', class: 'Mage', guild: 'APES', tag: 'dps' },
+        ];
+        const pool = await build({ code: 'ABC123', guilds: [{ name: 'APES' }], rounds: 1 });
+
+        expect(pool).to.have.length(2);
+        expect(pool.every(p => p.active === false)).to.equal(true);
+        const status = lastStatus();
+        expect(status.state).to.equal('error');
+        expect(status.message).to.include('No active raiders');
+        expect(updates.some(u => u.update.$set.player_pool)).to.equal(false);
+      });
+
+      it('writes an error pool_status when too few active players for the round count', async function () {
+        seedPlayers.dps = [
+          { name: 'Arthas', class: 'Warrior', guild: 'APES', tag: 'dps', avgParse: 90 },
+        ];
+        await build({ code: 'ABC123', guilds: [{ name: 'APES' }], rounds: 2 });
+
+        const status = lastStatus();
+        expect(status.state).to.equal('error');
+        expect(status.message).to.include('Not enough active raiders');
+        expect(status.message).to.include('need at least 4');
+      });
+
+      it('writes an error pool_status when role requirements are not covered', async function () {
+        seedPlayers.dps = [
+          { name: 'Arthas', class: 'Warrior', guild: 'APES', tag: 'dps', avgParse: 90 },
+          { name: 'Jaina', class: 'Mage', guild: 'APES', tag: 'dps', avgDps: 50000 },
+        ];
+        await build({ code: 'ABC123', guilds: [{ name: 'APES' }], rounds: 1, requirements: { tanks: 1, healers: 0, dps: 1 } });
+
+        const status = lastStatus();
+        expect(status.state).to.equal('error');
+        expect(status.message).to.include('active tank-capable');
+      });
+
+      it('persists player_pool and a done pool_status on success', async function () {
+        seedPlayers.dps = [
+          { name: 'Arthas', class: 'Warrior', guild: 'APES', tag: 'dps', avgParse: 90 },
+          { name: 'Jaina', class: 'Mage', guild: 'APES', tag: 'dps', avgDps: 50000 },
+        ];
+        seedPlayers.healers = [
+          { name: 'Anduin', class: 'Priest', guild: 'APES', tag: 'healers' },
+        ];
+        const pool = await build({ code: 'ABC123', guilds: [{ name: 'APES' }], rounds: 1 });
+
+        expect(pool).to.have.length(3);
+        const final = updates[updates.length - 1];
+        expect(final.filter).to.deep.equal({ code: 'ABC123' });
+        expect(final.update.$set.player_pool).to.have.length(3);
+        expect(final.update.$set.pool_status).to.deep.equal({
+          state: 'done', active: 2, inactive: 1, total: 3,
+        });
+      });
+
+      it('does not touch the DB when the league has no code', async function () {
+        seedPlayers.dps = [
+          { name: 'Arthas', class: 'Warrior', guild: 'APES', tag: 'dps', avgParse: 90 },
+          { name: 'Jaina', class: 'Mage', guild: 'APES', tag: 'dps', avgParse: 80 },
+        ];
+        const pool = await build({ guilds: [{ name: 'APES' }], rounds: 1 });
+        expect(pool).to.have.length(2);
+        expect(updates).to.deep.equal([]);
+      });
+    });
   });
 });

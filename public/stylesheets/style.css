@@ -12,6 +12,10 @@
   --shaman: #0070DD;
   --warlock: #4C4FE6;
   --warrior: #936739;
+  --death-knight: #C41F3B;
+  --monk: #00FF96;
+  --demon-hunter: #A330C9;
+  --evoker: #33937F;
 }
 
 /* ============================================
@@ -908,6 +912,9 @@ input, select {
 .role-pill.dps { background: #C41E3A; color: #fff; }
 .role-pill.tanks { background: #00B7FF; color: #000; }
 .role-pill.healers { background: #40BC40; color: #000; }
+.role-pills-cell { display: flex; gap: 3px; flex-wrap: wrap; }
+.role-pills-cell .role-pill { opacity: 0.3; }
+.role-pills-cell .role-pill.active { opacity: 1; }
 
 /* ============================================
    Player Class Text Colors
@@ -922,10 +929,25 @@ input, select {
 .class-Mage { color: var(--mage); }
 .class-Warlock { color: var(--warlock); }
 .class-Druid { color: var(--druid); }
-.class-Death.Knight, .class-DeathKnight { color: #C41F3B; }
-.class-Monk { color: #00FF96; }
-.class-Demon.Hunter, .class-DemonHunter { color: #A330C9; }
-.class-Evoker { color: #33937F; }
+.class-Death.Knight, .class-DeathKnight { color: var(--death-knight); }
+.class-Monk { color: var(--monk); }
+.class-Demon.Hunter, .class-DemonHunter { color: var(--demon-hunter); }
+.class-Evoker { color: var(--evoker); }
+
+/* Bare class selectors (used by rankings, teams, draft templates) */
+.Warrior { color: var(--warrior); }
+.Paladin { color: var(--paladin); }
+.Hunter { color: var(--hunter); }
+.Rogue { color: var(--rogue); }
+.Priest { color: var(--priest); }
+.Shaman { color: var(--shaman); }
+.Mage { color: var(--mage); }
+.Warlock { color: var(--warlock); }
+.Druid { color: var(--druid); }
+.Death.Knight { color: var(--death-knight); }
+.Monk { color: var(--monk); }
+.Demon.Hunter { color: var(--demon-hunter); }
+.Evoker { color: var(--evoker); }
 
 .player-name-text {
   font-weight: 600;
@@ -1688,6 +1710,12 @@ header {
   color: #000;
 }
 
+.btn-styled--small {
+  padding: 6px 14px;
+  font-size: 0.8em;
+  border-radius: 6px;
+}
+
 .btn-styled--warning {
   background: #FF8000;
   color: #000;
@@ -2102,6 +2130,30 @@ header {
   opacity: 1;
 }
 
+.guild-chip--inactive {
+  background: #555;
+  color: #ccc;
+}
+
+.guild-chip--active {
+  background: #00B7FF;
+}
+
+.guild-chip-activity {
+  font-size: 0.75em;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.guild-activity--active {
+  color: #004422;
+}
+
+.guild-activity--inactive {
+  color: #ffcccc;
+  font-weight: 600;
+}
+
 /* ============================================
    Create League: Guild Search Results
    ============================================ */
@@ -2142,11 +2194,36 @@ header {
   color: #40BC40;
 }
 
+.guild-result-active {
+  color: #40BC40;
+  font-size: 0.8em;
+}
+
+.guild-result-inactive {
+  opacity: 0.35;
+}
+
 .guild-loading {
   padding: 10px 12px;
   display: block;
   opacity: 0.5;
   font-size: 0.85em;
+}
+
+.guild-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.guild-add-row .form-input {
+  flex: 1;
+}
+
+.guild-hint {
+  font-size: 0.75em;
+  opacity: 0.4;
+  margin-top: 4px;
 }
 
 /* ============================================
@@ -2172,6 +2249,17 @@ header {
   font-size: 0.85em;
   opacity: 0.8;
   margin: 0;
+}
+
+.form-error {
+  border: 1px solid #C41E3A;
+  border-radius: 6px;
+  padding: 12px 15px;
+  margin-bottom: 14px;
+  background: rgba(196, 30, 58, 0.12);
+  color: #C41E3A;
+  font-size: 0.9em;
+  font-family: 'Montserrat', sans-serif;
 }
 
 /* ============================================
@@ -2706,6 +2794,54 @@ header {
   opacity: 0.6;
   margin-top: 4px;
   display: block;
+}
+
+/* Pool-building global progress banner */
+#pool-build-banner[v-cloak] { display: none; }
+
+.pool-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  background: #1a1a2e;
+  border-bottom: 1px solid #333;
+}
+
+.pool-banner-bar {
+  flex: 1;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.pool-banner-fill {
+  height: 100%;
+  background: #00B7FF;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.pool-banner-text {
+  font-size: 0.85em;
+  color: #ccc;
+}
+
+.pool-banner-detail {
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+
+.pool-banner-link {
+  font-size: 0.8em;
+  color: #00B7FF;
+}
+
+.pool-banner-error {
+  font-size: 0.8em;
+  color: #ff4444;
 }
 
 .loading-spinner--inline {

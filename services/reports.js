@@ -74,7 +74,7 @@ async function generateReport(leagueCode) {
   }
 
   // Build WCL query options from league settings
-  const wclOptions = {};
+  const wclOptions = { difficulty: 4 }; // Heroic by default
   if (league.raids && league.raids.length > 0) {
     // Use the first selected zone ID for scoping
     // WCL zoneRankings takes a single zoneID

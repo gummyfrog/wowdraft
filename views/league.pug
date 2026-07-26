@@ -19,7 +19,24 @@ block content
 			div.league-description-card(v-if="league_info.description")
 				p.league-description-text {{league_info.description}}
 
-			a.cta-card.cta-card--primary(v-if="organizer && league_info.status == 'Setting Up' && league_info.teams && league_info.teams.length >= 2" :href="'/leagues/' + league_info.code + '/start'")
+			div.cta-card(v-if="league_info.pool_status && league_info.pool_status.state === 'building'")
+				div.cta-card-body
+					h2.cta-card-heading
+						i.fas.fa-sync.fa-spin
+						|  Building Player Pool...
+					p.cta-card-subtext The player pool is being built from guild rosters. This may take a few minutes.
+
+			div.cta-card.cta-card--warning(v-if="league_info.pool_status && league_info.pool_status.state === 'error'")
+				div.cta-card-body
+					h2.cta-card-heading
+						i.fas.fa-exclamation-triangle
+						|  Player Pool Error
+					p.cta-card-subtext {{league_info.pool_status.message}}
+					button.btn-styled.btn-styled--primary(@click="retryPoolBuild" :disabled="retryingPool")
+						i.fas.fa-redo
+						|  {{retryingPool ? ' Retrying...' : ' Retry'}}
+
+			a.cta-card.cta-card--primary(v-if="organizer && league_info.status == 'Setting Up' && league_info.teams && league_info.teams.length >= 2 && (!league_info.pool_status || !league_info.pool_status.state)" :href="'/leagues/' + league_info.code + '/start'")
 				div.cta-card-body
 					h2.cta-card-heading
 						i.fas.fa-hand-point-right
@@ -257,6 +274,7 @@ block content
 		  	generating: false,
 		  	reportProgress: 0,
 		  	reportTotal: 0,
+		  	retryingPool: false,
 		  	_pollTimer: null,
 		  },
 		  methods: {
@@ -315,6 +333,20 @@ block content
 			getRecord: function(teamId) {
 				var s = this.league_info.standings && this.league_info.standings[teamId];
 				return s ? s.wins + 'W - ' + s.losses + 'L' : '0W - 0L';
+			},
+			retryPoolBuild: function() {
+				var self = this;
+				self.retryingPool = true;
+				fetch('/leagues/api/' + league.code + '/retryPool', { method: 'POST' })
+					.then(function(res) { return res.json(); })
+					.then(function(data) {
+						if (data.started) {
+							localStorage.setItem('wowdraft_pool_building', league.code);
+							self.league_info.pool_status = { state: 'building', step: 'rosters', progress: 0, total: 0, message: 'Retrying...' };
+						}
+						self.retryingPool = false;
+					})
+					.catch(function() { self.retryingPool = false; });
 			}
 		  },
 		  computed: {

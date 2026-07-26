@@ -72,8 +72,8 @@ block content
 								div.player-guild-sub
 									i.fas.fa-shield-alt.guild-icon
 									| {{player.guild}}
-							td
-								span.role-pill(:class="player.tag") {{player.tag === 'dps' ? 'DPS' : player.tag === 'tanks' ? 'Tank' : 'Healer'}}
+							td.role-pills-cell
+								span.role-pill(v-for="t in (player.tags || [player.tag])" :class="[t, {active: t === tag}]") {{t === 'dps' ? 'DPS' : t === 'tanks' ? 'Tank' : 'Healer'}}
 							td
 								div.parse-cell(v-if="player.avgParse != null")
 									div.parse-bar(:style="'width:' + Math.round(player.avgParse) + '%; background:' + parseColor(player.avgParse)")

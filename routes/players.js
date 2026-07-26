@@ -38,10 +38,15 @@ function filterPool(league, tag, page, extraFilter) {
   const pool = league.player_pool || [];
   const PAGE_SIZE = 10;
 
-  let filtered = pool.filter(p =>
-    (p.tags ? p.tags.includes(tag) : p.tag === tag) &&
-    !p.drafted.includes(leagueCode)
-  );
+  let filtered = pool.filter(p => {
+    if (p.drafted.includes(leagueCode)) return false;
+    // DPS tab: show players whose primary role is DPS
+    // Tanks/Healers tabs: show anyone capable of that role
+    if (tag === 'dps') {
+      return p.tag === 'dps';
+    }
+    return p.tags ? p.tags.includes(tag) : p.tag === tag;
+  });
 
   if (extraFilter) {
     filtered = filtered.filter(extraFilter);

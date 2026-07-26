@@ -96,6 +96,9 @@ class league_interpret {
 	}
 
 	isCurrentTeamManager() {
+		if(!this.league.draft || this.league.draft.status !== 1) {
+			return false;
+		}
 		var teamIndex = this.currentTeamIndex();
 		if(teamIndex == null || !this.league.teams[teamIndex]) {
 			return false;

@@ -46,6 +46,14 @@ html
 				div#logged-out
 					a(href="/login").
 						login <i class="fas fa-sign-in-alt"></i>
+		div#pool-build-banner(v-cloak style="display:none")
+			div.pool-banner-content
+				span.pool-banner-text {{poolMessage}}
+				div.pool-banner-bar
+					div.pool-banner-fill(:style="'width:' + poolPercent + '%'")
+				span.pool-banner-detail {{poolProgress}} / {{poolTotal}}
+				a.pool-banner-link(v-if="poolLeagueCode" :href="'/leagues/' + poolLeagueCode") View League →
+				span.pool-banner-error(v-if="poolError") {{poolError}}
 		block content
 
 	footer
@@ -60,4 +68,100 @@ html
 				$("#logged-in").show();
 				$("#username").text(username);
 			}
+
+			// Global pool-building progress banner
+			(function() {
+				var bannerEl = document.getElementById('pool-build-banner');
+				if (!bannerEl) return;
+
+				new Vue({
+					el: '#pool-build-banner',
+					data: {
+						poolLeagueCode: null,
+						poolMessage: '',
+						poolProgress: 0,
+						poolTotal: 0,
+						poolError: '',
+						_pollTimer: null,
+					},
+					computed: {
+						poolPercent: function() {
+							if (this.poolTotal <= 0) return 0;
+							return Math.round((this.poolProgress / this.poolTotal) * 100);
+						},
+					},
+					methods: {
+						startPolling: function() {
+							var self = this;
+							if (self._pollTimer) clearInterval(self._pollTimer);
+							self.$el.style.display = '';
+							self._pollTimer = setInterval(function() {
+								fetch('/leagues/api/' + self.poolLeagueCode + '/poolStatus')
+									.then(function(res) { return res.json(); })
+									.then(function(status) {
+										if (status && status.state === 'done') {
+											var msg = status.active + ' active raiders';
+											if (status.inactive > 0) msg += ', ' + status.inactive + ' inactive';
+											self.poolMessage = 'Player pool ready! ' + msg + '.';
+											self.poolProgress = status.total || self.poolTotal;
+											self.poolTotal = status.total || self.poolTotal;
+											self.poolError = '';
+											clearInterval(self._pollTimer);
+											self._pollTimer = null;
+											localStorage.removeItem('wowdraft_pool_building');
+											setTimeout(function() { window.location.reload(); }, 2500);
+										} else if (!status || !status.state || status.state === 'idle') {
+											self.poolMessage = 'Player pool ready!';
+											self.poolProgress = self.poolTotal;
+											self.poolError = '';
+											clearInterval(self._pollTimer);
+											self._pollTimer = null;
+											localStorage.removeItem('wowdraft_pool_building');
+											setTimeout(function() { window.location.reload(); }, 1500);
+										} else if (status.state === 'building') {
+											self.poolMessage = status.message || 'Building...';
+											self.poolProgress = status.progress || 0;
+											self.poolTotal = status.total || 0;
+											self.poolError = '';
+										} else if (status.state === 'error') {
+											self.poolMessage = '';
+											self.poolError = status.message || 'An error occurred.';
+											self.poolProgress = 0;
+											self.poolTotal = 0;
+											clearInterval(self._pollTimer);
+											self._pollTimer = null;
+										}
+									})
+									.catch(function() {
+										clearInterval(self._pollTimer);
+										self._pollTimer = null;
+										self.clear();
+									});
+							}, 2000);
+						},
+						clear: function() {
+							if (this._pollTimer) clearInterval(this._pollTimer);
+							this._pollTimer = null;
+							localStorage.removeItem('wowdraft_pool_building');
+							this.$el.style.display = 'none';
+							this.poolLeagueCode = null;
+							this.poolMessage = '';
+							this.poolProgress = 0;
+							this.poolTotal = 0;
+							this.poolError = '';
+						},
+					},
+					mounted: function() {
+						var code = localStorage.getItem('wowdraft_pool_building');
+						if (code) {
+							this.poolLeagueCode = code;
+							this.poolMessage = 'Building player pool...';
+							this.startPolling();
+						}
+					},
+					beforeDestroy: function() {
+						if (this._pollTimer) clearInterval(this._pollTimer);
+					},
+				});
+			})();
 

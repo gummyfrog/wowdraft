@@ -10,7 +10,7 @@ block content
 					i.fas.fa-plus-circle
 					|  Create a League
 
-				form.create-league-sections(action='/leagues/api/create' method='post')
+				form.create-league-sections(@submit.prevent="submitForm")
 
 					//- Section: Identity
 					div.form-section
@@ -111,7 +111,9 @@ block content
 									span.guild-chip-faction(v-if="g.faction")  ({{g.faction}})
 									button.guild-chip-x(type='button' @click="removeGuild(i)") ×
 							label.form-label Search Guilds
-							input.form-input(v-model="guildFilter" type='text' placeholder='Filter guilds...' :disabled="!server && servers.length > 0")
+							div.guild-add-row
+								input.form-input(v-model="guildFilter" type='text' placeholder='Filter guilds...' :disabled="!server && servers.length > 0" @keydown.enter.prevent="addCustomGuild")
+								button.btn-styled.btn-styled--primary.btn-styled--small(type='button' @click="addCustomGuild" :disabled="!guildFilter.trim() || (!server && servers.length > 0)") + Add
 							div.guild-results(v-if="filteredGuilds.length > 0")
 								div.guild-result-item(v-for="g in filteredGuilds" @click="addGuild(g)" :class="{ disabled: isGuildSelected(g.name) }")
 									span {{g.name}}
@@ -121,8 +123,8 @@ block content
 								span.guild-loading
 									span.loading-spinner.loading-spinner--inline
 									|  Loading guilds...
-							div.guild-results(v-else-if="server && allGuilds.length === 0 && !loadingGuilds")
-								span.guild-loading No guilds found for this server.
+							div.guild-results(v-else-if="server && guildFilter && !loadingGuilds")
+								span.guild-loading No matches. Press Enter or click + Add to add "{{guildFilter}}" manually.
 							input(type='hidden' name='guilds' :value="JSON.stringify(selectedGuilds)")
 
 					//- Section: Schedule
@@ -152,10 +154,19 @@ block content
 								option(value="Friday") Friday
 								option(value="Saturday") Saturday
 
+					//- Error display
+					div.form-error(v-if="formError")
+						i.fas.fa-exclamation-triangle
+						span  {{formError}}
+
 					//- Submit
-					button.btn-styled.btn-styled--primary.btn-large(type='submit')
-						i.fas.fa-check
-						|  Create League
+					button.btn-styled.btn-styled--primary.btn-large(type='submit' :disabled="submitting")
+						span(v-if="submitting")
+							span.loading-spinner.loading-spinner--inline
+							|  Creating...
+						span(v-else)
+							i.fas.fa-check
+							|  Create League
 
 			//- Right Column: Live Preview
 			div.create-league-preview
@@ -210,6 +221,8 @@ block content
 				loadingServers: false,
 				loadingZones: false,
 				loadingGuilds: false,
+				submitting: false,
+				formError: "",
 				allIcons: [
 					"banner_Bloodelf.png",
 					"banner_Draenei.png",
@@ -245,6 +258,51 @@ block content
 				],
 			},
 			methods: {
+				submitForm: function() {
+					var self = this;
+					self.formError = "";
+					self.submitting = true;
+					var formData = new URLSearchParams();
+					formData.append('name', self.name);
+					formData.append('description', self.description);
+					formData.append('icon', self.icon);
+					formData.append('color1', self.color1);
+					formData.append('game_version', self.game_version);
+					formData.append('region', self.region);
+					formData.append('region_id', self.region_id);
+					formData.append('server', self.server);
+					formData.append('server_id', self.server_id);
+					formData.append('rounds', self.rounds);
+					formData.append('season_length', self.season_length);
+					formData.append('report_day', self.report_day);
+					formData.append('draft_notes', self.draft_notes);
+					formData.append('req_tanks', self.req_tanks);
+					formData.append('req_healers', self.req_healers);
+					formData.append('req_dps', self.req_dps);
+					formData.append('guilds', JSON.stringify(self.selectedGuilds));
+					formData.append('raids', JSON.stringify(self.selectedRaids));
+					fetch('/leagues/api/create', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+						body: formData.toString(),
+					})
+					.then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+					.then(function(result) {
+						self.submitting = false;
+						if (!result.ok) {
+							self.formError = result.data.error || 'Something went wrong.';
+						} else if (result.data.redirect) {
+							if (result.data.leagueCode) {
+								localStorage.setItem('wowdraft_pool_building', result.data.leagueCode);
+							}
+							window.location.href = result.data.redirect;
+						}
+					})
+					.catch(function() {
+						self.submitting = false;
+						self.formError = 'Network error. Please try again.';
+					});
+				},
 				fetchGameVersions: function() {
 					var self = this;
 					fetch('/leagues/api/game-versions')
@@ -297,9 +355,25 @@ block content
 				fetchGuilds: function() {
 					var self = this;
 					var serverSlug = this.server;
+					if (!serverSlug || self.selectedRaidIds.length === 0) {
+						self.allGuilds = [];
+						return;
+					}
+					// Collect encounter IDs from selected zones
+					var encounterIds = [];
+					for (var zi = 0; zi < self.availableZones.length; zi++) {
+						var zone = self.availableZones[zi];
+						if (self.selectedRaidIds.indexOf(zone.id) !== -1 && zone.encounters) {
+							for (var ei = 0; ei < zone.encounters.length; ei++) {
+								encounterIds.push(zone.encounters[ei]);
+							}
+						}
+					}
+					if (encounterIds.length === 0) { self.allGuilds = []; return; }
 					self.loadingGuilds = true;
 					var url = '/leagues/api/guilds/search?region=' + this.region + '&game_version=' + this.game_version;
-					if (serverSlug) url += '&server=' + encodeURIComponent(serverSlug);
+					url += '&server=' + encodeURIComponent(serverSlug);
+					url += '&encounter_ids=' + encounterIds.join(',');
 					fetch(url)
 						.then(function(res) { return res.json(); })
 						.then(function(guilds) {
@@ -313,6 +387,14 @@ block content
 					if (!this.isGuildSelected(guild.name)) {
 						this.selectedGuilds.push({ name: guild.name, faction: guild.faction || null });
 					}
+				},
+				addCustomGuild: function() {
+					var name = this.guildFilter.trim();
+					if (!name || this.selectedGuilds.length >= 5) return;
+					if (!this.isGuildSelected(name)) {
+						this.selectedGuilds.push({ name: name, faction: null });
+					}
+					this.guildFilter = '';
 				},
 				isGuildSelected: function(name) {
 					return this.selectedGuilds.some(function(g) { return g.name === name; });
@@ -399,6 +481,12 @@ block content
 				},
 				totalRequired: function(val) {
 					if (this.rounds < val) this.rounds = val;
+				},
+				selectedRaidIds: function() {
+					// Re-fetch guild list — encounter IDs change with raid selection
+					if (this.server) {
+						this.fetchGuilds();
+					}
 				},
 			},
 			mounted: function() {

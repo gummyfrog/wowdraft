@@ -32,25 +32,26 @@ router.get('/create', function (req, res) {
 });
 
 // API: Search guilds (for league creation)
+// Uses encounter fightRankings to find guilds with actual boss kills
 router.get('/api/guilds/search', function (req, res, next) {
   const q = (req.query.q || '').toLowerCase();
   const serverSlug = (req.query.server || '').toLowerCase().replace(/\s/g, '-');
   const serverRegion = req.query.region || 'us';
   const gameVersion = req.query.game_version || 'retail';
+  // encounter_ids = comma-separated encounter IDs from the selected zone
+  const encounterIds = (req.query.encounter_ids || '').split(',').map(Number).filter(n => n > 0);
 
   const wcl = getClient();
-  if (wcl && serverSlug) {
-    // Search WCL for guilds on this server
-    wcl.searchGuilds(serverSlug, serverRegion, gameVersion)
-      .then((result) => {
-        const guilds = (result && result.data) || [];
-        const filtered = q
-          ? guilds.filter(g => g.name.toLowerCase().includes(q))
-          : guilds;
-        res.json(filtered.slice(0, 20).map(g => ({
-          name: g.name,
-          faction: g.faction ? g.faction.name : null,
-        })));
+  if (wcl && serverSlug && encounterIds.length > 0) {
+    // Query fightRankings — returns guilds that have actual boss kills
+    wcl.getActiveGuilds(encounterIds, serverSlug, serverRegion, gameVersion)
+      .then((guilds) => {
+        let results = guilds.map(g => ({ name: g.name, faction: g.faction, active: true }));
+        results.sort((a, b) => a.name.localeCompare(b.name));
+        if (q) {
+          results = results.filter(g => g.name.toLowerCase().includes(q));
+        }
+        res.json(results);
       })
       .catch((err) => next(err));
   } else {
@@ -221,6 +222,33 @@ router.get('/api/:leagueID/teams', function (req, res, next) {
     .catch((err) => next(err));
 });
 
+// API: Pool building status (for progress polling)
+router.get('/api/:leagueID/poolStatus', function (req, res, next) {
+  db.leagues().findOne({ code: req.params.leagueID }, { projection: { pool_status: 1 } })
+    .then((league) => {
+      if (!league) return res.status(404).json({ error: 'League not found' });
+      res.json(league.pool_status || { state: 'idle' });
+    })
+    .catch((err) => next(err));
+});
+
+// API: Retry pool building (re-triggers async build)
+router.post('/api/:leagueID/retryPool', function (req, res) {
+  if (!req.session.loggedin) return res.status(403).json({ error: 'Not logged in' });
+
+  db.leagues().findOne({ code: req.params.leagueID })
+    .then((league) => {
+      if (!league) return res.status(404).json({ error: 'League not found' });
+
+      // Fire and forget
+      buildPlayerPool(league)
+        .catch((err) => console.error('Pool retry failed for ' + league.code + ':', err.message));
+
+      res.json({ started: true });
+    })
+    .catch(() => res.status(500).json({ error: 'Server error' }));
+});
+
 // API: Create league
 router.post('/api/create', function (req, res) {
   if (!req.session.loggedin) return res.redirect('/403');
@@ -286,16 +314,24 @@ router.post('/api/create', function (req, res) {
     new_league.raids = getZonesForVersion(new_league.game_version);
   }
 
-  // Build player pool
-  buildPlayerPool(new_league)
-    .then((pool) => {
-      new_league.player_pool = pool;
-      return db.leagues().insertOne(new_league);
+  // Insert league immediately with empty pool and building status
+  new_league.player_pool = [];
+  new_league.pool_status = {
+    state: 'building', step: 'rosters', progress: 0,
+    total: new_league.guilds.length, message: 'Starting...',
+  };
+
+  db.leagues().insertOne(new_league)
+    .then(() => {
+      // Fire and forget — buildPlayerPool updates progress via DB
+      buildPlayerPool(new_league)
+        .catch((err) => console.error('Pool building failed for ' + new_league.code + ':', err.message));
+
+      res.json({ redirect: '/leagues/' + new_league.code, leagueCode: new_league.code });
     })
-    .then(() => res.redirect('/leagues'))
     .catch((err) => {
       console.error('League creation failed:', err.message);
-      res.redirect('/403');
+      res.status(500).json({ error: 'League creation failed: ' + err.message });
     });
 });
 
