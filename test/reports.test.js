@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { resolveMatchups, fetchPlayerSnapshot } = require('../services/reports');
+const { resolveMatchups, fetchPlayerSnapshot, buildPlayerEntry } = require('../services/reports');
 
 describe('Report Generation', function () {
   describe('resolveMatchups', function () {
@@ -83,6 +83,41 @@ describe('Report Generation', function () {
     it('should return null with empty options', async function () {
       const result = await fetchPlayerSnapshot('Arthas', 'area-52', 'us', 'retail');
       expect(result).to.be.null;
+    });
+  });
+
+  describe('buildPlayerEntry', function () {
+    const snap = {
+      encounters: {
+        'Ragnaros': { rankPercent: 85, bestAmount: 1500, totalKills: 10, fastestKill: 180000, medianPercent: 80 },
+      },
+      zoneAllStars: { points: 800, possiblePoints: 1000, rankPercent: 80, spec: 'Fire' },
+    };
+
+    it('should persist points, title and details for a drafted player', function () {
+      const entry = buildPlayerEntry('Arthas', { Arthas: snap }, {}, [snap]);
+      expect(entry).to.have.all.keys('points', 'title', 'details');
+      expect(entry.points).to.have.all.keys(
+        'total', 'parse', 'dps', 'bosses_down', 'speedy_clear', 'new_best', 'consistency', 'all_stars'
+      );
+      expect(entry.points).to.not.have.property('details');
+      expect(entry.title).to.be.a('string').and.not.equal('');
+      expect(entry.details.parse.avg).to.equal(85);
+      expect(entry.details.bosses_down.new_kills).to.equal(10);
+    });
+
+    it('should leave No Pick slots bare with zero points', function () {
+      const entry = buildPlayerEntry('No Pick', {}, {}, []);
+      expect(entry).to.have.all.keys('points');
+      expect(entry.points.total).to.equal(0);
+      expect(entry).to.not.have.property('title');
+      expect(entry).to.not.have.property('details');
+    });
+
+    it('should score a player with no fresh snapshot as zero', function () {
+      const entry = buildPlayerEntry('Missing', {}, {}, [snap]);
+      expect(entry.points.total).to.equal(0);
+      expect(entry.details.parse.avg).to.be.null;
     });
   });
 });

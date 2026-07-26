@@ -82,4 +82,30 @@ describe('LeagueLogic', function () {
       expect(logic.startSeason({ season_length: 6 })).to.equal(false);
     });
   });
+
+  describe('joinEligibility', function () {
+    it('should reject anonymous visitors with not_logged_in', function () {
+      const logic = new LeagueLogic(makeLeague(), { loggedin: false });
+      expect(logic.joinEligibility()).to.deep.equal({ canJoin: false, reason: 'not_logged_in' });
+      expect(logic.canMakeTeam()).to.equal(false);
+    });
+
+    it('should allow a logged in user with no team while Setting Up', function () {
+      const logic = new LeagueLogic(makeLeague(), { loggedin: true, username: 'newbie#0001' });
+      expect(logic.joinEligibility()).to.deep.equal({ canJoin: true, reason: null });
+      expect(logic.canMakeTeam()).to.equal(true);
+    });
+
+    it('should reject an existing manager with already_manager', function () {
+      const logic = new LeagueLogic(makeLeague(), { loggedin: true, username: 'user#5678' });
+      expect(logic.joinEligibility()).to.deep.equal({ canJoin: false, reason: 'already_manager' });
+      expect(logic.canMakeTeam()).to.equal(false);
+    });
+
+    it('should reject joins once the league is Active with wrong_status', function () {
+      const logic = new LeagueLogic(makeLeague({ status: 'Active' }), { loggedin: true, username: 'newbie#0001' });
+      expect(logic.joinEligibility()).to.deep.equal({ canJoin: false, reason: 'wrong_status' });
+      expect(logic.canMakeTeam()).to.equal(false);
+    });
+  });
 });

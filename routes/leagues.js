@@ -178,13 +178,50 @@ router.get('/:leagueID/teams', function (req, res, next) {
     .catch((err) => next(err));
 });
 
+// Join / invite landing page
+router.get('/:leagueID/join', function (req, res, next) {
+  db.leagues().findOne({ code: req.params.leagueID })
+    .then((league) => {
+      if (!league) return res.redirect('/404');
+
+      var leaguelogic = new LeagueLogic(league, req.session);
+      var eligibility = leaguelogic.joinEligibility();
+
+      res.render('join_league', {
+        title: league.name,
+        code: league.code,
+        name: league.name,
+        description: league.description || '',
+        icon: league.icon || '',
+        color1: league.color1 || '#00B7FF',
+        status: league.status,
+        organizer_name: (league.admin && league.admin.name) || 'Unknown',
+        team_count: (league.teams && league.teams.length) || 0,
+        rounds: league.rounds || 0,
+        can_join: eligibility.canJoin,
+        join_reason: eligibility.reason,
+        user_session_auth: req.session.loggedin,
+        user_session_name: req.session.username,
+      });
+    })
+    .catch((err) => next(err));
+});
+
 // New team form
 router.get('/:leagueID/newTeam', function (req, res, next) {
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
+      if (!league) return res.redirect('/404');
+
+      var leaguelogic = new LeagueLogic(league, req.session);
+      if (!leaguelogic.joinEligibility().canJoin) {
+        return res.redirect('/leagues/' + req.params.leagueID + '/join');
+      }
+
       res.render('create_team', {
         title: league.name,
         leagueID: req.params.leagueID,
+        error: req.query.error || '',
         user_session_auth: req.session.loggedin,
         user_session_name: req.session.username,
       });
@@ -341,28 +378,17 @@ router.post('/api/:leagueID/newTeam', function (req, res, next) {
 
   db.leagues().findOne({ code: req.params.leagueID })
     .then((league) => {
+      if (!league) return res.redirect('/404');
+
       var leaguelogic = new LeagueLogic(league, req.session);
-      leaguelogic.addTeam(req.body);
+      if (leaguelogic.addTeam(req.body) !== true) {
+        return res.redirect('/leagues/' + req.params.leagueID + '/join');
+      }
 
       db.leagues().updateOne(
         { code: req.params.leagueID },
         { $set: leaguelogic.league }
       ).then(() => res.redirect(`/leagues/${req.params.leagueID}/`));
-    })
-    .catch((err) => next(err));
-});
-
-// API: Activity report
-router.post('/api/:leagueID/activity_report', function (req, res, next) {
-  db.leagues().findOne({ code: req.params.leagueID })
-    .then((league) => {
-      if (!league.activity_reports) league.activity_reports = [];
-      league.activity_reports.push({ time: new Date(), data: req.body.data });
-
-      return db.leagues().updateOne(
-        { code: req.params.leagueID },
-        { $set: { activity_reports: league.activity_reports } }
-      ).then(() => res.json({ msg: 'Accepted' }));
     })
     .catch((err) => next(err));
 });

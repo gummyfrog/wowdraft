@@ -153,6 +153,81 @@ describe('Scoring Engine', function () {
     });
   });
 
+  describe('scorePlayer details', function () {
+    it('should expose a details object keyed like the points categories', function () {
+      const { details } = scorePlayer(makeSnapshot(), {}, [makeSnapshot()]);
+      expect(details).to.be.an('object');
+      expect(Object.keys(details).sort()).to.deep.equal(
+        ['all_stars', 'bosses_down', 'consistency', 'dps', 'new_best', 'parse', 'speedy_clear']
+      );
+      expect(details.parse).to.have.property('avg');
+      expect(details.dps).to.have.all.keys('avg', 'percentile');
+      expect(details.bosses_down).to.have.property('new_kills');
+      expect(details.speedy_clear).to.have.property('fastest_bosses');
+      expect(details.new_best).to.have.property('improvements');
+      expect(details.consistency).to.have.property('ratio');
+      expect(details.all_stars).to.have.all.keys('points', 'possible');
+    });
+
+    it('should report the average parse behind the parse score', function () {
+      const { parse, details } = scorePlayer(makeSnapshot(), {}, [makeSnapshot()]);
+      // (85 + 90) / 2
+      expect(details.parse.avg).to.equal(87.5);
+      expect(parse).to.equal(4);
+    });
+
+    it('should report new_kills behind the bosses_down score', function () {
+      const now = makeSnapshot();
+      const old = { encounters: { 'Ragnaros': { totalKills: 8 }, 'Onyxia': { totalKills: 6 } } };
+      const { bosses_down, details } = scorePlayer(now, old, [now]);
+      expect(details.bosses_down.new_kills).to.equal(4);
+      expect(bosses_down).to.equal(8);
+    });
+
+    it('should report dps average and percentile, and all-star raw points', function () {
+      const snap = makeSnapshot();
+      const { details } = scorePlayer(snap, {}, [snap]);
+      // (1500 + 1600) / 2
+      expect(details.dps.avg).to.equal(1550);
+      expect(details.dps.percentile).to.equal(1);
+      expect(details.all_stars.points).to.equal(800);
+      expect(details.all_stars.possible).to.equal(1000);
+      expect(details.speedy_clear.fastest_bosses).to.equal(2);
+      expect(details.new_best.improvements).to.equal(4);
+      expect(details.consistency.ratio).to.equal(0.96);
+    });
+
+    it('should null out details when the inputs are missing', function () {
+      const { details } = scorePlayer({ encounters: {}, zoneAllStars: null }, {}, []);
+      expect(details.parse.avg).to.be.null;
+      expect(details.dps.avg).to.be.null;
+      expect(details.dps.percentile).to.be.null;
+      expect(details.consistency.ratio).to.be.null;
+      expect(details.all_stars.points).to.be.null;
+      expect(details.all_stars.possible).to.be.null;
+      expect(details.bosses_down.new_kills).to.equal(0);
+      expect(details.speedy_clear.fastest_bosses).to.equal(0);
+      expect(details.new_best.improvements).to.equal(0);
+    });
+
+    it('should not change any category points for the standard fixture', function () {
+      const points = scorePlayer(makeSnapshot(), {}, [makeSnapshot()]);
+      expect(points.parse).to.equal(4);
+      expect(points.dps).to.equal(8);
+      expect(points.bosses_down).to.equal(10);
+      expect(points.speedy_clear).to.equal(4);
+      expect(points.new_best).to.equal(4);
+      expect(points.consistency).to.equal(6);
+      expect(points.all_stars).to.equal(6);
+      expect(points.total).to.equal(42);
+    });
+
+    it('should keep getTitle working when details are attached', function () {
+      const points = scorePlayer(makeSnapshot(), {}, [makeSnapshot()]);
+      expect(getTitle(points)).to.equal('Boss Killer');
+    });
+  });
+
   describe('getTitle', function () {
     it('should return the title for highest-scoring category', function () {
       const points = { total: 20, parse: 10, dps: 4, bosses_down: 2, speedy_clear: 2, new_best: 1, consistency: 1, all_stars: 0 };

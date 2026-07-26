@@ -10,6 +10,17 @@ block content
 					i.fas.fa-flag
 					|  Register Your Team
 
+				if error
+					-
+						var errorMessages = {
+							already_manager: 'You already manage a team in this league.',
+							wrong_status: 'This league is no longer accepting teams.',
+							not_logged_in: 'You need to be logged in to register a team.',
+						};
+					div.form-error
+						i.fas.fa-exclamation-triangle
+						|  #{errorMessages[error] || 'Something went wrong. Please try again.'}
+
 				form.create-league-sections(action=`/leagues/api/${leagueID}/newTeam` method='post')
 
 					//- Section: Identity

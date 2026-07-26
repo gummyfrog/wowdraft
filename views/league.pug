@@ -52,6 +52,12 @@ block content
 					p.cta-card-subtext Join this league by creating a team.
 					span.cta-card-action Register →
 
+			div.invite-link-row(v-if="league_info.status == 'Setting Up'")
+				button.btn-styled.btn-styled--primary.btn-styled--small(@click="copyInviteLink")
+					i.fas.fa-link
+					|  {{inviteCopied ? ' Copied!' : ' Copy Invite Link'}}
+				span.invite-link-hint Share this link to let managers register a team.
+
 			draft_progress(
 				v-bind:draft_info="draft_info",
 				v-bind:teams="teams",
@@ -275,9 +281,18 @@ block content
 		  	reportProgress: 0,
 		  	reportTotal: 0,
 		  	retryingPool: false,
+		  	inviteCopied: false,
 		  	_pollTimer: null,
 		  },
 		  methods: {
+			copyInviteLink: function() {
+				var self = this;
+				navigator.clipboard.writeText(location.origin + '/leagues/' + league.code + '/join')
+					.then(function() {
+						self.inviteCopied = true;
+						setTimeout(function() { self.inviteCopied = false; }, 1500);
+					});
+			},
 			fetchDraftData: function(event) {
 				fetch(`/leagues/api/${league.code}/draftInfo`)
 				.then(res => res.json())

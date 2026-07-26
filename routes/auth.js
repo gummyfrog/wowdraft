@@ -8,11 +8,27 @@ const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 // Guest mode: if no Discord credentials, auto-login
 const guestMode = !clientId;
 
+// Only relative, single-slash paths are accepted (no protocol-relative redirects)
+function safeNext(next) {
+  if (typeof next !== 'string') return null;
+  if (next.charAt(0) !== '/' || next.charAt(1) === '/') return null;
+  return next;
+}
+
+function consumeReturnTo(req) {
+  const dest = req.session.returnTo || '/';
+  delete req.session.returnTo;
+  return dest;
+}
+
 router.get('/login', function (req, res) {
+  const next = safeNext(req.query.next);
+  if (next) req.session.returnTo = next;
+
   if (guestMode) {
     req.session.loggedin = true;
     req.session.username = 'Guest#' + Math.floor(1000 + Math.random() * 9000);
-    return res.redirect('/');
+    return res.redirect(consumeReturnTo(req));
   }
   res.render('login', {
     title: 'Login',
@@ -31,7 +47,7 @@ router.get('/auth', function (req, res) {
   if (guestMode) {
     req.session.loggedin = true;
     req.session.username = 'Guest#' + Math.floor(1000 + Math.random() * 9000);
-    return res.redirect('/');
+    return res.redirect(consumeReturnTo(req));
   }
 
   const { code } = req.query;
@@ -65,7 +81,7 @@ router.get('/auth', function (req, res) {
           const user = userResult.data;
           req.session.loggedin = true;
           req.session.username = user.username + '#' + user.discriminator;
-          res.redirect('/');
+          res.redirect(consumeReturnTo(req));
         })
         .catch(() => res.redirect('/404'));
     })

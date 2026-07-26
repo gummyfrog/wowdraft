@@ -52,6 +52,22 @@ async function fetchPlayerSnapshot(playerName, serverSlug, serverRegion, gameVer
   }
 }
 
+const EMPTY_POINTS = { total: 0, parse: 0, dps: 0, bosses_down: 0, speedy_clear: 0, new_best: 0, consistency: 0, all_stars: 0 };
+
+// Builds one weekly activity_reports entry for a drafted player:
+// { points, title, details }. 'No Pick' slots stay bare (zero points, no title/details).
+function buildPlayerEntry(playerName, newSnapshots, oldSnapshots, allNewSnapshots) {
+  if (playerName === 'No Pick') {
+    return { points: { ...EMPTY_POINTS } };
+  }
+
+  const newSnap = newSnapshots[playerName] || { encounters: {} };
+  const oldSnap = oldSnapshots[playerName] || {};
+  const { details, ...points } = scorePlayer(newSnap, oldSnap, allNewSnapshots);
+
+  return { points, title: getTitle(points), details };
+}
+
 async function generateReport(leagueCode) {
   const league = await db.leagues().findOne({ code: leagueCode });
   if (!league || league.status !== 'Active') {
@@ -119,17 +135,9 @@ async function generateReport(leagueCode) {
     let teamTotal = 0;
 
     for (const player of team.drafted_players) {
-      if (player.name === 'No Pick') {
-        playerScores[player.name] = { points: { total: 0, parse: 0, dps: 0, bosses_down: 0, speedy_clear: 0, new_best: 0, consistency: 0, all_stars: 0 } };
-        continue;
-      }
-
-      const newSnap = newSnapshots[player.name] || { encounters: {} };
-      const oldSnap = oldSnapshots[player.name] || {};
-      const points = scorePlayer(newSnap, oldSnap, allNewSnapshots);
-
-      playerScores[player.name] = { points, title: getTitle(points) };
-      teamTotal += points.total;
+      const entry = buildPlayerEntry(player.name, newSnapshots, oldSnapshots, allNewSnapshots);
+      playerScores[player.name] = entry;
+      teamTotal += entry.points.total;
     }
 
     teamReportData.push({
@@ -234,4 +242,4 @@ function resolveMatchups(weekSchedule, teamReportData) {
   return results;
 }
 
-module.exports = { generateReport, fetchPlayerSnapshot, resolveMatchups };
+module.exports = { generateReport, fetchPlayerSnapshot, resolveMatchups, buildPlayerEntry };

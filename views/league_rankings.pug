@@ -22,8 +22,42 @@ block content
 					button(@click="nextWeek" :disabled="selectedWeek >= activity_reports.length - 1")
 						i.fas.fa-arrow-right
 
+				details.scoring-legend
+					summary
+						i.fas.fa-info-circle
+						|  How scoring works
+					ul.legend-list
+						li
+							span.legend-cat Parse Performance
+							span.legend-max max 10
+							span.legend-desc Average best parse percentile across all bosses. ≥99 → 10, ≥95 → 8, ≥90 → 6, ≥75 → 4, ≥50 → 2, anything lower → 1.
+						li
+							span.legend-cat DPS Ranking
+							span.legend-max max 8
+							span.legend-desc Average best DPS ranked against every other drafted player. Percentile ≥0.95 → 8, ≥0.80 → 6, ≥0.60 → 4, ≥0.40 → 2, lower → 1.
+						li
+							span.legend-cat Bosses Down
+							span.legend-max max 10
+							span.legend-desc Kills gained since last week's snapshot. 2 points per new kill, capped at 10.
+						li
+							span.legend-cat Speedy Clear
+							span.legend-max max 8
+							span.legend-desc Bosses where you hold the fastest kill time in the league. 2 points each, capped at 8.
+						li
+							span.legend-cat New Best
+							span.legend-max max 8
+							span.legend-desc Every boss where your parse percentile or best DPS beat the previous snapshot. 1 point each, capped at 8.
+						li
+							span.legend-cat Consistency
+							span.legend-max max 6
+							span.legend-desc Average median-percent ÷ best-percent ratio. ≥0.95 → 6, ≥0.85 → 4, ≥0.70 → 2, lower → 1.
+						li
+							span.legend-cat All-Star
+							span.legend-max max 6
+							span.legend-desc Zone All-Star points ÷ possible points. ≥0.80 → 6, ≥0.60 → 4, ≥0.40 → 2, above zero → 1.
+
 				team-item(
-					v-for="(team, index) in teams"
+					v-for="(team, index) in sorted_teams"
 					v-bind:team="team",
 					v-bind:team_index="index",
 					v-bind:activity_report="activity_report",
@@ -102,6 +136,57 @@ block content
 		var league = !{JSON.stringify(league)}
 		league = JSON.parse(league)
 
+		var SCORE_CATEGORIES = [
+			{ key: 'parse', label: 'Parse Performance' },
+			{ key: 'dps', label: 'DPS Ranking' },
+			{ key: 'bosses_down', label: 'Bosses Down' },
+			{ key: 'speedy_clear', label: 'Speedy Clear' },
+			{ key: 'new_best', label: 'New Best' },
+			{ key: 'consistency', label: 'Consistency' },
+			{ key: 'all_stars', label: 'All-Star' },
+		]
+
+		var WCL_BASE = league.game_version === 'classic' ? 'https://classic.warcraftlogs.com' : 'https://www.warcraftlogs.com'
+		var WCL_REGION = league.region || 'us'
+		var WCL_SERVER = (league.server || '').toLowerCase().replace(/\s/g, '-')
+
+		function characterUrl(name) {
+			return WCL_BASE + '/character/' + WCL_REGION + '/' + WCL_SERVER + '/' + encodeURIComponent(name)
+		}
+
+		function formatNumber(n) {
+			return Number(n).toLocaleString('en-US')
+		}
+
+		function pluralize(n, word) {
+			return n + ' ' + word + (n === 1 ? '' : 's')
+		}
+
+		function detailLine(key, d) {
+			if(!d) return ''
+			switch(key) {
+				case 'parse':
+					return d.avg == null ? '' : 'Avg parse ' + d.avg
+				case 'dps':
+					if(d.avg == null) return ''
+					var line = 'Avg DPS ' + formatNumber(d.avg)
+					if(d.percentile != null) line += ' — top ' + Math.max(1, Math.round((1 - d.percentile) * 100)) + '%'
+					return line
+				case 'bosses_down':
+					return d.new_kills ? pluralize(d.new_kills, 'new kill') : 'No new kills'
+				case 'speedy_clear':
+					return d.fastest_bosses ? pluralize(d.fastest_bosses, 'fastest kill') : 'No fastest kills'
+				case 'new_best':
+					return d.improvements ? pluralize(d.improvements, 'improvement') : 'No improvements'
+				case 'consistency':
+					return d.ratio == null ? '' : 'Median/best ratio ' + d.ratio
+				case 'all_stars':
+					if(d.points == null || d.possible == null) return ''
+					return 'AS points ' + formatNumber(d.points) + '/' + formatNumber(d.possible)
+			}
+			return ''
+		}
+
 		Vue.component('team-item', {
 			props: ['team', 'team_index', 'activity_report', 'total_points', 'get_index', 'highest_points'],
 			template: `
@@ -135,17 +220,54 @@ block content
 
 		Vue.component('mini_player', {
 			props: ['player', 'team_activity', 'team_color', 'highest_points'],
+			data: function() {
+				return { open: false }
+			},
+			computed: {
+				entry: function() {
+					return this.team_activity[this.player.name] || null
+				},
+				scored: function() {
+					return !!(this.entry && this.entry.points && this.entry.points.total > 0)
+				},
+				wclUrl: function() {
+					return characterUrl(this.player.name)
+				},
+				rows: function() {
+					var entry = this.entry
+					if(!entry || !entry.points) return []
+					var details = entry.details || {}
+					return SCORE_CATEGORIES.map(function(c) {
+						return {
+							key: c.key,
+							label: c.label,
+							points: entry.points[c.key] || 0,
+							detail: detailLine(c.key, details[c.key]),
+						}
+					})
+				},
+			},
 			template: `
-			<div v-if="team_activity[player.name] && team_activity[player.name].points.total > 0" class="ranking-player">
-				<img :src="'/images/classes/'+player.class+'.png'">
-				<span :class="'rp-name '+player.class">{{player.name}}</span>
-				<span class="rp-title">{{highest_points(team_activity[player.name].points)}}</span>
-				<span class="rp-points" :style="'color:'+team_color">{{team_activity[player.name].points.total}}</span>
-			</div>
-			<div v-else class="ranking-player absent">
-				<img :src="'/images/classes/'+player.class+'.png'">
-				<span :class="'rp-name '+player.class">{{player.name}}</span>
-				<span class="rp-points">Absent</span>
+			<div class="ranking-player-wrap">
+				<div v-if="scored" class="ranking-player" :class="{expanded: open}" @click="open = !open">
+					<img :src="'/images/classes/'+player.class+'.png'">
+					<a :href="wclUrl" target="_blank" rel="noopener" :class="'rp-name rp-link '+player.class" @click.stop>{{player.name}}</a>
+					<span class="rp-title">{{highest_points(entry.points)}}</span>
+					<span class="rp-points" :style="'color:'+team_color">{{entry.points.total}}</span>
+					<i class="fas rp-caret" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+				</div>
+				<div v-else class="ranking-player absent">
+					<img :src="'/images/classes/'+player.class+'.png'">
+					<a :href="wclUrl" target="_blank" rel="noopener" :class="'rp-name rp-link '+player.class" @click.stop>{{player.name}}</a>
+					<span class="rp-points">Absent</span>
+				</div>
+				<div v-if="open && scored" class="rp-breakdown">
+					<div v-for="row in rows" :key="row.key" class="rp-cat">
+						<span class="rp-cat-label">{{row.label}}</span>
+						<span class="rp-cat-detail">{{row.detail}}</span>
+						<span class="rp-cat-points">{{row.points}}</span>
+					</div>
+				</div>
 			</div>
 			`
 		})
@@ -268,6 +390,7 @@ block content
 		  	highestPoints:function(dist) {
 		  		var fakeDist = Object.assign({}, dist);
 		  		delete fakeDist.total;
+		  		delete fakeDist.details;
 
 		  		var html = "";
 		  		var highest = Object.keys(fakeDist).reduce((a, b) => fakeDist[a] > fakeDist[b] ? a : b);

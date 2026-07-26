@@ -1,0 +1,48 @@
+extends layout
+
+block content
+
+	div#content.join-page
+		div.join-card
+			div.join-card-head
+				img.join-league-icon(src=`/images/league_icons/${icon}` alt=name)
+				div.join-league-titles
+					h1.join-league-name(style=`color: ${color1}`)= name
+					div.join-league-organizer
+						i.fas.fa-crown
+						|  Organized by #{organizer_name}
+
+			if description
+				p.join-league-description= description
+
+			div.join-league-meta
+				div.join-meta-item
+					i.fas.fa-users
+					span  #{team_count} teams
+				div.join-meta-item
+					i.fas.fa-layer-group
+					span  #{rounds} rounds
+				div.join-meta-item
+					i.fas.fa-flag-checkered
+					span  #{status}
+
+			div.join-cta
+				if can_join
+					a.btn-styled.btn-styled--primary.btn-large(href=`/leagues/${code}/newTeam`)
+						i.fas.fa-flag
+						|  Create your team
+				else if join_reason === 'not_logged_in'
+					p.join-cta-note You need an account to join this league.
+					a.btn-styled.btn-styled--primary.btn-large(href=`/login?next=/leagues/${code}/join`)
+						i.fas.fa-sign-in-alt
+						|  Log in to join
+				else if join_reason === 'already_manager'
+					p.join-cta-note You already manage a team here.
+					a.btn-styled.btn-styled--primary.btn-large(href=`/leagues/${code}`)
+						i.fas.fa-arrow-right
+						|  View league
+				else
+					p.join-cta-note This league is no longer accepting teams — the draft has started and the season is underway.
+					a.btn-styled.btn-styled--primary.btn-large(href=`/leagues/${code}`)
+						i.fas.fa-arrow-right
+						|  View league

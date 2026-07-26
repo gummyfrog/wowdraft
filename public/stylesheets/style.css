@@ -2940,3 +2940,217 @@ header {
     font-size: 0.85em;
   }
 }
+
+/* ============================================
+   Join League page
+   ============================================ */
+
+.join-page {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.join-card {
+  border: 2px solid #555;
+  border-radius: 6px;
+  background-image: linear-gradient(#161616, #0a0a0a);
+  padding: 24px;
+}
+
+.join-card-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.join-league-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.join-league-name {
+  margin: 0;
+  font-size: 1.6em;
+}
+
+.join-league-organizer {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.join-league-description {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9em;
+  margin-top: 16px;
+}
+
+.join-league-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.join-cta {
+  margin-top: 24px;
+  border-top: 1px solid #333;
+  padding-top: 20px;
+}
+
+.join-cta-note {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9em;
+  opacity: 0.7;
+  margin-bottom: 12px;
+}
+
+/* Invite link button on the league page */
+.invite-link-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.invite-link-hint {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.8em;
+  opacity: 0.55;
+}
+
+/* Rankings: score breakdown */
+.ranking-player-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-player-wrap .ranking-player {
+  cursor: pointer;
+}
+
+.ranking-player-wrap .ranking-player.absent {
+  cursor: default;
+}
+
+.ranking-player-wrap .ranking-player:hover {
+  background-color: #1a1a2e;
+}
+
+.ranking-player.expanded {
+  background-color: #1a1a2e;
+}
+
+.ranking-player .rp-link {
+  text-decoration: none;
+}
+
+.ranking-player .rp-link:hover {
+  text-decoration: underline;
+}
+
+.ranking-player .rp-caret {
+  font-size: 0.65em;
+  opacity: 0.4;
+  margin-left: 4px;
+}
+
+.rp-breakdown {
+  background-color: #14141f;
+  border-left: 2px solid #2c2c44;
+  padding: 6px 8px 6px 10px;
+  margin: 0 0 4px 12px;
+}
+
+.rp-cat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.72em;
+}
+
+.rp-cat-label {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.rp-cat-detail {
+  flex-grow: 1;
+  opacity: 0.45;
+  text-align: right;
+  font-style: italic;
+}
+
+.rp-cat-points {
+  flex-shrink: 0;
+  min-width: 20px;
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  color: #FFD100;
+}
+
+/* Rankings: how-scoring-works legend */
+.scoring-legend {
+  background-color: #1a1a2e;
+  border: 1px solid #2c2c44;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+}
+
+.scoring-legend summary {
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85em;
+  font-weight: 600;
+  opacity: 0.8;
+  list-style: none;
+}
+
+.scoring-legend summary:hover {
+  opacity: 1;
+}
+
+.scoring-legend[open] summary {
+  margin-bottom: 8px;
+}
+
+.legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.legend-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  border-top: 1px solid #23233a;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.75em;
+}
+
+.legend-cat {
+  flex-shrink: 0;
+  width: 130px;
+  font-weight: 600;
+  color: #FFD100;
+}
+
+.legend-max {
+  flex-shrink: 0;
+  width: 48px;
+  font-family: 'Roboto Mono', monospace;
+  opacity: 0.6;
+}
+
+.legend-desc {
+  opacity: 0.6;
+}

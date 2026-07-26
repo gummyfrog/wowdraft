@@ -19,17 +19,22 @@ class league_interpret {
 		}
 	}
 
-	canMakeTeam() {
+	joinEligibility() {
 		// make an enum for status
-		if(!this.loggedin || this.league.status != "Setting Up") { return false; }
+		if(!this.loggedin) { return { canJoin: false, reason: 'not_logged_in' }; }
+		if(this.league.status != "Setting Up") { return { canJoin: false, reason: 'wrong_status' }; }
 
 		for(var x=0; x< this.league.teams.length; x++) {
 			if(this.league.teams[x].manager == this.whoami) {
-				return false;
+				return { canJoin: false, reason: 'already_manager' };
 			}
 		}
 
-		return true;
+		return { canJoin: true, reason: null };
+	}
+
+	canMakeTeam() {
+		return this.joinEligibility().canJoin;
 	}
 
 	sessionIsAdmin() {
@@ -64,6 +69,7 @@ class league_interpret {
 		};
 
 		this.league.teams.push(team);
+		return true;
 	}
 
 	startDraft() {
